@@ -1,5 +1,4 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -36,14 +35,6 @@ function Acesso() {
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  const { data: precisaAdmin } = useQuery({
-    queryKey: ["precisa-primeiro-admin"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("precisa_primeiro_admin");
-      if (error) throw error;
-      return data as boolean;
-    },
-  });
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -227,22 +218,22 @@ function Acesso() {
                 Esqueci minha senha
               </button>
             )}
-            {modo === "login" && precisaAdmin && (
-              <button
-                type="button"
-                className="text-left font-medium text-primary hover:underline"
-                onClick={() => {
-                  setErro(null);
-                  setModo("cadastro");
-                }}
-              >
-                Criar a primeira conta de administrador
-              </button>
-            )}
-            {modo === "login" && precisaAdmin === false && (
-              <p className="text-muted-foreground">
-                Novas contas são criadas pelo administrador da BR3 Tech.
-              </p>
+            {modo === "login" && (
+              <>
+                <button
+                  type="button"
+                  className="text-left font-medium text-primary hover:underline"
+                  onClick={() => {
+                    setErro(null);
+                    setModo("cadastro");
+                  }}
+                >
+                  Criar a primeira conta de administrador
+                </button>
+                <p className="text-muted-foreground">
+                  Depois da primeira conta, novos usuários são criados pelo administrador.
+                </p>
+              </>
             )}
           </div>
         </div>
