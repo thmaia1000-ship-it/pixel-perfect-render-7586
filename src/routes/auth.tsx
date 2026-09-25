@@ -83,7 +83,14 @@ function Acesso() {
             data: { nome: nomeOk.data },
           },
         });
-        if (error) throw error;
+        if (error) {
+          setErro(
+            /database error|BR3_SOMENTE_ADMIN/i.test(error.message)
+              ? "O sistema já possui um administrador. Peça a ele para criar a sua conta."
+              : error.message,
+          );
+          return;
+        }
         if (data.session) {
           toast.success("Conta de administrador criada.");
           navigate({ to: "/painel" });
