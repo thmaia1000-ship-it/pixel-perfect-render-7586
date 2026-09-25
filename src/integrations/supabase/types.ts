@@ -278,7 +278,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      precisa_primeiro_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "atendente" | "tecnico"
