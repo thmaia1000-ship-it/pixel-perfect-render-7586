@@ -10,33 +10,133 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
+import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as AuthenticatedClientesIndexRouteImport } from './routes/_authenticated/clientes.index'
+import { Route as AuthenticatedOrdensIndexRouteImport } from './routes/_authenticated/ordens.index'
+import { Route as AuthenticatedOrdensIdRouteImport } from './routes/_authenticated/ordens.$id'
+import { Route as AuthenticatedOrdensNovaRouteImport } from './routes/_authenticated/ordens.nova'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
+  id: '/redefinir-senha',
+  path: '/redefinir-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
+  id: '/painel',
+  path: '/painel',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedClientesIndexRoute =
+  AuthenticatedClientesIndexRouteImport.update({
+    id: '/clientes/',
+    path: '/clientes/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOrdensIndexRoute =
+  AuthenticatedOrdensIndexRouteImport.update({
+    id: '/ordens/',
+    path: '/ordens/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOrdensIdRoute = AuthenticatedOrdensIdRouteImport.update({
+  id: '/ordens/$id',
+  path: '/ordens/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOrdensNovaRoute = AuthenticatedOrdensNovaRouteImport.update({
+  id: '/ordens/nova',
+  path: '/ordens/nova',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
+  '/painel': typeof AuthenticatedPainelRoute
+  '/ordens/$id': typeof AuthenticatedOrdensIdRoute
+  '/ordens/nova': typeof AuthenticatedOrdensNovaRoute
+  '/clientes/': typeof AuthenticatedClientesIndexRoute
+  '/ordens/': typeof AuthenticatedOrdensIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
+  '/painel': typeof AuthenticatedPainelRoute
+  '/ordens/$id': typeof AuthenticatedOrdensIdRoute
+  '/ordens/nova': typeof AuthenticatedOrdensNovaRoute
+  '/clientes': typeof AuthenticatedClientesIndexRoute
+  '/ordens': typeof AuthenticatedOrdensIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
+  '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/_authenticated/ordens/$id': typeof AuthenticatedOrdensIdRoute
+  '/_authenticated/ordens/nova': typeof AuthenticatedOrdensNovaRoute
+  '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
+  '/_authenticated/ordens/': typeof AuthenticatedOrdensIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/redefinir-senha'
+    | '/painel'
+    | '/ordens/$id'
+    | '/ordens/nova'
+    | '/clientes/'
+    | '/ordens/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/redefinir-senha'
+    | '/painel'
+    | '/ordens/$id'
+    | '/ordens/nova'
+    | '/clientes'
+    | '/ordens'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/redefinir-senha'
+    | '/_authenticated/painel'
+    | '/_authenticated/ordens/$id'
+    | '/_authenticated/ordens/nova'
+    | '/_authenticated/clientes/'
+    | '/_authenticated/ordens/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  RedefinirSenhaRoute: typeof RedefinirSenhaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +148,89 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/redefinir-senha': {
+      id: '/redefinir-senha'
+      path: '/redefinir-senha'
+      fullPath: '/redefinir-senha'
+      preLoaderRoute: typeof RedefinirSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/painel': {
+      id: '/_authenticated/painel'
+      path: '/painel'
+      fullPath: '/painel'
+      preLoaderRoute: typeof AuthenticatedPainelRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/clientes/': {
+      id: '/_authenticated/clientes/'
+      path: '/clientes'
+      fullPath: '/clientes/'
+      preLoaderRoute: typeof AuthenticatedClientesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ordens/': {
+      id: '/_authenticated/ordens/'
+      path: '/ordens'
+      fullPath: '/ordens/'
+      preLoaderRoute: typeof AuthenticatedOrdensIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ordens/$id': {
+      id: '/_authenticated/ordens/$id'
+      path: '/ordens/$id'
+      fullPath: '/ordens/$id'
+      preLoaderRoute: typeof AuthenticatedOrdensIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ordens/nova': {
+      id: '/_authenticated/ordens/nova'
+      path: '/ordens/nova'
+      fullPath: '/ordens/nova'
+      preLoaderRoute: typeof AuthenticatedOrdensNovaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+  AuthenticatedOrdensIdRoute: typeof AuthenticatedOrdensIdRoute
+  AuthenticatedOrdensNovaRoute: typeof AuthenticatedOrdensNovaRoute
+  AuthenticatedClientesIndexRoute: typeof AuthenticatedClientesIndexRoute
+  AuthenticatedOrdensIndexRoute: typeof AuthenticatedOrdensIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+  AuthenticatedOrdensIdRoute: AuthenticatedOrdensIdRoute,
+  AuthenticatedOrdensNovaRoute: AuthenticatedOrdensNovaRoute,
+  AuthenticatedClientesIndexRoute: AuthenticatedClientesIndexRoute,
+  AuthenticatedOrdensIndexRoute: AuthenticatedOrdensIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  RedefinirSenhaRoute: RedefinirSenhaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
