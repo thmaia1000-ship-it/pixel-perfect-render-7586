@@ -19,7 +19,10 @@ import {
 } from "@/lib/br3";
 
 const searchSchema = z.object({
-  status: z.enum(["todas", "abertas", ...OS_STATUS]).catch("todas"),
+  status: z
+    .enum(["todas", "abertas", ...OS_STATUS])
+    .optional()
+    .catch(undefined),
 });
 
 export const Route = createFileRoute("/_authenticated/ordens/")({
@@ -48,7 +51,7 @@ const FILTROS = [
 ] as const;
 
 function Ordens() {
-  const { status } = Route.useSearch();
+  const { status = "todas" } = Route.useSearch();
   const [busca, setBusca] = useState("");
 
   const { data, isLoading } = useQuery({
