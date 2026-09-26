@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -11,6 +11,13 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
+  ssr: false,
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.user) {
+      throw redirect({ to: "/painel" });
+    }
+  },
   head: () => ({
     meta: [
       { title: "Entrar — BR3 Tech" },
@@ -41,7 +48,8 @@ function Acesso() {
     e.preventDefault();
     setErro(null);
 
-    const emailOk = emailSchema.safeParse(email);
+    const emailLimpo = email.trim().toLowerCase();
+    const emailOk = emailSchema.safeParse(emailLimpo);
     if (!emailOk.success) {
       setErro(emailOk.error.issues[0]!.message);
       return;
@@ -89,6 +97,7 @@ function Acesso() {
         }
         if (data.session) {
           toast.success("Conta de administrador criada.");
+          await new Promise((r) => setTimeout(r, 150));
           navigate({ to: "/painel" });
         } else {
           toast.success("Conta criada. Confirme o e-mail pelo link que enviamos para entrar.");
@@ -105,11 +114,15 @@ function Acesso() {
         setErro(
           error.message.toLowerCase().includes("invalid")
             ? "E-mail ou senha incorretos."
-            : error.message,
+            : error.message.toLowerCase().includes("email not confirmed")
+              ? "E-mail ainda não confirmado. Verifique sua caixa de entrada."
+              : error.message,
         );
         return;
       }
       toast.success("Bem-vindo de volta!");
+      // Pequeno intervalo para sincronização do token via postMessage com a interface do Lovable
+      await new Promise((r) => setTimeout(r, 150));
       navigate({ to: "/painel" });
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Não foi possível concluir. Tente novamente.");

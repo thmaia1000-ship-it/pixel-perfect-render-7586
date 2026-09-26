@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ClipboardList, Smartphone, Boxes, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -48,13 +50,31 @@ const RECURSOS = [
 ];
 
 function Entrada() {
+  const [estaLogado, setEstaLogado] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setEstaLogado(!!data.session?.user);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setEstaLogado(!!session?.user);
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-transparent">
       <header className="border-b border-border/60 bg-card/75 backdrop-blur-xl">
         <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-4">
           <Logo />
           <Button asChild size="sm" className="shadow-lg shadow-primary/20">
-            <Link to="/auth">Entrar no sistema</Link>
+            <Link to={estaLogado ? "/painel" : "/auth"}>
+              {estaLogado ? "Acessar o Painel" : "Entrar no sistema"}
+            </Link>
           </Button>
         </div>
       </header>
@@ -79,7 +99,9 @@ function Entrada() {
                 size="lg"
                 className="shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all font-semibold"
               >
-                <Link to="/auth">Acessar o sistema</Link>
+                <Link to={estaLogado ? "/painel" : "/auth"}>
+                  {estaLogado ? "Ir para o Painel de Controle" : "Acessar o sistema"}
+                </Link>
               </Button>
             </div>
           </div>
