@@ -13,8 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/auth")({
   ssr: false,
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (data.session?.user) {
+    const { data, error } = await supabase.auth.getUser();
+    if (!error && data.user) {
       throw redirect({ to: "/painel" });
     }
   },
@@ -106,7 +106,7 @@ function Acesso() {
         return;
       }
 
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: emailOk.data,
         password: senha,
       });
@@ -120,10 +120,12 @@ function Acesso() {
         );
         return;
       }
+      if (!data.session?.user) {
+        setErro("Não foi possível iniciar sua sessão. Tente entrar novamente.");
+        return;
+      }
       toast.success("Bem-vindo de volta!");
-      // Pequeno intervalo para sincronização do token via postMessage com a interface do Lovable
-      await new Promise((r) => setTimeout(r, 150));
-      navigate({ to: "/painel" });
+      await navigate({ to: "/painel", replace: true });
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Não foi possível concluir. Tente novamente.");
     } finally {
