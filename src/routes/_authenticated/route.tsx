@@ -5,24 +5,22 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    // 1. Fast check from in-memory / local storage
-    const { data: sessionData } = await supabase.auth.getSession();
-    let session = sessionData.session;
+    // Validate the saved session with the auth service instead of trusting a stale token.
+    let { data, error } = await supabase.auth.getUser();
 
-    // 2. In iframe preview environments (e.g. Lovable postMessage broker),
-    // the initial token retrieval over postMessage is asynchronous.
-    // Give a brief grace period if session is not yet populated on initial page load.
-    if (!session && typeof window !== "undefined") {
+    // The preview session can arrive asynchronously through the storage broker.
+    if ((error || !data.user) && typeof window !== "undefined") {
       await new Promise((resolve) => setTimeout(resolve, 350));
-      const retry = await supabase.auth.getSession();
-      session = retry.data.session;
+      const retry = await supabase.auth.getUser();
+      data = retry.data;
+      error = retry.error;
     }
 
-    if (!session?.user) {
+    if (error || !data.user) {
       throw redirect({ to: "/auth" });
     }
 
-    return { user: session.user };
+    return { user: data.user };
   },
   component: () => <Outlet />,
 });

@@ -10,3 +10,7 @@
 > the editor, so keep the branch in a working state.
 
 <!-- LOVABLE:END -->
+
+## Architecture rules
+
+- Validate protected-route sessions with `supabase.auth.getUser()`; it rejects stale tokens before private screens render.
