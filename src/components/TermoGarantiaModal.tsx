@@ -76,7 +76,7 @@ export function TermoGarantiaModal({
 }: TermoGarantiaModalProps) {
   const ehEntregue = os.status === "entregue";
   const [modo, setModo] = useState<ModoDocumentoOS>(
-    modoInicial ?? (ehEntregue ? "finalizada" : "duas_vias"),
+    modoInicial ?? (ehEntregue ? "finalizada" : "entrada"),
   );
 
   React.useEffect(() => {
@@ -85,7 +85,7 @@ export function TermoGarantiaModal({
     } else if (ehEntregue) {
       setModo("finalizada");
     } else {
-      setModo("duas_vias");
+      setModo("entrada");
     }
   }, [modoInicial, ehEntregue, aberto]);
 
@@ -113,6 +113,11 @@ export function TermoGarantiaModal({
     (item) => conferencia[item] === "Defeito",
   );
   const itensOK = ITENS_CONFERENCIA_ENTRADA.filter((item) => conferencia[item] === "OK");
+
+  // Divisão do checklist em duas colunas para garantir encaixe perfeito em 1 página impressa
+  const meioChecklist = Math.ceil(ITENS_CONFERENCIA_ENTRADA.length / 2);
+  const coluna1Checklist = ITENS_CONFERENCIA_ENTRADA.slice(0, meioChecklist);
+  const coluna2Checklist = ITENS_CONFERENCIA_ENTRADA.slice(meioChecklist);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 p-3 sm:p-4 backdrop-blur-sm print:p-0 print:bg-white print:static print:inset-auto">
@@ -204,6 +209,18 @@ export function TermoGarantiaModal({
             <div className="flex rounded-lg border border-border bg-secondary/50 p-0.5 text-xs font-medium">
               <button
                 type="button"
+                onClick={() => setModo("entrada")}
+                className={`rounded-md px-2.5 py-1 transition-colors ${
+                  modo === "entrada"
+                    ? "bg-primary text-primary-foreground font-semibold shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                title="Relatório de Entrada completo em 1 página (Padrão de abertura de OS)"
+              >
+                Via Completa (1 Página)
+              </button>
+              <button
+                type="button"
                 onClick={() => setModo("duas_vias")}
                 className={`rounded-md px-2.5 py-1 transition-colors ${
                   modo === "duas_vias"
@@ -213,18 +230,6 @@ export function TermoGarantiaModal({
                 title="Imprime 1 folha A4 dividida: 1ª Via Loja e 2ª Via Cliente"
               >
                 2 Vias (Loja + Cliente)
-              </button>
-              <button
-                type="button"
-                onClick={() => setModo("entrada")}
-                className={`rounded-md px-2.5 py-1 transition-colors ${
-                  modo === "entrada"
-                    ? "bg-primary text-primary-foreground font-semibold shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                title="Relatório de Entrada completo em página única"
-              >
-                Via Completa
               </button>
               <button
                 type="button"
@@ -257,7 +262,7 @@ export function TermoGarantiaModal({
         {/* DOCUMENTO IMPRESSO / FORMATO 1: "duas_vias" (LOJA + CLIENTE NA MESMA FOLHA) */}
         {/* ========================================================================= */}
         {modo === "duas_vias" && (
-          <div className="space-y-4 bg-white text-slate-900 p-4 md:p-6 rounded-xl border border-slate-200 text-[11px] font-sans print:border-none print:p-0 print:text-black">
+          <div className="print-page-exact space-y-3 bg-white text-slate-900 p-4 md:p-6 rounded-xl border border-slate-200 text-[11px] font-sans print:border-none print:p-0 print:text-black print:space-y-2">
             {/* ======================== 1ª VIA: LOJA ======================== */}
             <div className="rounded-lg border-2 border-slate-800 p-3 bg-white">
               {/* Topo da Via Loja */}
@@ -471,27 +476,27 @@ export function TermoGarantiaModal({
         {/* DOCUMENTO IMPRESSO / FORMATO 2 & 3: "entrada" (COMPLETO) OU "finalizada"   */}
         {/* ========================================================================= */}
         {(modo === "entrada" || modo === "finalizada") && (
-          <div className="space-y-4 bg-white text-slate-900 p-6 md:p-8 rounded-xl border border-slate-200 text-xs sm:text-sm font-sans print:border-none print:p-0 print:text-black">
+          <div className="print-page-exact space-y-2 bg-white text-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 text-[10.5px] font-sans print:border-none print:p-0 print:text-black print:space-y-1.5 leading-snug">
             {/* Cabeçalho Oficial */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-slate-900 pb-3">
-              <div className="flex items-center gap-3">
-                <Logo size="md" />
+            <div className="flex items-center justify-between border-b-2 border-slate-900 pb-2">
+              <div className="flex items-center gap-2">
+                <Logo size="sm" />
               </div>
               <div className="text-right">
-                <h1 className="text-base md:text-lg font-black uppercase tracking-tight text-slate-900">
+                <h1 className="text-xs sm:text-sm font-black uppercase tracking-tight text-slate-900">
                   {modo === "finalizada"
                     ? "ORDEM DE SERVIÇO FINALIZADA"
                     : "RELATÓRIO DE ENTRADA DE EQUIPAMENTO"}
                 </h1>
-                <p className="text-sm font-extrabold text-slate-900">OS Nº {os.numero}</p>
-                <div className="flex items-center justify-end gap-2 mt-1">
+                <div className="flex items-center justify-end gap-2 mt-0.5">
+                  <span className="text-xs font-black text-slate-900">OS Nº {os.numero}</span>
                   {modo === "finalizada" ? (
-                    <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-300">
-                      <CheckCircle2 className="h-3 w-3" /> CONCLUÍDA / ENTREGUE
+                    <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800 border border-emerald-300">
+                      <CheckCircle2 className="h-3 w-3" /> ENTREGUE / GARANTIA ATIVA
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded bg-blue-100 px-2 py-0.5 text-[11px] font-bold text-blue-800 border border-blue-300">
-                      CONTROLE DA LOJA E DO CLIENTE
+                    <span className="inline-flex items-center rounded bg-blue-100 px-1.5 py-0.2 text-[9px] font-bold text-blue-800 border border-blue-300">
+                      COMPROVANTE DE ENTRADA (1 PÁGINA)
                     </span>
                   )}
                 </div>
@@ -499,7 +504,7 @@ export function TermoGarantiaModal({
             </div>
 
             {/* Dados da Empresa */}
-            <div className="text-[11px] text-slate-600 text-center border-b border-slate-200 pb-2 flex flex-wrap justify-center gap-x-4">
+            <div className="text-[9px] text-slate-600 border-b border-slate-200 pb-1 flex flex-wrap justify-between items-center px-0.5">
               <span>
                 WhatsApp: <strong className="text-slate-800">(92) 99236-5757</strong>
               </span>
@@ -507,110 +512,119 @@ export function TermoGarantiaModal({
                 E-mail: <strong className="text-slate-800">br3tech.am@gmail.com</strong>
               </span>
               <span>
-                Data de Entrada: <strong className="text-slate-800">{dataCriacaoFormatada}</strong>
+                Data Entrada: <strong className="text-slate-800">{dataCriacaoFormatada}</strong>
               </span>
               {dataEntregaFormatada && (
                 <span>
-                  Data de Entrega:{" "}
-                  <strong className="text-emerald-700">{dataEntregaFormatada}</strong>
+                  Entrega: <strong className="text-emerald-700">{dataEntregaFormatada}</strong>
                 </span>
               )}
             </div>
 
-            {/* DADOS DO CLIENTE */}
-            <section>
-              <h2 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-800 border-b border-slate-300 pb-1 mb-2 bg-slate-100 px-2 py-0.5 rounded">
-                1. DADOS DO CLIENTE
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 px-1">
-                <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-500">
-                    Nome do Cliente
-                  </span>
-                  <span className="font-bold text-slate-900 text-xs sm:text-sm">
-                    {os.clientes?.nome || "Não informado"}
-                  </span>
-                </div>
-                <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-500">
-                    WhatsApp / Telefone
-                  </span>
-                  <span className="font-semibold text-slate-900">
-                    {os.clientes?.telefone || "Não informado"}
-                  </span>
-                </div>
-                {os.clientes?.documento && (
-                  <div>
-                    <span className="block text-[10px] uppercase font-bold text-slate-500">
-                      CPF / Documento
+            {/* DADOS DO CLIENTE & IDENTIFICAÇÃO DO EQUIPAMENTO (LADO A LADO) */}
+            <div className="grid grid-cols-2 gap-2">
+              {/* 1. DADOS DO CLIENTE */}
+              <section className="rounded border border-slate-200 bg-slate-50/70 p-2">
+                <h2 className="text-[9.5px] font-black uppercase tracking-wider text-slate-800 border-b border-slate-200 pb-0.5 mb-1.5 flex items-center justify-between">
+                  <span>1. DADOS DO CLIENTE</span>
+                </h2>
+                <div className="grid grid-cols-2 gap-1 text-[9.5px]">
+                  <div className="col-span-2">
+                    <span className="block text-[8px] uppercase font-bold text-slate-500">
+                      Nome:
                     </span>
-                    <span className="font-medium text-slate-900">{os.clientes.documento}</span>
+                    <span className="font-bold text-slate-900 truncate block">
+                      {os.clientes?.nome || "Não informado"}
+                    </span>
                   </div>
-                )}
-              </div>
-            </section>
+                  <div>
+                    <span className="block text-[8px] uppercase font-bold text-slate-500">
+                      Telefone / WhatsApp:
+                    </span>
+                    <span className="font-semibold text-slate-900">
+                      {os.clientes?.telefone || "Não informado"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-[8px] uppercase font-bold text-slate-500">
+                      CPF / Documento:
+                    </span>
+                    <span className="font-medium text-slate-900">
+                      {os.clientes?.documento || "Não informado"}
+                    </span>
+                  </div>
+                </div>
+              </section>
 
-            {/* EQUIPAMENTO E ESPECIFICAÇÕES */}
-            <section>
-              <h2 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-800 border-b border-slate-300 pb-1 mb-2 bg-slate-100 px-2 py-0.5 rounded">
-                2. IDENTIFICAÇÃO DO EQUIPAMENTO
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 px-1">
-                <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-500">
-                    Modelo do Aparelho
-                  </span>
-                  <span className="font-bold text-slate-900">{modeloAparelho}</span>
+              {/* 2. IDENTIFICAÇÃO DO EQUIPAMENTO */}
+              <section className="rounded border border-slate-200 bg-slate-50/70 p-2">
+                <h2 className="text-[9.5px] font-black uppercase tracking-wider text-slate-800 border-b border-slate-200 pb-0.5 mb-1.5 flex items-center justify-between">
+                  <span>2. IDENTIFICAÇÃO DO EQUIPAMENTO</span>
+                </h2>
+                <div className="grid grid-cols-2 gap-1 text-[9.5px]">
+                  <div>
+                    <span className="block text-[8px] uppercase font-bold text-slate-500">
+                      Aparelho / Modelo:
+                    </span>
+                    <span className="font-bold text-slate-900 truncate block">
+                      {modeloAparelho}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-[8px] uppercase font-bold text-slate-500">
+                      IMEI / Nº Série:
+                    </span>
+                    <span className="font-medium text-slate-900 truncate block">
+                      {os.imei || "Não informado"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-[8px] uppercase font-bold text-slate-500">
+                      Tipo:
+                    </span>
+                    <span className="font-medium text-slate-900">{os.aparelho}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[8px] uppercase font-bold text-slate-500">
+                      Acessórios:
+                    </span>
+                    <span className="font-medium text-slate-900 truncate block">
+                      {os.acessorios || "Nenhum"}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-500">
-                    IMEI / Nº de Série
-                  </span>
-                  <span className="font-medium text-slate-900">{os.imei || "Não informado"}</span>
-                </div>
-                <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-500">
-                    Tipo de Equipamento
-                  </span>
-                  <span className="font-medium text-slate-900">{os.aparelho}</span>
-                </div>
-                <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-500">
-                    Acessórios Recebidos
-                  </span>
-                  <span className="font-medium text-slate-900">{os.acessorios || "Nenhum"}</span>
-                </div>
-              </div>
-            </section>
+              </section>
+            </div>
 
             {/* SERVIÇO EXECUTADO & ORÇAMENTO */}
-            <section>
-              <h2 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-800 border-b border-slate-300 pb-1 mb-2 bg-slate-100 px-2 py-0.5 rounded">
+            <section className="rounded border border-slate-200 bg-slate-50/70 p-2">
+              <h2 className="text-[9.5px] font-black uppercase tracking-wider text-slate-800 border-b border-slate-200 pb-0.5 mb-1.5">
                 {modo === "finalizada"
                   ? "3. SERVIÇOS EXECUTADOS E VALORES FINAIS"
                   : "3. DEFEITO RELATADO E ORÇAMENTO INICIAL"}
               </h2>
-              <div className="grid grid-cols-2 gap-3 px-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[9.5px]">
                 <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-500">
-                    Defeito Relatado pelo Cliente
+                  <span className="block text-[8px] uppercase font-bold text-slate-500">
+                    Defeito Relatado:
                   </span>
-                  <p className="font-medium text-slate-900 text-xs">{os.defeito_relatado}</p>
+                  <p className="font-medium text-slate-900 bg-white p-1 rounded border border-slate-200 text-[9.5px]">
+                    {os.defeito_relatado}
+                  </p>
                   {observacoesFisicas && (
-                    <p className="mt-1 text-[10px] text-slate-600">
-                      <strong className="text-slate-700">Estado físico:</strong>{" "}
-                      {observacoesFisicas}
+                    <p className="mt-0.5 text-[8.5px] text-slate-600">
+                      <strong>Obs. Físicas:</strong> {observacoesFisicas}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-500">
+                  <span className="block text-[8px] uppercase font-bold text-slate-500">
                     {modo === "finalizada"
-                      ? "Diagnóstico / Solução Realizada"
-                      : "Diagnóstico Técnico Inicial"}
+                      ? "Diagnóstico / Solução Realizada:"
+                      : "Diagnóstico Técnico Inicial:"}
                   </span>
-                  <p className="font-medium text-slate-900 text-xs">
+                  <p className="font-medium text-slate-900 bg-white p-1 rounded border border-slate-200 text-[9.5px]">
                     {os.diagnostico ||
                       (modo === "finalizada"
                         ? "Reparo efetuado e aprovado em testes técnicos."
@@ -620,77 +634,129 @@ export function TermoGarantiaModal({
               </div>
 
               {/* Tabela de Valores */}
-              <div className="mt-2 rounded-lg border border-slate-300 bg-slate-50 p-2.5">
-                <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                  <div>
-                    <span className="block text-[10px] uppercase text-slate-500 font-semibold">
-                      Peças / Componentes
-                    </span>
-                    <span className="font-bold text-slate-800">{moeda(os.valor_pecas)}</span>
-                  </div>
-                  <div>
-                    <span className="block text-[10px] uppercase text-slate-500 font-semibold">
-                      Mão de Obra
-                    </span>
-                    <span className="font-bold text-slate-800">{moeda(os.valor_mao_obra)}</span>
-                  </div>
-                  <div className="border-l border-slate-300 pl-2">
-                    <span className="block text-[10px] uppercase text-slate-600 font-extrabold">
-                      {modo === "finalizada" ? "Valor Total Pago" : "Valor Total Estimado"}
-                    </span>
-                    <span className="text-sm font-black text-slate-950">{moeda(total)}</span>
-                  </div>
+              <div className="mt-1.5 grid grid-cols-4 gap-1 rounded bg-white p-1.5 border border-slate-200 text-center text-[9.5px]">
+                <div>
+                  <span className="block text-[8px] uppercase text-slate-500 font-semibold">
+                    Peças / Comp.
+                  </span>
+                  <span className="font-bold text-slate-800">{moeda(os.valor_pecas)}</span>
                 </div>
-                <div className="mt-2 text-center border-t border-slate-200 pt-1.5 text-[11px] font-semibold text-emerald-800">
-                  Prazo de Garantia:{" "}
-                  <span className="underline font-bold">
+                <div>
+                  <span className="block text-[8px] uppercase text-slate-500 font-semibold">
+                    Mão de Obra
+                  </span>
+                  <span className="font-bold text-slate-800">{moeda(os.valor_mao_obra)}</span>
+                </div>
+                <div className="border-l border-slate-200 pl-1">
+                  <span className="block text-[8px] uppercase text-slate-600 font-extrabold">
+                    {modo === "finalizada" ? "Total Pago" : "Total Estimado"}
+                  </span>
+                  <span className="text-xs font-black text-slate-950">{moeda(total)}</span>
+                </div>
+                <div className="border-l border-slate-200 pl-1">
+                  <span className="block text-[8px] uppercase text-emerald-700 font-bold">
+                    Garantia
+                  </span>
+                  <span className="text-[9.5px] font-bold text-emerald-800">
                     {os.garantia_dias ? `${os.garantia_dias} dias` : "90 dias"}
-                  </span>{" "}
-                  {modo === "finalizada" && dataEntregaFormatada
-                    ? `(vigência a partir da entrega em ${dataEntregaFormatada})`
-                    : "(a contar da entrega do aparelho reparado)"}
+                  </span>
                 </div>
               </div>
             </section>
 
-            {/* CONFERÊNCIA DE ENTRADA DO APARELHO */}
-            <section className="pt-0.5">
-              <h2 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-800 border-b border-slate-300 pb-1 mb-1.5 bg-slate-100 px-2 py-0.5 rounded">
-                4. CONFERÊNCIA DE ENTRADA DO APARELHO (CHECKLIST)
-              </h2>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-slate-300 text-[11px]">
+            {/* 4. CONFERÊNCIA DE ENTRADA DO APARELHO (CHECKLIST EM 2 COLUNAS) */}
+            <section className="rounded border border-slate-200 bg-slate-50/70 p-2">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-0.5 mb-1">
+                <h2 className="text-[9.5px] font-black uppercase tracking-wider text-slate-800">
+                  4. CONFERÊNCIA DE ENTRADA DO APARELHO (CHECKLIST)
+                </h2>
+                <span className="text-[8.5px] text-slate-600 font-medium">
+                  {itensComDefeito.length > 0 ? (
+                    <span className="text-rose-700 font-bold">
+                      ⚠️ {itensComDefeito.length} avaria(s) anotada(s)
+                    </span>
+                  ) : (
+                    <span className="text-emerald-700 font-bold">✓ Sem defeitos aparentes</span>
+                  )}
+                  {midias.length > 0 && ` · ${midias.length} foto(s)/vídeo(s)`}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-[9px]">
+                {/* Coluna 1 do Checklist */}
+                <table className="w-full border-collapse border border-slate-200 bg-white">
                   <thead>
-                    <tr className="bg-slate-100 text-slate-800">
-                      <th className="border border-slate-300 py-1 px-2 text-left font-bold">
+                    <tr className="bg-slate-100 text-slate-700 text-[8px]">
+                      <th className="border border-slate-200 py-0.5 px-1.5 text-left font-bold">
                         Item
                       </th>
-                      <th className="border border-slate-300 py-1 px-2 text-center font-bold w-12 text-emerald-700">
+                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-6 text-emerald-700">
                         OK
                       </th>
-                      <th className="border border-slate-300 py-1 px-2 text-center font-bold w-14 text-rose-700">
-                        Defeito
+                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-8 text-rose-700">
+                        Def.
                       </th>
-                      <th className="border border-slate-300 py-1 px-2 text-center font-bold w-12 text-slate-600">
+                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-6 text-slate-500">
                         N/V
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {ITENS_CONFERENCIA_ENTRADA.map((item, idx) => {
+                    {coluna1Checklist.map((item, idx) => {
                       const st = conferencia[item];
                       return (
-                        <tr key={item} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}>
-                          <td className="border border-slate-300 py-0.5 px-2 font-medium text-slate-800">
+                        <tr key={item} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"}>
+                          <td className="border border-slate-200 py-0.5 px-1.5 font-medium text-slate-800 truncate max-w-[130px]">
                             {item}
                           </td>
-                          <td className="border border-slate-300 py-0.5 px-2 text-center font-bold text-emerald-600">
+                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-emerald-600">
                             {st === "OK" ? "✓" : ""}
                           </td>
-                          <td className="border border-slate-300 py-0.5 px-2 text-center font-bold text-rose-600">
+                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-rose-600">
                             {st === "Defeito" ? "✓" : ""}
                           </td>
-                          <td className="border border-slate-300 py-0.5 px-2 text-center font-bold text-slate-500">
+                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-slate-400">
+                            {st === "N/V" ? "✓" : ""}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                {/* Coluna 2 do Checklist */}
+                <table className="w-full border-collapse border border-slate-200 bg-white">
+                  <thead>
+                    <tr className="bg-slate-100 text-slate-700 text-[8px]">
+                      <th className="border border-slate-200 py-0.5 px-1.5 text-left font-bold">
+                        Item
+                      </th>
+                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-6 text-emerald-700">
+                        OK
+                      </th>
+                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-8 text-rose-700">
+                        Def.
+                      </th>
+                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-6 text-slate-500">
+                        N/V
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {coluna2Checklist.map((item, idx) => {
+                      const st = conferencia[item];
+                      return (
+                        <tr key={item} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"}>
+                          <td className="border border-slate-200 py-0.5 px-1.5 font-medium text-slate-800 truncate max-w-[130px]">
+                            {item}
+                          </td>
+                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-emerald-600">
+                            {st === "OK" ? "✓" : ""}
+                          </td>
+                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-rose-600">
+                            {st === "Defeito" ? "✓" : ""}
+                          </td>
+                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-slate-400">
                             {st === "N/V" ? "✓" : ""}
                           </td>
                         </tr>
@@ -700,81 +766,60 @@ export function TermoGarantiaModal({
                 </table>
               </div>
 
-              {/* Mídias de comprovação do checklist */}
               {midias.length > 0 && (
-                <div className="mt-2 rounded border border-slate-200 bg-slate-50 p-1.5">
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-800">
-                    <Camera className="h-3 w-3 text-primary" />
-                    Registro Visual na Entrada: {midias.length} foto(s)/vídeo(s) arquivados
-                    digitalmente no sistema da BR3 Tech.
-                  </div>
+                <div className="mt-1 flex items-center gap-1.5 text-[8.5px] font-medium text-slate-600">
+                  <Camera className="h-3 w-3 text-primary" />
+                  Registro Fotográfico: {midias.length} arquivo(s) arquivado(s) no sistema digital.
                 </div>
               )}
             </section>
 
             {/* TERMOS E CONDIÇÕES */}
-            <section className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-[10px] leading-relaxed text-slate-700">
-              <h3 className="font-bold text-slate-900 uppercase text-[10px] mb-0.5">
+            <section className="rounded border border-slate-200 bg-slate-50/70 p-2 text-[8px] leading-tight text-slate-700">
+              <h3 className="font-bold text-slate-900 uppercase text-[8.5px] mb-0.5">
                 {modo === "finalizada"
                   ? "TERMOS DE GARANTIA E ENTREGA"
                   : "CONDIÇÕES DA ORDEM DE SERVIÇO E GUARDA"}
               </h3>
-              <ul className="list-disc list-inside space-y-0.5">
+              <ul className="grid grid-cols-2 gap-x-3 gap-y-0.5 list-disc list-inside">
                 {modo === "finalizada" ? (
                   <>
+                    <li>Cliente testou e recebeu o equipamento em perfeito funcionamento.</li>
                     <li>
-                      O cliente declara ter testado e recebido o equipamento em perfeitas condições
-                      de funcionamento nesta data.
+                      Garantia de <strong>{os.garantia_dias || 90} dias</strong> sobre serviços e
+                      peças.
                     </li>
-                    <li>
-                      A garantia cobre exclusivamente o serviço executado e as peças substituídas
-                      durante o prazo de <strong>{os.garantia_dias || 90} dias</strong> a contar
-                      desta entrega.
-                    </li>
-                    <li>
-                      A garantia perde a validade em caso de quedas, trincados, oxidação por contato
-                      com líquidos ou violação por terceiros.
-                    </li>
+                    <li>Perda de garantia em caso de quedas, trincados ou umidade.</li>
+                    <li>Apresentação deste comprovante obrigatória para garantia.</li>
                   </>
                 ) : (
                   <>
-                    <li>
-                      O cliente declara que o aparelho foi entregue para diagnóstico/reparo e que as
-                      informações de entrada acima conferem.
-                    </li>
-                    <li>
-                      Prazo médio de diagnóstico: até 5 dias úteis. Orçamento sujeito a aprovação
-                      prévia.
-                    </li>
-                    <li>
-                      Aparelhos não retirados em até 90 dias após comunicação poderão ser
-                      descartados ou cobrados taxa conforme legislação.
-                    </li>
-                    <li>
-                      Não nos responsabilizamos por dados armazenados. Recomenda-se backup prévio.
-                    </li>
+                    <li>Aparelho entregue para diagnóstico/reparo conforme itens acima.</li>
+                    <li>Diagnóstico: até 5 dias úteis. Orçamento sujeito à aprovação.</li>
+                    <li>Aparelhos não retirados em até 90 dias poderão ser descartados.</li>
+                    <li>Não nos responsabilizamos por dados (recomendado backup prévio).</li>
                   </>
                 )}
               </ul>
             </section>
 
             {/* ASSINATURAS */}
-            <div className="pt-4 grid grid-cols-2 gap-8 text-center text-xs">
+            <div className="pt-2 grid grid-cols-2 gap-8 text-center text-[9.5px]">
               <div>
-                <div className="border-t border-slate-400 pt-1 font-semibold text-slate-900">
+                <div className="border-t border-slate-400 pt-0.5 font-bold text-slate-900">
                   {os.clientes?.nome || "Assinatura do Cliente"}
                 </div>
-                <p className="text-[10px] text-slate-500">
+                <p className="text-[8px] text-slate-500">
                   {modo === "finalizada"
                     ? "Cliente (Declara recebimento e aceite)"
                     : "Cliente (Autorização de entrada)"}
                 </p>
               </div>
               <div>
-                <div className="border-t border-slate-400 pt-1 font-semibold text-slate-900">
-                  {os.profiles?.nome || "BR3 Tech"}
+                <div className="border-t border-slate-400 pt-0.5 font-bold text-slate-900">
+                  {os.profiles?.nome || "BR3 Tech (Recepção)"}
                 </div>
-                <p className="text-[10px] text-slate-500">
+                <p className="text-[8px] text-slate-500">
                   {modo === "finalizada"
                     ? "Técnico Responsável (Entrega efetuada)"
                     : "Técnico Responsável (Recepção)"}

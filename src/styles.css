@@ -201,15 +201,25 @@
 }
 
 @media print {
+  html,
   body {
     background: white !important;
     color: black !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   body::before {
     display: none !important;
   }
   @page {
-    margin: 10mm;
-    size: auto;
+    margin: 8mm;
+    size: A4 portrait;
+  }
+  .print-page-exact {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
   }
 }

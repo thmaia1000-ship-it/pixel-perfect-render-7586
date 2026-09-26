@@ -661,7 +661,7 @@ function NovaOS() {
           conferencia={osRecemCriada.conferencia}
           observacoesFisicas={osRecemCriada.observacoesFisicas}
           midias={osRecemCriada.midias}
-          modoInicial="duas_vias"
+          modoInicial="entrada"
           mostrarAcoesFinalizacao={true}
           onIrParaOS={irParaOSCriada}
           onNovaOS={prepararNovaOS}

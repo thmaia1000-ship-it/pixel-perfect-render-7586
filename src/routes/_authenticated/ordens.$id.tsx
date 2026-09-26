@@ -186,7 +186,7 @@ function DetalheOS() {
             <>
               <Button
                 onClick={() => {
-                  setModoDocumento("duas_vias");
+                  setModoDocumento("entrada");
                   setTermoAberto(true);
                 }}
                 variant="outline"
@@ -210,14 +210,14 @@ function DetalheOS() {
           ) : (
             <Button
               onClick={() => {
-                setModoDocumento("duas_vias");
+                setModoDocumento("entrada");
                 setTermoAberto(true);
               }}
               variant="outline"
               size="sm"
               className="gap-1.5 font-medium border-border"
             >
-              <Printer className="h-4 w-4 text-primary" /> Relatório de Entrada (Loja e Cliente)
+              <Printer className="h-4 w-4 text-primary" /> Imprimir Relatório de Entrada (PDF)
             </Button>
           )}
           <span
