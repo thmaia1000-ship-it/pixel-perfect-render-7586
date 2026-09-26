@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -31,10 +32,10 @@ function Acesso() {
   const [modo, setModo] = useState<Modo>("login");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [nome, setNome] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
-
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -65,12 +66,7 @@ function Acesso() {
       }
 
       if (modo === "cadastro") {
-        const nomeOk = z
-          .string()
-          .trim()
-          .min(2, "Informe o nome completo")
-          .max(100)
-          .safeParse(nome);
+        const nomeOk = z.string().trim().min(2, "Informe o nome completo").max(100).safeParse(nome);
         if (!nomeOk.success) {
           setErro(nomeOk.error.issues[0]!.message);
           return;
@@ -130,20 +126,25 @@ function Acesso() {
         : "Criar conta de administrador";
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-transparent">
       <div className="px-4 py-5">
         <Link to="/">
           <Logo />
         </Link>
       </div>
       <div className="flex flex-1 items-start justify-center px-4 pb-16 pt-6">
-        <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <h1 className="text-xl font-bold">{titulo}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {modo === "recuperar"
-              ? "Informe seu e-mail para receber o link de redefinição."
-              : "Área restrita à equipe da BR3 Tech."}
-          </p>
+        <div className="w-full max-w-sm rounded-2xl border border-border/70 bg-card/85 backdrop-blur-2xl p-6 shadow-2xl shadow-black/60">
+          <div className="mb-4 flex justify-center">
+            <Logo size="lg" showText={false} />
+          </div>
+          <div className="text-center">
+            <h1 className="text-xl font-bold">{titulo}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {modo === "recuperar"
+                ? "Informe seu e-mail para receber o link de redefinição."
+                : "Área restrita à equipe da BR3 Tech."}
+            </p>
+          </div>
 
           <form onSubmit={enviar} className="mt-6 grid gap-4">
             {modo === "cadastro" && (
@@ -169,17 +170,31 @@ function Acesso() {
                 autoComplete="email"
               />
             </div>
+
             {modo !== "recuperar" && (
               <div className="grid gap-1.5">
                 <Label htmlFor="senha">Senha</Label>
-                <Input
-                  id="senha"
-                  type="password"
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
-                  maxLength={72}
-                  autoComplete={modo === "cadastro" ? "new-password" : "current-password"}
-                />
+                <div className="relative">
+                  <Input
+                    id="senha"
+                    type={mostrarSenha ? "text" : "password"}
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    maxLength={72}
+                    autoComplete={modo === "cadastro" ? "new-password" : "current-password"}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMostrarSenha((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded"
+                    aria-label={mostrarSenha ? "Ocultar senha" : "Ver senha"}
+                    title={mostrarSenha ? "Ocultar senha" : "Ver senha"}
+                    tabIndex={-1}
+                  >
+                    {mostrarSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
             )}
 

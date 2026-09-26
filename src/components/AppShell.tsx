@@ -34,8 +34,8 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b border-border bg-card">
+    <div className="min-h-screen bg-transparent">
+      <header className="sticky top-0 z-30 border-b border-border/60 bg-card/75 backdrop-blur-xl">
         <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
           <Link to="/painel" className="min-w-0">
             <Logo />
@@ -46,8 +46,10 @@ export function AppShell({
                 <Link
                   key={item.to}
                   to={item.to}
-                  className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                  activeProps={{ className: "bg-secondary text-foreground" }}
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary/80 hover:text-foreground"
+                  activeProps={{
+                    className: "bg-secondary text-foreground shadow-sm shadow-black/20",
+                  }}
                 >
                   {item.label}
                 </Link>
@@ -68,7 +70,7 @@ export function AppShell({
           </div>
         </div>
         {aberto && (
-          <nav className="grid gap-1 border-t border-border px-4 py-2 md:hidden">
+          <nav className="grid gap-1 border-t border-border/60 bg-card/90 backdrop-blur-xl px-4 py-2 md:hidden">
             {NAV.map((item) => (
               <Link
                 key={item.to}

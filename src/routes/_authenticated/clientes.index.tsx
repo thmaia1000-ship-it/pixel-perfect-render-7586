@@ -98,7 +98,10 @@ function Clientes() {
     >
       <div className="grid gap-4">
         {aberto && (
-          <form onSubmit={salvar} className="grid gap-4 rounded-2xl border border-border bg-card p-5">
+          <form
+            onSubmit={salvar}
+            className="grid gap-4 rounded-2xl border border-border bg-card p-5"
+          >
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="grid gap-1.5">
                 <Label htmlFor="nome">Nome</Label>

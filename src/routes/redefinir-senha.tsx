@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -29,6 +30,8 @@ function Redefinir() {
   const navigate = useNavigate();
   const [senha, setSenha] = useState("");
   const [confirma, setConfirma] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [mostrarConfirma, setMostrarConfirma] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
@@ -55,16 +58,19 @@ function Redefinir() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-transparent">
       <div className="px-4 py-5">
         <Logo />
       </div>
       <div className="flex flex-1 items-start justify-center px-4 pb-16 pt-6">
         <form
           onSubmit={enviar}
-          className="grid w-full max-w-sm gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm"
+          className="grid w-full max-w-sm gap-4 rounded-2xl border border-border/70 bg-card/85 backdrop-blur-2xl p-6 shadow-2xl shadow-black/60"
         >
-          <div>
+          <div className="flex justify-center mb-1">
+            <Logo size="lg" showText={false} />
+          </div>
+          <div className="text-center">
             <h1 className="text-xl font-bold">Nova senha</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Escolha uma senha com pelo menos 8 caracteres.
@@ -72,25 +78,55 @@ function Redefinir() {
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="senha">Nova senha</Label>
-            <Input
-              id="senha"
-              type="password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              maxLength={72}
-              autoComplete="new-password"
-            />
+            <div className="relative">
+              <Input
+                id="senha"
+                type={mostrarSenha ? "text" : "password"}
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                maxLength={72}
+                autoComplete="new-password"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setMostrarSenha((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded"
+                aria-label={mostrarSenha ? "Ocultar senha" : "Ver senha"}
+                title={mostrarSenha ? "Ocultar senha" : "Ver senha"}
+                tabIndex={-1}
+              >
+                {mostrarSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="confirma">Confirmar senha</Label>
-            <Input
-              id="confirma"
-              type="password"
-              value={confirma}
-              onChange={(e) => setConfirma(e.target.value)}
-              maxLength={72}
-              autoComplete="new-password"
-            />
+            <div className="relative">
+              <Input
+                id="confirma"
+                type={mostrarConfirma ? "text" : "password"}
+                value={confirma}
+                onChange={(e) => setConfirma(e.target.value)}
+                maxLength={72}
+                autoComplete="new-password"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setMostrarConfirma((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded"
+                aria-label={
+                  mostrarConfirma ? "Ocultar confirmação de senha" : "Ver confirmação de senha"
+                }
+                title={
+                  mostrarConfirma ? "Ocultar confirmação de senha" : "Ver confirmação de senha"
+                }
+                tabIndex={-1}
+              >
+                {mostrarConfirma ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
           {erro && (
             <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">

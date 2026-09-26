@@ -157,9 +157,7 @@ function Ordens() {
                   </div>
                   <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
                     <span>Prazo: {dataCurta(o.prazo)}</span>
-                    <span>
-                      Total: {moeda(Number(o.valor_pecas) + Number(o.valor_mao_obra))}
-                    </span>
+                    <span>Total: {moeda(Number(o.valor_pecas) + Number(o.valor_mao_obra))}</span>
                   </div>
                 </Link>
               </li>

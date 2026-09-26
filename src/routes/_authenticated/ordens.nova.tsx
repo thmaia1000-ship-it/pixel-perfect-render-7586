@@ -3,13 +3,27 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { Sparkles, Smartphone, ClipboardCheck, Camera } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ConferenciaEntrada } from "@/components/ConferenciaEntrada";
+import { UploadMidiaConferencia } from "@/components/UploadMidiaConferencia";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  MARCAS_POPULARES_POR_TIPO,
+  getModelosIndividuais,
+  MAIS_BUSCADOS_ASSISTENCIA,
+} from "@/lib/dispositivos-populares";
+import {
+  criarConferenciaPadrao,
+  serializarEstadoEConferencia,
+  type ConferenciaChecklist,
+  type MidiaConferencia,
+} from "@/lib/conferencia-aparelho";
 
 export const Route = createFileRoute("/_authenticated/ordens/nova")({
   head: () => ({
@@ -39,6 +53,11 @@ function NovaOS() {
 
   const [clienteId, setClienteId] = useState("");
   const [novoCliente, setNovoCliente] = useState({ nome: "", telefone: "", email: "" });
+  const [modeloManual, setModeloManual] = useState(false);
+  const [conferencia, setConferencia] = useState<ConferenciaChecklist>(() =>
+    criarConferenciaPadrao(),
+  );
+  const [midias, setMidias] = useState<MidiaConferencia[]>([]);
   const [form, setForm] = useState({
     aparelho: "Celular",
     marca: "",
@@ -129,7 +148,7 @@ function NovaOS() {
           imei: form.imei.trim().slice(0, 40) || null,
           acessorios: form.acessorios.trim().slice(0, 300) || null,
           defeito_relatado: defeito.data,
-          estado_fisico: form.estado_fisico.trim().slice(0, 300) || null,
+          estado_fisico: serializarEstadoEConferencia(conferencia, form.estado_fisico, midias),
           diagnostico: form.diagnostico.trim().slice(0, 1000) || null,
           valor_pecas: Number(form.valor_pecas.replace(",", ".")) || 0,
           valor_mao_obra: Number(form.valor_mao_obra.replace(",", ".")) || 0,
@@ -219,15 +238,75 @@ function NovaOS() {
         </section>
 
         <section className="rounded-2xl border border-border bg-card p-5">
-          <h2 className="text-base font-bold">Aparelho</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="text-base font-bold">Aparelho</h2>
+              <p className="text-xs text-muted-foreground">
+                Selecione marcas e modelos mais populares no Brasil (lançados a partir de 2016) ou
+                digite livremente.
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+              <Sparkles className="h-3 w-3" /> Sugestões 2016+
+            </span>
+          </div>
+
+          {/* Atalhos rápidos para os modelos mais frequentes no Brasil */}
+          <div className="mt-4 rounded-xl border border-border/60 bg-secondary/30 p-3">
+            <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mb-2">
+              <Smartphone className="h-3.5 w-3.5 text-primary" /> Modelos frequentes na bancada
+              (clique para selecionar):
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {MAIS_BUSCADOS_ASSISTENCIA.slice(0, 12).map((disp) => (
+                <button
+                  key={`${disp.marca}-${disp.modelo}`}
+                  type="button"
+                  onClick={() => {
+                    setModeloManual(false);
+                    setForm((f) => ({
+                      ...f,
+                      aparelho: disp.tipo,
+                      marca: disp.marca,
+                      modelo: disp.modelo,
+                    }));
+                  }}
+                  className={`rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors ${
+                    form.marca === disp.marca && form.modelo === disp.modelo
+                      ? "border-primary bg-primary text-primary-foreground font-semibold shadow-sm shadow-primary/20"
+                      : "border-border/80 bg-card/80 text-foreground hover:border-primary hover:bg-primary/10 hover:text-primary"
+                  }`}
+                >
+                  <span
+                    className={
+                      form.marca === disp.marca && form.modelo === disp.modelo
+                        ? "text-primary-foreground font-bold"
+                        : "font-semibold text-primary"
+                    }
+                  >
+                    {disp.marca}
+                  </span>{" "}
+                  {disp.modelo}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">
-              <Label htmlFor="aparelho">Tipo</Label>
+              <Label htmlFor="aparelho">Tipo de aparelho</Label>
               <select
                 id="aparelho"
                 value={form.aparelho}
-                onChange={(e) => setForm((f) => ({ ...f, aparelho: e.target.value }))}
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                onChange={(e) => {
+                  const novoTipo = e.target.value;
+                  setModeloManual(false);
+                  setForm((f) => ({
+                    ...f,
+                    aparelho: novoTipo,
+                  }));
+                }}
+                className="h-10 rounded-md border border-input bg-card px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               >
                 <option>Celular</option>
                 <option>Notebook</option>
@@ -236,27 +315,203 @@ function NovaOS() {
                 <option>Outro</option>
               </select>
             </div>
+
             <div className="grid gap-1.5">
               <Label htmlFor="imei">IMEI / Nº de série</Label>
-              <Input id="imei" maxLength={40} {...campo("imei")} />
+              <Input
+                id="imei"
+                placeholder="Ex: 356789101112131"
+                maxLength={40}
+                {...campo("imei")}
+              />
             </div>
+
+            {/* Campo Marca com Select e botões rápidos */}
             <div className="grid gap-1.5">
-              <Label htmlFor="marca">Marca</Label>
-              <Input id="marca" maxLength={60} {...campo("marca")} />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="marca-select">Marca</Label>
+                <span className="text-[11px] text-muted-foreground">Escolha a marca</span>
+              </div>
+              <select
+                id="marca-select"
+                value={form.marca}
+                onChange={(e) => {
+                  const novaMarca = e.target.value;
+                  setModeloManual(false);
+                  setForm((f) => ({ ...f, marca: novaMarca, modelo: "" }));
+                }}
+                className="h-10 rounded-md border border-input bg-card px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                <option value="">Selecione a marca...</option>
+                {(
+                  MARCAS_POPULARES_POR_TIPO[form.aparelho] ?? MARCAS_POPULARES_POR_TIPO["Celular"]
+                ).map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+
+              {/* Pílulas de marcas populares para seleção rápida com 1 clique */}
+              <div className="flex flex-wrap gap-1 pt-1">
+                {(MARCAS_POPULARES_POR_TIPO[form.aparelho] ?? MARCAS_POPULARES_POR_TIPO["Celular"])
+                  .slice(0, 6)
+                  .map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => {
+                        setModeloManual(false);
+                        setForm((f) => ({ ...f, marca: m, modelo: "" }));
+                      }}
+                      className={`rounded-md px-2 py-0.5 text-[11px] transition-colors ${
+                        form.marca.toLowerCase() === m.toLowerCase()
+                          ? "bg-primary text-primary-foreground font-semibold"
+                          : "bg-secondary text-muted-foreground hover:bg-primary/20 hover:text-foreground"
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+              </div>
             </div>
+
+            {/* Campo Modelo: cada modelo é um item individual no select */}
             <div className="grid gap-1.5">
-              <Label htmlFor="modelo">Modelo</Label>
-              <Input id="modelo" maxLength={60} {...campo("modelo")} />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="modelo-select">Modelo</Label>
+                {form.marca && (
+                  <span className="text-[11px] text-primary font-medium">
+                    {getModelosIndividuais(form.marca).length} modelos ({form.marca})
+                  </span>
+                )}
+              </div>
+
+              <select
+                id="modelo-select"
+                value={modeloManual ? "__outro__" : form.modelo}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "__outro__") {
+                    setModeloManual(true);
+                    setForm((f) => ({ ...f, modelo: "" }));
+                  } else {
+                    setModeloManual(false);
+                    setForm((f) => ({ ...f, modelo: val }));
+                  }
+                }}
+                className="h-10 rounded-md border border-input bg-card px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                <option value="">
+                  {form.marca
+                    ? "Selecione o modelo na lista..."
+                    : "Selecione primeiro uma marca..."}
+                </option>
+                {getModelosIndividuais(form.marca).map((mod) => (
+                  <option key={mod} value={mod}>
+                    {mod}
+                  </option>
+                ))}
+                <option value="__outro__">Outro modelo (digitar manualmente)...</option>
+              </select>
+
+              {/* Se o usuário escolheu digitar manualmente */}
+              {modeloManual ? (
+                <div className="mt-1 flex items-center gap-2">
+                  <Input
+                    id="modelo-input"
+                    placeholder="Digite o modelo exato do aparelho..."
+                    value={form.modelo}
+                    onChange={(e) => setForm((f) => ({ ...f, modelo: e.target.value }))}
+                    maxLength={70}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setModeloManual(false)}
+                    className="shrink-0 text-xs font-semibold text-primary hover:underline"
+                  >
+                    Voltar ao select
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between pt-0.5">
+                  <span className="text-[11px] text-muted-foreground">
+                    Não encontrou na lista?{" "}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModeloManual(true);
+                        setForm((f) => ({ ...f, modelo: "" }));
+                      }}
+                      className="text-primary hover:underline font-semibold"
+                    >
+                      Digitar manualmente
+                    </button>
+                  </span>
+                  {form.modelo && (
+                    <span className="text-[11px] text-foreground font-medium truncate max-w-[200px]">
+                      Selecionado: <span className="text-primary font-bold">{form.modelo}</span>
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
+
             <div className="grid gap-1.5 sm:col-span-2">
               <Label htmlFor="acessorios">Acessórios recebidos</Label>
-              <Input id="acessorios" maxLength={300} {...campo("acessorios")} />
+              <Input
+                id="acessorios"
+                placeholder="Ex: Capinha, carregador original, película..."
+                maxLength={300}
+                {...campo("acessorios")}
+              />
             </div>
+
             <div className="grid gap-1.5 sm:col-span-2">
-              <Label htmlFor="estado_fisico">Estado físico</Label>
-              <Input id="estado_fisico" maxLength={300} {...campo("estado_fisico")} />
+              <Label htmlFor="estado_fisico">Observações do estado físico (opcional)</Label>
+              <Input
+                id="estado_fisico"
+                placeholder="Ex: Marcas de uso na tampa traseira, sem riscos na lente..."
+                maxLength={300}
+                {...campo("estado_fisico")}
+              />
             </div>
           </div>
+        </section>
+
+        <section className="rounded-2xl border border-border bg-card p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <h2 className="text-base font-bold uppercase tracking-tight text-foreground flex items-center gap-2">
+                <ClipboardCheck className="h-5 w-5 text-primary" />
+                CONFERÊNCIA DE ENTRADA DO APARELHO
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Marque cada item da conferência conforme o estado do aparelho recebido (OK, Defeito
+                ou Não Verificado).
+              </p>
+            </div>
+          </div>
+
+          <ConferenciaEntrada valor={conferencia} onChange={setConferencia} />
+        </section>
+
+        <section className="rounded-2xl border border-border bg-card p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <h2 className="text-base font-bold uppercase tracking-tight text-foreground flex items-center gap-2">
+                <Camera className="h-5 w-5 text-primary" />
+                FOTOS E VÍDEOS DE CONFERÊNCIA
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Anexe fotos ou vídeos do aparelho (marcas de uso, tela trincada, número de série ou
+                teste rápido) para comprovação no checklist de entrada.
+              </p>
+            </div>
+          </div>
+
+          <UploadMidiaConferencia midias={midias} onChange={setMidias} />
         </section>
 
         <section className="rounded-2xl border border-border bg-card p-5">
@@ -273,7 +528,12 @@ function NovaOS() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="grid gap-1.5">
                 <Label htmlFor="valor_pecas">Peças (R$)</Label>
-                <Input id="valor_pecas" inputMode="decimal" maxLength={12} {...campo("valor_pecas")} />
+                <Input
+                  id="valor_pecas"
+                  inputMode="decimal"
+                  maxLength={12}
+                  {...campo("valor_pecas")}
+                />
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="valor_mao_obra">Mão de obra (R$)</Label>
@@ -290,7 +550,12 @@ function NovaOS() {
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="garantia">Garantia (dias)</Label>
-                <Input id="garantia" inputMode="numeric" maxLength={4} {...campo("garantia_dias")} />
+                <Input
+                  id="garantia"
+                  inputMode="numeric"
+                  maxLength={4}
+                  {...campo("garantia_dias")}
+                />
               </div>
             </div>
             <div className="grid gap-1.5 sm:max-w-xs">

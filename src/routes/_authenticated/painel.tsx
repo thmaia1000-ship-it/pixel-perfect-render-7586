@@ -32,7 +32,9 @@ function Painel() {
       const [ordens, pecas] = await Promise.all([
         supabase
           .from("ordens_servico")
-          .select("id, numero, status, prazo, valor_pecas, valor_mao_obra, entregue_em, clientes(nome)")
+          .select(
+            "id, numero, status, prazo, valor_pecas, valor_mao_obra, entregue_em, clientes(nome)",
+          )
           .order("created_at", { ascending: false }),
         supabase.from("pecas").select("id, nome, quantidade, quantidade_minima"),
       ]);
@@ -67,7 +69,11 @@ function Painel() {
 
   const cards = [
     { label: "Abertas", valor: abertas, para: "abertas" as const },
-    { label: "Aguardando aprovação", valor: conta("aguardando_aprovacao"), para: "aguardando_aprovacao" as const },
+    {
+      label: "Aguardando aprovação",
+      valor: conta("aguardando_aprovacao"),
+      para: "aguardando_aprovacao" as const,
+    },
     { label: "Em reparo", valor: conta("em_reparo"), para: "em_reparo" as const },
     { label: "Prontas", valor: conta("pronta"), para: "pronta" as const },
     { label: "Entregues", valor: conta("entregue"), para: "entregue" as const },

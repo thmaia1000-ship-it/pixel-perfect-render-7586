@@ -1,0 +1,5 @@
+{
+  "name": "BR3 Tech — Gestão de assistência técnica",
+  "description": "Sistema de gestão da BR3 Tech para ordens de serviço de celulares e computadores.",
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

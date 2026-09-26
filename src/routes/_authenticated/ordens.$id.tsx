@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Printer, ClipboardCheck, Camera } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -8,7 +8,11 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ConferenciaEntrada } from "@/components/ConferenciaEntrada";
+import { UploadMidiaConferencia } from "@/components/UploadMidiaConferencia";
+import { TermoGarantiaModal } from "@/components/TermoGarantiaModal";
 import { supabase } from "@/integrations/supabase/client";
+import { deserializarEstadoEConferencia } from "@/lib/conferencia-aparelho";
 import {
   PROXIMOS_STATUS,
   STATUS_CLASS,
@@ -52,6 +56,7 @@ function DetalheOS() {
   const queryClient = useQueryClient();
   const [observacao, setObservacao] = useState("");
   const [salvando, setSalvando] = useState(false);
+  const [termoAberto, setTermoAberto] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["os", id],
@@ -139,6 +144,11 @@ function DetalheOS() {
   const status = os.status as OsStatus;
   const telefone = os.clientes?.telefone ?? "";
   const nomeCliente = os.clientes?.nome ?? "cliente";
+  const {
+    conferencia,
+    observacoes: observacoesFisicas,
+    midias,
+  } = deserializarEstadoEConferencia(os.estado_fisico);
 
   const mensagens = [
     {
@@ -163,11 +173,21 @@ function DetalheOS() {
     <AppShell
       title={os.numero}
       actions={
-        <span
-          className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold ${STATUS_CLASS[status]}`}
-        >
-          {STATUS_LABEL[status]}
-        </span>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setTermoAberto(true)}
+            variant="outline"
+            size="sm"
+            className="gap-1.5 font-medium border-border"
+          >
+            <Printer className="h-4 w-4 text-primary" /> Termo de Garantia
+          </Button>
+          <span
+            className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold ${STATUS_CLASS[status]}`}
+          >
+            {STATUS_LABEL[status]}
+          </span>
+        </div>
       }
     >
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
@@ -178,12 +198,47 @@ function DetalheOS() {
               <Linha rotulo="Cliente" valor={nomeCliente} />
               <Linha rotulo="Telefone" valor={telefone} />
               <Linha rotulo="Aparelho" valor={os.aparelho} />
-              <Linha rotulo="Marca / modelo" valor={[os.marca, os.modelo].filter(Boolean).join(" ")} />
+              <Linha
+                rotulo="Marca / modelo"
+                valor={[os.marca, os.modelo].filter(Boolean).join(" ")}
+              />
               <Linha rotulo="IMEI / Nº de série" valor={os.imei} />
               <Linha rotulo="Acessórios" valor={os.acessorios} />
-              <Linha rotulo="Estado físico" valor={os.estado_fisico} />
+              <Linha rotulo="Observações físicas" valor={observacoesFisicas} />
               <Linha rotulo="Técnico responsável" valor={os.profiles?.nome} />
             </dl>
+          </section>
+
+          <section className="rounded-2xl border border-border bg-card p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div>
+                <h2 className="text-base font-bold uppercase tracking-tight text-foreground flex items-center gap-2">
+                  <ClipboardCheck className="h-5 w-5 text-primary" />
+                  CONFERÊNCIA DE ENTRADA DO APARELHO
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Checklist conferido na recepção do equipamento.
+                </p>
+              </div>
+            </div>
+
+            <ConferenciaEntrada valor={conferencia} somenteLeitura />
+          </section>
+
+          <section className="rounded-2xl border border-border bg-card p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div>
+                <h2 className="text-base font-bold uppercase tracking-tight text-foreground flex items-center gap-2">
+                  <Camera className="h-5 w-5 text-primary" />
+                  FOTOS E VÍDEOS DE CONFERÊNCIA
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Registros visuais anexados no checklist de entrada.
+                </p>
+              </div>
+            </div>
+
+            <UploadMidiaConferencia midias={midias} somenteLeitura />
           </section>
 
           <section className="rounded-2xl border border-border bg-card p-5">
@@ -193,10 +248,7 @@ function DetalheOS() {
               <Linha rotulo="Diagnóstico" valor={os.diagnostico} />
               <Linha rotulo="Peças" valor={moeda(os.valor_pecas)} />
               <Linha rotulo="Mão de obra" valor={moeda(os.valor_mao_obra)} />
-              <Linha
-                rotulo="Total"
-                valor={<span className="text-primary">{moeda(total)}</span>}
-              />
+              <Linha rotulo="Total" valor={<span className="text-primary">{moeda(total)}</span>} />
               <Linha rotulo="Prazo" valor={dataCurta(os.prazo)} />
               <Linha rotulo="Garantia" valor={`${os.garantia_dias} dias`} />
               <Linha rotulo="Entregue em" valor={dataHora(os.entregue_em)} />
@@ -242,7 +294,9 @@ function DetalheOS() {
                   {PROXIMOS_STATUS[status].map((s) => (
                     <Button
                       key={s}
-                      variant={s === "cancelada" || s === "orcamento_recusado" ? "outline" : "default"}
+                      variant={
+                        s === "cancelada" || s === "orcamento_recusado" ? "outline" : "default"
+                      }
                       disabled={salvando}
                       onClick={() => mudarStatus(s)}
                     >
@@ -281,6 +335,15 @@ function DetalheOS() {
           </section>
         </div>
       </div>
+
+      <TermoGarantiaModal
+        aberto={termoAberto}
+        onFechar={() => setTermoAberto(false)}
+        os={os}
+        conferencia={conferencia}
+        observacoesFisicas={observacoesFisicas}
+        midias={midias}
+      />
     </AppShell>
   );
 }
