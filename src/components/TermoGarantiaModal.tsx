@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Printer,
   X,
@@ -79,7 +80,7 @@ export function TermoGarantiaModal({
     modoInicial ?? (ehEntregue ? "finalizada" : "entrada"),
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (modoInicial) {
       setModo(modoInicial);
     } else if (ehEntregue) {
@@ -88,6 +89,139 @@ export function TermoGarantiaModal({
       setModo("entrada");
     }
   }, [modoInicial, ehEntregue, aberto]);
+
+  const imprimir = () => {
+    const el = document.getElementById("documento-impresso-ativo");
+    if (!el) {
+      window.print();
+      return;
+    }
+
+    // Cria ou recupera iframe invisível dedicado exclusivamente à impressão do relatório
+    let iframe = document.getElementById("print-iframe-helper") as HTMLIFrameElement | null;
+    if (!iframe) {
+      iframe = document.createElement("iframe");
+      iframe.id = "print-iframe-helper";
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
+      iframe.style.visibility = "hidden";
+      document.body.appendChild(iframe);
+    }
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      window.print();
+      return;
+    }
+
+    // Copia todas as folhas de estilo do app (Tailwind, fontes, utilitários)
+    const styles = Array.from(document.querySelectorAll("link[rel='stylesheet'], style"))
+      .map((s) => s.outerHTML)
+      .join("\n");
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+        <head>
+          <meta charset="utf-8" />
+          <title>OS Nº ${os.numero} - BR3 Tech</title>
+          ${styles}
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 4mm 6mm !important;
+            }
+            *, *::before, *::after {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              color-adjust: exact !important;
+              box-sizing: border-box;
+            }
+            html, body {
+              background: #ffffff !important;
+              color: #000000 !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              width: 100% !important;
+              height: auto !important;
+              font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            }
+            .documento-folha-unica {
+              width: 100% !important;
+              max-width: 100% !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              background: #ffffff !important;
+              color: #000000 !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              page-break-after: avoid !important;
+              page-break-before: avoid !important;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="documento-folha-unica">
+            ${el.innerHTML}
+          </div>
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    // Garante que o logo e imagens estejam carregados antes de abrir a janela de impressão
+    const imagens = Array.from(doc.images);
+    let executado = false;
+    const dispararImpressao = () => {
+      if (executado) return;
+      executado = true;
+      setTimeout(() => {
+        try {
+          iframe?.contentWindow?.focus();
+          iframe?.contentWindow?.print();
+        } catch {
+          window.print();
+        }
+      }, 100);
+    };
+
+    if (imagens.length === 0) {
+      dispararImpressao();
+    } else {
+      let carregadas = 0;
+      const onImagemCarregada = () => {
+        carregadas++;
+        if (carregadas >= imagens.length) dispararImpressao();
+      };
+      imagens.forEach((img) => {
+        if (img.complete) {
+          onImagemCarregada();
+        } else {
+          img.onload = onImagemCarregada;
+          img.onerror = onImagemCarregada;
+        }
+      });
+      setTimeout(dispararImpressao, 450);
+    }
+  };
+
+  // Intercepta atalho de teclado Ctrl+P / Cmd+P quando o modal estiver aberto
+  useEffect(() => {
+    if (!aberto) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        imprimir();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [aberto, modo, os]);
 
   if (!aberto) return null;
 
@@ -98,10 +232,6 @@ export function TermoGarantiaModal({
   const telefoneCliente = os.clientes?.telefone ?? "";
 
   const mensagemWhatsApp = `Olá, ${os.clientes?.nome || "cliente"}! Seu aparelho (${modeloAparelho}) deu entrada na BR3 Tech sob a Ordem de Serviço nº ${os.numero}. Defeito relatado: "${os.defeito_relatado}". Estamos iniciando a análise. Guarde o nº da sua OS para acompanhar. WhatsApp de contato: (92) 99236-5757. Agradecemos a confiança!`;
-
-  const imprimir = () => {
-    window.print();
-  };
 
   const copiarNumeroOS = () => {
     navigator.clipboard.writeText(os.numero);
@@ -119,8 +249,11 @@ export function TermoGarantiaModal({
   const coluna1Checklist = ITENS_CONFERENCIA_ENTRADA.slice(0, meioChecklist);
   const coluna2Checklist = ITENS_CONFERENCIA_ENTRADA.slice(meioChecklist);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 p-3 sm:p-4 backdrop-blur-sm print:p-0 print:bg-white print:static print:inset-auto">
+  const modalConteudo = (
+    <div
+      id="modal-termo-garantia"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 p-3 sm:p-4 backdrop-blur-sm print:p-0 print:bg-white print:static print:inset-auto"
+    >
       <div className="relative w-full max-w-4xl rounded-2xl border border-border bg-background p-4 sm:p-6 shadow-2xl print:border-none print:shadow-none print:p-0 print:w-full print:max-w-none">
         {/* BANNER DE FINALIZAÇÃO DE ABERTURA DA OS (quando aplicável) */}
         {mostrarAcoesFinalizacao && (
@@ -262,7 +395,10 @@ export function TermoGarantiaModal({
         {/* DOCUMENTO IMPRESSO / FORMATO 1: "duas_vias" (LOJA + CLIENTE NA MESMA FOLHA) */}
         {/* ========================================================================= */}
         {modo === "duas_vias" && (
-          <div className="relatorio-impresso-selecionado print-page-exact space-y-3 bg-white text-slate-900 p-4 md:p-6 rounded-xl border border-slate-200 text-[11px] font-sans print:border-none print:p-0 print:text-black print:space-y-1.5 print:text-[9.5px]">
+          <div
+            id="documento-impresso-ativo"
+            className="relatorio-impresso-selecionado print-page-exact space-y-3 bg-white text-slate-900 p-4 md:p-6 rounded-xl border border-slate-200 text-[11px] font-sans print:border-none print:p-0 print:text-black print:space-y-1.5 print:text-[9.5px]"
+          >
             {/* ======================== 1ª VIA: LOJA ======================== */}
             <div className="rounded-lg border-2 border-slate-800 p-3 bg-white print:p-2 print:border-slate-800">
               {/* Topo da Via Loja */}
@@ -476,7 +612,10 @@ export function TermoGarantiaModal({
         {/* DOCUMENTO IMPRESSO / FORMATO 2 & 3: "entrada" (COMPLETO) OU "finalizada"   */}
         {/* ========================================================================= */}
         {(modo === "entrada" || modo === "finalizada") && (
-          <div className="relatorio-impresso-selecionado print-page-exact space-y-2 bg-white text-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 text-[10.5px] font-sans print:border-none print:p-0 print:text-black print:space-y-1 print:text-[9px] leading-snug">
+          <div
+            id="documento-impresso-ativo"
+            className="relatorio-impresso-selecionado print-page-exact space-y-2 bg-white text-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 text-[10.5px] font-sans print:border-none print:p-0 print:text-black print:space-y-1 print:text-[9px] leading-snug"
+          >
             {/* Cabeçalho Oficial */}
             <div className="flex items-center justify-between border-b-2 border-slate-900 pb-2 print:pb-1">
               <div className="flex items-center gap-2">
@@ -864,4 +1003,8 @@ export function TermoGarantiaModal({
       </div>
     </div>
   );
+
+  return typeof document !== "undefined"
+    ? createPortal(modalConteudo, document.body)
+    : modalConteudo;
 }

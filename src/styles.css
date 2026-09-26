@@ -214,6 +214,11 @@
     color-adjust: exact !important;
   }
 
+  /* Oculta completamente o #root para que as 4 páginas da aplicação de fundo não vão para a impressora */
+  #root {
+    display: none !important;
+  }
+
   html,
   body {
     background: white !important;
@@ -230,21 +235,36 @@
     display: none !important;
   }
 
-  /* Oculta tudo na tela durante a impressão para que nenhum elemento de fundo vaze */
-  body * {
-    visibility: hidden !important;
+  /* Oculta tudo fora do modal no body */
+  body > *:not(#modal-termo-garantia) {
+    display: none !important;
+  }
+
+  #modal-termo-garantia {
+    position: static !important;
+    display: block !important;
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    inset: auto !important;
+  }
+
+  #modal-termo-garantia > div {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: white !important;
   }
 
   /* Exibe EXCLUSIVAMENTE o relatório selecionado nos botões do modal */
-  .relatorio-impresso-selecionado,
-  .relatorio-impresso-selecionado * {
-    visibility: visible !important;
-  }
-
   .relatorio-impresso-selecionado {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
+    position: static !important;
+    display: block !important;
     width: 100% !important;
     max-width: 100% !important;
     max-height: 288mm !important;
