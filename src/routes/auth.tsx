@@ -111,12 +111,15 @@ function Acesso() {
         password: senha,
       });
       if (error) {
+        const msg = error.message.toLowerCase();
         setErro(
-          error.message.toLowerCase().includes("invalid")
+          msg.includes("invalid")
             ? "E-mail ou senha incorretos."
-            : error.message.toLowerCase().includes("email not confirmed")
+            : msg.includes("email not confirmed")
               ? "E-mail ainda não confirmado. Verifique sua caixa de entrada."
-              : error.message,
+              : msg.includes("failed to fetch")
+                ? "Erro de conexão com o servidor de autenticação. Verifique sua conexão e tente novamente."
+                : error.message,
         );
         return;
       }
@@ -127,7 +130,15 @@ function Acesso() {
       toast.success("Bem-vindo de volta!");
       await navigate({ to: "/painel", replace: true });
     } catch (err) {
-      setErro(err instanceof Error ? err.message : "Não foi possível concluir. Tente novamente.");
+      const msg =
+        err instanceof Error ? err.message : "Não foi possível concluir. Tente novamente.";
+      if (msg.toLowerCase().includes("failed to fetch")) {
+        setErro(
+          "Não foi possível conectar ao servidor de login. Verifique sua conexão ou tente novamente.",
+        );
+      } else {
+        setErro(msg);
+      }
     } finally {
       setEnviando(false);
     }

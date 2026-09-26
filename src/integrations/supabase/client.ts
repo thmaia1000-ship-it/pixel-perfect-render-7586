@@ -30,13 +30,18 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
+const DEFAULT_SUPABASE_URL = "https://wfugtqltzfmisynurfil.supabase.co";
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_7kYdbVZuWRUcV74lWkL_0g_f3JHaWUd";
+
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env for SSR (server-side rendering)
+  // Fall back to default project credentials to avoid "Failed to fetch" on unreachable placeholder domain
   const SUPABASE_URL =
     import.meta.env["VITE_SUPABASE_URL"] ||
     process.env["SUPABASE_URL"] ||
-    process.env["VITE_SUPABASE_URL"];
+    process.env["VITE_SUPABASE_URL"] ||
+    DEFAULT_SUPABASE_URL;
 
   const SUPABASE_PUBLISHABLE_KEY =
     import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
@@ -44,30 +49,8 @@ function createSupabaseClient() {
     process.env["SUPABASE_PUBLISHABLE_KEY"] ||
     process.env["SUPABASE_ANON_KEY"] ||
     process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
-    process.env["VITE_SUPABASE_ANON_KEY"];
-
-  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    const missing = [
-      ...(!SUPABASE_URL ? ["SUPABASE_URL / VITE_SUPABASE_URL"] : []),
-      ...(!SUPABASE_PUBLISHABLE_KEY ? ["SUPABASE_PUBLISHABLE_KEY / VITE_SUPABASE_ANON_KEY"] : []),
-    ];
-    const message = `Missing Supabase environment variable(s): ${missing.join(", ")}.`;
-    console.warn(`[Supabase] ${message} Using placeholder client until credentials are provided.`);
-    return createClient<Database>(
-      "https://placeholder.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder_key",
-      {
-        global: {
-          fetch: createSupabaseFetch("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder_key"),
-        },
-        auth: {
-          storage: brokeredPreviewStorage(),
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      },
-    );
-  }
+    process.env["VITE_SUPABASE_ANON_KEY"] ||
+    DEFAULT_SUPABASE_PUBLISHABLE_KEY;
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: {
