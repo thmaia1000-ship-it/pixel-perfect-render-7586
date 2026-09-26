@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Printer } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 
@@ -155,9 +155,16 @@ function Ordens() {
                       {STATUS_LABEL[o.status as OsStatus]}
                     </span>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
-                    <span>Prazo: {dataCurta(o.prazo)}</span>
-                    <span>Total: {moeda(Number(o.valor_pecas) + Number(o.valor_mao_obra))}</span>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap gap-x-6 gap-y-1">
+                      <span>Prazo: {dataCurta(o.prazo)}</span>
+                      <span>Total: {moeda(Number(o.valor_pecas) + Number(o.valor_mao_obra))}</span>
+                    </div>
+                    {o.status === "entregue" && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-400">
+                        <Printer className="h-3 w-3" /> Termo / PDF disponível
+                      </span>
+                    )}
                   </div>
                 </Link>
               </li>

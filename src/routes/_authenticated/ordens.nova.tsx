@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Sparkles, Smartphone, ClipboardCheck, Camera } from "lucide-react";
+import { Sparkles, Smartphone, ClipboardCheck, Camera, Printer } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ConferenciaEntrada } from "@/components/ConferenciaEntrada";
 import { UploadMidiaConferencia } from "@/components/UploadMidiaConferencia";
+import { TermoGarantiaModal } from "@/components/TermoGarantiaModal";
 import { supabase } from "@/integrations/supabase/client";
 import {
   MARCAS_POPULARES_POR_TIPO,
@@ -58,6 +59,14 @@ function NovaOS() {
     criarConferenciaPadrao(),
   );
   const [midias, setMidias] = useState<MidiaConferencia[]>([]);
+  const [osRecemCriada, setOsRecemCriada] = useState<{
+    os: React.ComponentProps<typeof TermoGarantiaModal>["os"];
+    conferencia: ConferenciaChecklist;
+    observacoesFisicas: string;
+    midias: MidiaConferencia[];
+  } | null>(null);
+  const [modalRelatorioAberto, setModalRelatorioAberto] = useState(false);
+
   const [form, setForm] = useState({
     aparelho: "Celular",
     marca: "",
@@ -157,7 +166,7 @@ function NovaOS() {
           garantia_dias: Number(form.garantia_dias) || 90,
           created_by: user.user?.id ?? null,
         })
-        .select("id, numero, status")
+        .select("*, clientes(nome, telefone, documento, endereco), profiles(nome)")
         .single();
       if (error) throw error;
 
@@ -170,14 +179,61 @@ function NovaOS() {
       });
 
       await queryClient.invalidateQueries();
-      toast.success(`Ordem ${os.numero} criada com sucesso.`);
-      navigate({ to: "/ordens/$id", params: { id: os.id } });
+      toast.success(`Ordem ${os.numero} cadastrada com sucesso! Imprima o relatório de entrada.`);
+
+      setOsRecemCriada({
+        os,
+        conferencia: { ...conferencia },
+        observacoesFisicas: form.estado_fisico,
+        midias: [...midias],
+      });
+      setModalRelatorioAberto(true);
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Não foi possível salvar a ordem.");
     } finally {
       setSalvando(false);
     }
   }
+
+  const fecharModalENavegar = () => {
+    setModalRelatorioAberto(false);
+    if (osRecemCriada?.os?.id) {
+      navigate({ to: "/ordens/$id", params: { id: osRecemCriada.os.id } });
+    }
+  };
+
+  const irParaOSCriada = () => {
+    setModalRelatorioAberto(false);
+    if (osRecemCriada?.os?.id) {
+      navigate({ to: "/ordens/$id", params: { id: osRecemCriada.os.id } });
+    }
+  };
+
+  const prepararNovaOS = () => {
+    setModalRelatorioAberto(false);
+    setOsRecemCriada(null);
+    setClienteId("");
+    setNovoCliente({ nome: "", telefone: "", email: "" });
+    setConferencia(criarConferenciaPadrao());
+    setMidias([]);
+    setForm({
+      aparelho: "Celular",
+      marca: "",
+      modelo: "",
+      imei: "",
+      acessorios: "",
+      defeito_relatado: "",
+      estado_fisico: "",
+      diagnostico: "",
+      valor_pecas: "",
+      valor_mao_obra: "",
+      prazo: "",
+      tecnico_id: "",
+      garantia_dias: "90",
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast.info("Formulário pronto para cadastrar nova ordem de serviço.");
+  };
 
   return (
     <AppShell title="Nova ordem de serviço">
@@ -590,6 +646,21 @@ function NovaOS() {
           </Button>
         </div>
       </form>
+
+      {osRecemCriada && (
+        <TermoGarantiaModal
+          aberto={modalRelatorioAberto}
+          onFechar={fecharModalENavegar}
+          os={osRecemCriada.os}
+          conferencia={osRecemCriada.conferencia}
+          observacoesFisicas={osRecemCriada.observacoesFisicas}
+          midias={osRecemCriada.midias}
+          modoInicial="duas_vias"
+          mostrarAcoesFinalizacao={true}
+          onIrParaOS={irParaOSCriada}
+          onNovaOS={prepararNovaOS}
+        />
+      )}
     </AppShell>
   );
 }

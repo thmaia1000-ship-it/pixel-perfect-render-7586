@@ -199,3 +199,17 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  body::before {
+    display: none !important;
+  }
+  @page {
+    margin: 10mm;
+    size: auto;
+  }
+}

@@ -1,6 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessageCircle, Printer, ClipboardCheck, Camera } from "lucide-react";
+import {
+  MessageCircle,
+  Printer,
+  ClipboardCheck,
+  Camera,
+  CheckCircle2,
+  FileText,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -10,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ConferenciaEntrada } from "@/components/ConferenciaEntrada";
 import { UploadMidiaConferencia } from "@/components/UploadMidiaConferencia";
-import { TermoGarantiaModal } from "@/components/TermoGarantiaModal";
+import { TermoGarantiaModal, type ModoDocumentoOS } from "@/components/TermoGarantiaModal";
 import { supabase } from "@/integrations/supabase/client";
 import { deserializarEstadoEConferencia } from "@/lib/conferencia-aparelho";
 import {
@@ -57,6 +64,7 @@ function DetalheOS() {
   const [observacao, setObservacao] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [termoAberto, setTermoAberto] = useState(false);
+  const [modoDocumento, setModoDocumento] = useState<ModoDocumentoOS>("entrada");
 
   const { data, isLoading } = useQuery({
     queryKey: ["os", id],
@@ -174,14 +182,44 @@ function DetalheOS() {
       title={os.numero}
       actions={
         <div className="flex items-center gap-2">
-          <Button
-            onClick={() => setTermoAberto(true)}
-            variant="outline"
-            size="sm"
-            className="gap-1.5 font-medium border-border"
-          >
-            <Printer className="h-4 w-4 text-primary" /> Termo de Garantia
-          </Button>
+          {status === "entregue" ? (
+            <>
+              <Button
+                onClick={() => {
+                  setModoDocumento("duas_vias");
+                  setTermoAberto(true);
+                }}
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs text-muted-foreground"
+              >
+                <FileText className="h-3.5 w-3.5" /> Via de Entrada
+              </Button>
+              <Button
+                onClick={() => {
+                  setModoDocumento("finalizada");
+                  setTermoAberto(true);
+                }}
+                variant="outline"
+                size="sm"
+                className="gap-1.5 font-bold border-emerald-500/50 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+              >
+                <Printer className="h-4 w-4 text-emerald-400" /> Imprimir OS Finalizada (PDF)
+              </Button>
+            </>
+          ) : (
+            <Button
+              onClick={() => {
+                setModoDocumento("duas_vias");
+                setTermoAberto(true);
+              }}
+              variant="outline"
+              size="sm"
+              className="gap-1.5 font-medium border-border"
+            >
+              <Printer className="h-4 w-4 text-primary" /> Relatório de Entrada (Loja e Cliente)
+            </Button>
+          )}
           <span
             className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold ${STATUS_CLASS[status]}`}
           >
@@ -220,6 +258,20 @@ function DetalheOS() {
                   Checklist conferido na recepção do equipamento.
                 </p>
               </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setModoDocumento("duas_vias");
+                  setTermoAberto(true);
+                }}
+                className="gap-1.5 text-xs font-semibold"
+              >
+                <Printer className="h-3.5 w-3.5 text-primary" /> Imprimir Relatório (2 Vias: Loja e
+                Cliente)
+              </Button>
             </div>
 
             <ConferenciaEntrada valor={conferencia} somenteLeitura />
@@ -272,41 +324,120 @@ function DetalheOS() {
         </div>
 
         <div className="grid gap-6">
-          <section className="rounded-2xl border border-border bg-card p-5">
-            <h2 className="text-base font-bold">Atualizar situação</h2>
-            {PROXIMOS_STATUS[status].length === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">
-                Esta ordem está encerrada e não tem próximos passos.
-              </p>
-            ) : (
-              <div className="mt-4 grid gap-3">
-                <div className="grid gap-1.5">
-                  <Label htmlFor="obs">Observação (opcional)</Label>
-                  <Textarea
-                    id="obs"
-                    rows={3}
-                    maxLength={500}
-                    value={observacao}
-                    onChange={(e) => setObservacao(e.target.value)}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  {PROXIMOS_STATUS[status].map((s) => (
-                    <Button
-                      key={s}
-                      variant={
-                        s === "cancelada" || s === "orcamento_recusado" ? "outline" : "default"
-                      }
-                      disabled={salvando}
-                      onClick={() => mudarStatus(s)}
-                    >
-                      {STATUS_LABEL[s]}
-                    </Button>
-                  ))}
+          {status === "entregue" ? (
+            <section className="rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-card via-card to-emerald-950/20 p-5 shadow-sm">
+              <div className="flex items-center gap-2.5 mb-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <CheckCircle2 className="h-5 w-5" />
+                </span>
+                <div>
+                  <h2 className="text-base font-bold text-foreground">OS Finalizada e Entregue</h2>
+                  <p className="text-xs text-muted-foreground">
+                    Ordem concluída com garantia ativa.
+                  </p>
                 </div>
               </div>
-            )}
-          </section>
+
+              <div className="rounded-xl border border-border/70 bg-background/60 p-3.5 space-y-2 text-xs">
+                <div className="flex justify-between items-center py-0.5 border-b border-border/40">
+                  <span className="text-muted-foreground">Entregue em:</span>
+                  <span className="font-semibold text-foreground">{dataHora(os.entregue_em)}</span>
+                </div>
+                <div className="flex justify-between items-center py-0.5 border-b border-border/40">
+                  <span className="text-muted-foreground">Valor Total Pago:</span>
+                  <span className="font-bold text-primary text-sm">{moeda(total)}</span>
+                </div>
+                <div className="flex justify-between items-center py-0.5 border-b border-border/40">
+                  <span className="text-muted-foreground">Garantia Vigente:</span>
+                  <span className="font-semibold text-emerald-400">{os.garantia_dias} dias</span>
+                </div>
+                <div className="flex justify-between items-center py-0.5">
+                  <span className="text-muted-foreground">Técnico Responsável:</span>
+                  <span className="font-medium text-foreground">
+                    {os.profiles?.nome ?? "BR3 Tech"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                <Button
+                  onClick={() => {
+                    setModoDocumento("finalizada");
+                    setTermoAberto(true);
+                  }}
+                  className="w-full gap-2 font-bold shadow-md shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-500 text-white"
+                >
+                  <Printer className="h-4 w-4" /> Imprimir Documento de OS Finalizada (PDF)
+                </Button>
+
+                <Button
+                  onClick={() => {
+                    setModoDocumento("entrada");
+                    setTermoAberto(true);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <FileText className="h-3.5 w-3.5" /> Ver Termo de Entrada Original
+                </Button>
+              </div>
+
+              <p className="mt-2.5 text-[11px] text-center text-muted-foreground">
+                Gere a cópia física em papel A4 ou salve como PDF para arquivamento e entrega ao
+                cliente.
+              </p>
+            </section>
+          ) : (
+            <section className="rounded-2xl border border-border bg-card p-5">
+              <h2 className="text-base font-bold">Atualizar situação</h2>
+              {PROXIMOS_STATUS[status].length === 0 ? (
+                <div className="mt-3 space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Esta ordem está encerrada ({STATUS_LABEL[status]}).
+                  </p>
+                  <Button
+                    onClick={() => {
+                      setModoDocumento("finalizada");
+                      setTermoAberto(true);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-1.5 text-xs"
+                  >
+                    <Printer className="h-3.5 w-3.5" /> Imprimir Documento da OS (PDF)
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-4 grid gap-3">
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="obs">Observação (opcional)</Label>
+                    <Textarea
+                      id="obs"
+                      rows={3}
+                      maxLength={500}
+                      value={observacao}
+                      onChange={(e) => setObservacao(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    {PROXIMOS_STATUS[status].map((s) => (
+                      <Button
+                        key={s}
+                        variant={
+                          s === "cancelada" || s === "orcamento_recusado" ? "outline" : "default"
+                        }
+                        disabled={salvando}
+                        onClick={() => mudarStatus(s)}
+                      >
+                        {STATUS_LABEL[s]}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
 
           <section className="rounded-2xl border border-border bg-card p-5">
             <h2 className="text-base font-bold">Mensagens para o cliente</h2>
@@ -343,6 +474,7 @@ function DetalheOS() {
         conferencia={conferencia}
         observacoesFisicas={observacoesFisicas}
         midias={midias}
+        modoInicial={modoDocumento}
       />
     </AppShell>
   );
