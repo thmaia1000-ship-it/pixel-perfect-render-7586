@@ -400,7 +400,9 @@ function NovaOS() {
               >
                 <option value="">Selecione a marca...</option>
                 {(
-                  MARCAS_POPULARES_POR_TIPO[form.aparelho] ?? MARCAS_POPULARES_POR_TIPO["Celular"]
+                  MARCAS_POPULARES_POR_TIPO[form.aparelho] ??
+                  MARCAS_POPULARES_POR_TIPO["Celular"] ??
+                  []
                 ).map((m) => (
                   <option key={m} value={m}>
                     {m}
@@ -410,7 +412,11 @@ function NovaOS() {
 
               {/* Pílulas de marcas populares para seleção rápida com 1 clique */}
               <div className="flex flex-wrap gap-1 pt-1">
-                {(MARCAS_POPULARES_POR_TIPO[form.aparelho] ?? MARCAS_POPULARES_POR_TIPO["Celular"])
+                {(
+                  MARCAS_POPULARES_POR_TIPO[form.aparelho] ??
+                  MARCAS_POPULARES_POR_TIPO["Celular"] ??
+                  []
+                )
                   .slice(0, 6)
                   .map((m) => (
                     <button
