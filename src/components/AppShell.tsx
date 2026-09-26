@@ -35,7 +35,7 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-transparent">
-      <header className="sticky top-0 z-30 border-b border-border/60 bg-card/75 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-border/60 bg-card/75 backdrop-blur-xl print:hidden">
         <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
           <Link to="/painel" className="min-w-0">
             <Logo />

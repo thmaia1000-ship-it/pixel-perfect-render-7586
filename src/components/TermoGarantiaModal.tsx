@@ -262,7 +262,7 @@ export function TermoGarantiaModal({
         {/* DOCUMENTO IMPRESSO / FORMATO 1: "duas_vias" (LOJA + CLIENTE NA MESMA FOLHA) */}
         {/* ========================================================================= */}
         {modo === "duas_vias" && (
-          <div className="print-page-exact space-y-3 bg-white text-slate-900 p-4 md:p-6 rounded-xl border border-slate-200 text-[11px] font-sans print:border-none print:p-0 print:text-black print:space-y-2">
+          <div className="relatorio-impresso-selecionado print-page-exact space-y-3 bg-white text-slate-900 p-4 md:p-6 rounded-xl border border-slate-200 text-[11px] font-sans print:border-none print:p-0 print:text-black print:space-y-2">
             {/* ======================== 1ª VIA: LOJA ======================== */}
             <div className="rounded-lg border-2 border-slate-800 p-3 bg-white">
               {/* Topo da Via Loja */}
@@ -476,7 +476,7 @@ export function TermoGarantiaModal({
         {/* DOCUMENTO IMPRESSO / FORMATO 2 & 3: "entrada" (COMPLETO) OU "finalizada"   */}
         {/* ========================================================================= */}
         {(modo === "entrada" || modo === "finalizada") && (
-          <div className="print-page-exact space-y-2 bg-white text-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 text-[10.5px] font-sans print:border-none print:p-0 print:text-black print:space-y-1.5 leading-snug">
+          <div className="relatorio-impresso-selecionado print-page-exact space-y-2 bg-white text-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 text-[10.5px] font-sans print:border-none print:p-0 print:text-black print:space-y-1.5 leading-snug">
             {/* Cabeçalho Oficial */}
             <div className="flex items-center justify-between border-b-2 border-slate-900 pb-2">
               <div className="flex items-center gap-2">
@@ -485,17 +485,17 @@ export function TermoGarantiaModal({
               <div className="text-right">
                 <h1 className="text-xs sm:text-sm font-black uppercase tracking-tight text-slate-900">
                   {modo === "finalizada"
-                    ? "ORDEM DE SERVIÇO FINALIZADA"
+                    ? "ORDEM DE SERVIÇO FINALIZADA E TERMO DE GARANTIA"
                     : "RELATÓRIO DE ENTRADA DE EQUIPAMENTO"}
                 </h1>
                 <div className="flex items-center justify-end gap-2 mt-0.5">
                   <span className="text-xs font-black text-slate-900">OS Nº {os.numero}</span>
                   {modo === "finalizada" ? (
-                    <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800 border border-emerald-300">
-                      <CheckCircle2 className="h-3 w-3" /> ENTREGUE / GARANTIA ATIVA
+                    <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800 border border-emerald-300">
+                      <CheckCircle2 className="h-3 w-3" /> CONCLUÍDA / ENTREGUE (GARANTIA ATIVA)
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded bg-blue-100 px-1.5 py-0.2 text-[9px] font-bold text-blue-800 border border-blue-300">
+                    <span className="inline-flex items-center rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-bold text-blue-800 border border-blue-300">
                       COMPROVANTE DE ENTRADA (1 PÁGINA)
                     </span>
                   )}
@@ -668,7 +668,9 @@ export function TermoGarantiaModal({
             <section className="rounded border border-slate-200 bg-slate-50/70 p-2">
               <div className="flex items-center justify-between border-b border-slate-200 pb-0.5 mb-1">
                 <h2 className="text-[9.5px] font-black uppercase tracking-wider text-slate-800">
-                  4. CONFERÊNCIA DE ENTRADA DO APARELHO (CHECKLIST)
+                  {modo === "finalizada"
+                    ? "4. CHECKLIST DE TESTES DE SAÍDA E ENTREGA"
+                    : "4. CONFERÊNCIA DE ENTRADA DO APARELHO (CHECKLIST)"}
                 </h2>
                 <span className="text-[8.5px] text-slate-600 font-medium">
                   {itensComDefeito.length > 0 ? (

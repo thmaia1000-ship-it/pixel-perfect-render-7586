@@ -208,6 +208,7 @@
     height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
+    width: 100% !important;
   }
   body::before {
     display: none !important;
@@ -216,6 +217,32 @@
     margin: 8mm;
     size: A4 portrait;
   }
+
+  /* Oculta tudo na tela durante a impressão para que nenhum elemento de fundo vaze */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Exibe EXCLUSIVAMENTE o relatório selecionado nos botões do modal */
+  .relatorio-impresso-selecionado,
+  .relatorio-impresso-selecionado * {
+    visibility: visible !important;
+  }
+
+  .relatorio-impresso-selecionado {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+    color: black !important;
+  }
+
   .print-page-exact {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
