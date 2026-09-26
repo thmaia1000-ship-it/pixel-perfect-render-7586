@@ -262,36 +262,36 @@ export function TermoGarantiaModal({
         {/* DOCUMENTO IMPRESSO / FORMATO 1: "duas_vias" (LOJA + CLIENTE NA MESMA FOLHA) */}
         {/* ========================================================================= */}
         {modo === "duas_vias" && (
-          <div className="relatorio-impresso-selecionado print-page-exact space-y-3 bg-white text-slate-900 p-4 md:p-6 rounded-xl border border-slate-200 text-[11px] font-sans print:border-none print:p-0 print:text-black print:space-y-2">
+          <div className="relatorio-impresso-selecionado print-page-exact space-y-3 bg-white text-slate-900 p-4 md:p-6 rounded-xl border border-slate-200 text-[11px] font-sans print:border-none print:p-0 print:text-black print:space-y-1.5 print:text-[9.5px]">
             {/* ======================== 1ª VIA: LOJA ======================== */}
-            <div className="rounded-lg border-2 border-slate-800 p-3 bg-white">
+            <div className="rounded-lg border-2 border-slate-800 p-3 bg-white print:p-2 print:border-slate-800">
               {/* Topo da Via Loja */}
-              <div className="flex items-center justify-between border-b-2 border-slate-800 pb-2 mb-2">
+              <div className="flex items-center justify-between border-b-2 border-slate-800 pb-2 mb-2 print:pb-1 print:mb-1">
                 <div className="flex items-center gap-2">
                   <Logo size="sm" />
                 </div>
                 <div className="text-right">
-                  <span className="inline-block rounded bg-slate-900 text-white px-2 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                  <span className="inline-block rounded bg-slate-900 text-white px-2 py-0.5 text-[10px] font-black uppercase tracking-wider print:text-[9px]">
                     1ª VIA — CONTROLE DA LOJA / TÉCNICO
                   </span>
-                  <div className="text-xs font-black text-slate-900 mt-0.5">
+                  <div className="text-xs font-black text-slate-900 mt-0.5 print:text-[10px]">
                     OS Nº {os.numero} · Entrada: {dataCriacaoFormatada}
                   </div>
                 </div>
               </div>
 
               {/* Grid de Informações Loja */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] border-b border-slate-200 pb-2 mb-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] border-b border-slate-200 pb-2 mb-2 print:gap-1.5 print:pb-1 print:mb-1 print:text-[8.5px]">
                 <div>
-                  <span className="block font-bold text-slate-500 uppercase text-[9px]">
+                  <span className="block font-bold text-slate-500 uppercase text-[9px] print:text-[7.5px]">
                     Cliente
                   </span>
-                  <span className="font-bold text-slate-900 text-[11px]">
+                  <span className="font-bold text-slate-900 text-[11px] print:text-[9.5px]">
                     {os.clientes?.nome || "Não informado"}
                   </span>
                 </div>
                 <div>
-                  <span className="block font-bold text-slate-500 uppercase text-[9px]">
+                  <span className="block font-bold text-slate-500 uppercase text-[9px] print:text-[7.5px]">
                     Telefone / WhatsApp
                   </span>
                   <span className="font-semibold text-slate-900">
@@ -299,58 +299,58 @@ export function TermoGarantiaModal({
                   </span>
                 </div>
                 <div>
-                  <span className="block font-bold text-slate-500 uppercase text-[9px]">
+                  <span className="block font-bold text-slate-500 uppercase text-[9px] print:text-[7.5px]">
                     Equipamento / Modelo
                   </span>
                   <span className="font-bold text-slate-900">{modeloAparelho}</span>
                 </div>
                 <div>
-                  <span className="block font-bold text-slate-500 uppercase text-[9px]">
+                  <span className="block font-bold text-slate-500 uppercase text-[9px] print:text-[7.5px]">
                     IMEI / Nº Série
                   </span>
                   <span className="font-medium text-slate-900">{os.imei || "Não informado"}</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-[10px] mb-2">
+              <div className="grid grid-cols-2 gap-3 text-[10px] mb-2 print:gap-2 print:mb-1 print:text-[8.5px]">
                 <div>
-                  <span className="block font-bold text-slate-700 uppercase text-[9px]">
+                  <span className="block font-bold text-slate-700 uppercase text-[9px] print:text-[7.5px]">
                     Defeito Relatado pelo Cliente:
                   </span>
-                  <p className="font-medium text-slate-900 bg-slate-50 p-1.5 rounded border border-slate-200">
+                  <p className="font-medium text-slate-900 bg-slate-50 p-1.5 rounded border border-slate-200 print:p-1 print:text-[8px]">
                     {os.defeito_relatado}
                   </p>
                   {observacoesFisicas && (
-                    <p className="mt-1 text-[9px] text-slate-600">
+                    <p className="mt-1 text-[9px] text-slate-600 print:mt-0.5 print:text-[8px]">
                       <strong>Obs. Físicas:</strong> {observacoesFisicas}
                     </p>
                   )}
                   {os.acessorios && (
-                    <p className="text-[9px] text-slate-600">
+                    <p className="text-[9px] text-slate-600 print:text-[8px]">
                       <strong>Acessórios:</strong> {os.acessorios}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <span className="block font-bold text-slate-700 uppercase text-[9px]">
+                  <span className="block font-bold text-slate-700 uppercase text-[9px] print:text-[7.5px]">
                     Conferência de Entrada (Checklist):
                   </span>
-                  <div className="bg-slate-50 p-1.5 rounded border border-slate-200 space-y-1">
+                  <div className="bg-slate-50 p-1.5 rounded border border-slate-200 space-y-1 print:p-1 print:space-y-0.5">
                     {itensComDefeito.length > 0 ? (
-                      <p className="text-rose-700 font-bold text-[9px]">
+                      <p className="text-rose-700 font-bold text-[9px] print:text-[8px]">
                         ⚠️ Defeitos anotados: {itensComDefeito.join(", ")}
                       </p>
                     ) : (
-                      <p className="text-emerald-700 font-semibold text-[9px]">
+                      <p className="text-emerald-700 font-semibold text-[9px] print:text-[8px]">
                         ✓ Sem avarias críticas relatadas
                       </p>
                     )}
-                    <p className="text-[9px] text-slate-600">
+                    <p className="text-[9px] text-slate-600 print:text-[7.5px]">
                       Itens OK: {itensOK.length} · Defeito: {itensComDefeito.length}
                       {midias.length > 0 && ` · ${midias.length} foto(s)/vídeo(s) arquivados`}
                     </p>
-                    <div className="flex justify-between items-center text-[10px] pt-1 border-t border-slate-200 font-bold">
+                    <div className="flex justify-between items-center text-[10px] pt-1 border-t border-slate-200 font-bold print:pt-0.5 print:text-[8.5px]">
                       <span>Total Previsto / Orçamento:</span>
                       <span className="text-slate-950 font-black">{moeda(total)}</span>
                     </div>
@@ -359,12 +359,12 @@ export function TermoGarantiaModal({
               </div>
 
               {/* Assinatura da Via Loja */}
-              <div className="pt-2 flex items-end justify-between text-[9px] border-t border-slate-300">
+              <div className="pt-2 flex items-end justify-between text-[9px] border-t border-slate-300 print:pt-1 print:text-[8px]">
                 <div className="max-w-[65%] text-slate-500 italic">
                   O cliente autoriza a abertura do aparelho para análise/diagnóstico e concorda com
                   as condições de entrada.
                 </div>
-                <div className="text-center w-52">
+                <div className="text-center w-52 print:w-44">
                   <div className="border-t border-slate-800 pt-0.5 font-bold text-slate-900">
                     Assinatura do Cliente
                   </div>
@@ -373,79 +373,79 @@ export function TermoGarantiaModal({
             </div>
 
             {/* Linha Tracejada de Corte */}
-            <div className="relative my-2 py-1 text-center">
+            <div className="relative my-2 py-1 text-center print:my-1 print:py-0">
               <div className="border-t-2 border-dashed border-slate-400 w-full absolute top-1/2"></div>
-              <span className="relative bg-white px-3 text-[9px] font-black uppercase text-slate-500 tracking-widest border border-slate-300 rounded-full">
+              <span className="relative bg-white px-3 text-[9px] font-black uppercase text-slate-500 tracking-widest border border-slate-300 rounded-full print:text-[7.5px] print:px-2">
                 ✂ DESTACAR AQUI — 1ª VIA: LOJA / 2ª VIA: CLIENTE ✂
               </span>
             </div>
 
             {/* ======================== 2ª VIA: CLIENTE ======================== */}
-            <div className="rounded-lg border-2 border-slate-800 p-3 bg-white">
+            <div className="rounded-lg border-2 border-slate-800 p-3 bg-white print:p-2 print:border-slate-800">
               {/* Topo da Via Cliente */}
-              <div className="flex items-center justify-between border-b-2 border-slate-800 pb-2 mb-2">
+              <div className="flex items-center justify-between border-b-2 border-slate-800 pb-2 mb-2 print:pb-1 print:mb-1">
                 <div className="flex items-center gap-2">
                   <Logo size="sm" />
                 </div>
                 <div className="text-right">
-                  <span className="inline-block rounded bg-primary text-primary-foreground px-2 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                  <span className="inline-block rounded bg-primary text-primary-foreground px-2 py-0.5 text-[10px] font-black uppercase tracking-wider print:text-[9px]">
                     2ª VIA — COMPROVANTE DO CLIENTE
                   </span>
-                  <div className="text-xs font-black text-slate-900 mt-0.5">
+                  <div className="text-xs font-black text-slate-900 mt-0.5 print:text-[10px]">
                     OS Nº {os.numero} · Entrada: {dataCriacaoFormatada}
                   </div>
                 </div>
               </div>
 
               {/* Grid de Informações Cliente */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] border-b border-slate-200 pb-2 mb-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] border-b border-slate-200 pb-2 mb-2 print:gap-1.5 print:pb-1 print:mb-1 print:text-[8.5px]">
                 <div>
-                  <span className="block font-bold text-slate-500 uppercase text-[9px]">
+                  <span className="block font-bold text-slate-500 uppercase text-[9px] print:text-[7.5px]">
                     Cliente
                   </span>
-                  <span className="font-bold text-slate-900 text-[11px]">
+                  <span className="font-bold text-slate-900 text-[11px] print:text-[9.5px]">
                     {os.clientes?.nome || "Não informado"}
                   </span>
                 </div>
                 <div>
-                  <span className="block font-bold text-slate-500 uppercase text-[9px]">
+                  <span className="block font-bold text-slate-500 uppercase text-[9px] print:text-[7.5px]">
                     Equipamento Deixado
                   </span>
                   <span className="font-bold text-slate-900">{modeloAparelho}</span>
                 </div>
                 <div>
-                  <span className="block font-bold text-slate-500 uppercase text-[9px]">
+                  <span className="block font-bold text-slate-500 uppercase text-[9px] print:text-[7.5px]">
                     IMEI / Nº Série
                   </span>
                   <span className="font-medium text-slate-900">{os.imei || "Não informado"}</span>
                 </div>
                 <div>
-                  <span className="block font-bold text-slate-500 uppercase text-[9px]">
+                  <span className="block font-bold text-slate-500 uppercase text-[9px] print:text-[7.5px]">
                     WhatsApp Suporte
                   </span>
                   <span className="font-bold text-emerald-700">(92) 99236-5757</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-[10px] mb-2">
+              <div className="grid grid-cols-2 gap-3 text-[10px] mb-2 print:gap-2 print:mb-1 print:text-[8.5px]">
                 <div>
-                  <span className="block font-bold text-slate-700 uppercase text-[9px]">
+                  <span className="block font-bold text-slate-700 uppercase text-[9px] print:text-[7.5px]">
                     Defeito Relatado:
                   </span>
-                  <p className="font-medium text-slate-900 bg-slate-50 p-1.5 rounded border border-slate-200">
+                  <p className="font-medium text-slate-900 bg-slate-50 p-1.5 rounded border border-slate-200 print:p-1 print:text-[8px]">
                     {os.defeito_relatado}
                   </p>
-                  <p className="mt-1 text-[9px] text-slate-600">
+                  <p className="mt-1 text-[9px] text-slate-600 print:mt-0.5 print:text-[7.5px]">
                     <strong>Prazo estimado:</strong> {dataCurta(os.prazo)} ·{" "}
                     <strong>Garantia legal:</strong> {os.garantia_dias || 90} dias após reparo
                   </p>
                 </div>
 
-                <div className="bg-slate-50 p-2 rounded border border-slate-200 text-[9px] space-y-1 text-slate-700">
-                  <span className="font-bold text-slate-900 uppercase block text-[9px]">
+                <div className="bg-slate-50 p-2 rounded border border-slate-200 text-[9px] space-y-1 text-slate-700 print:p-1.5 print:space-y-0.5 print:text-[8px]">
+                  <span className="font-bold text-slate-900 uppercase block text-[9px] print:text-[8px]">
                     Condições Importantes da OS:
                   </span>
-                  <ul className="list-disc list-inside space-y-0.5">
+                  <ul className="list-disc list-inside space-y-0.5 print:space-y-0">
                     <li>Apresente este comprovante para retirada do aparelho.</li>
                     <li>O orçamento será enviado para sua aprovação antes de qualquer reparo.</li>
                     <li>
@@ -457,11 +457,11 @@ export function TermoGarantiaModal({
               </div>
 
               {/* Assinatura da Via Cliente */}
-              <div className="pt-2 flex items-end justify-between text-[9px] border-t border-slate-300">
-                <div className="text-[9px] text-slate-500">
+              <div className="pt-2 flex items-end justify-between text-[9px] border-t border-slate-300 print:pt-1 print:text-[8px]">
+                <div className="text-[9px] text-slate-500 print:text-[7.5px]">
                   BR3 Tech · Assistência Especializada · E-mail: br3tech.am@gmail.com
                 </div>
-                <div className="text-center w-52">
+                <div className="text-center w-52 print:w-44">
                   <div className="border-t border-slate-800 pt-0.5 font-bold text-slate-900">
                     {os.profiles?.nome || "BR3 Tech (Recepção)"}
                   </div>
@@ -476,26 +476,28 @@ export function TermoGarantiaModal({
         {/* DOCUMENTO IMPRESSO / FORMATO 2 & 3: "entrada" (COMPLETO) OU "finalizada"   */}
         {/* ========================================================================= */}
         {(modo === "entrada" || modo === "finalizada") && (
-          <div className="relatorio-impresso-selecionado print-page-exact space-y-2 bg-white text-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 text-[10.5px] font-sans print:border-none print:p-0 print:text-black print:space-y-1.5 leading-snug">
+          <div className="relatorio-impresso-selecionado print-page-exact space-y-2 bg-white text-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 text-[10.5px] font-sans print:border-none print:p-0 print:text-black print:space-y-1 print:text-[9px] leading-snug">
             {/* Cabeçalho Oficial */}
-            <div className="flex items-center justify-between border-b-2 border-slate-900 pb-2">
+            <div className="flex items-center justify-between border-b-2 border-slate-900 pb-2 print:pb-1">
               <div className="flex items-center gap-2">
                 <Logo size="sm" />
               </div>
               <div className="text-right">
-                <h1 className="text-xs sm:text-sm font-black uppercase tracking-tight text-slate-900">
+                <h1 className="text-xs sm:text-sm font-black uppercase tracking-tight text-slate-900 print:text-xs">
                   {modo === "finalizada"
                     ? "ORDEM DE SERVIÇO FINALIZADA E TERMO DE GARANTIA"
                     : "RELATÓRIO DE ENTRADA DE EQUIPAMENTO"}
                 </h1>
                 <div className="flex items-center justify-end gap-2 mt-0.5">
-                  <span className="text-xs font-black text-slate-900">OS Nº {os.numero}</span>
+                  <span className="text-xs font-black text-slate-900 print:text-[10px]">
+                    OS Nº {os.numero}
+                  </span>
                   {modo === "finalizada" ? (
-                    <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800 border border-emerald-300">
+                    <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800 border border-emerald-300 print:text-[8px] print:py-0">
                       <CheckCircle2 className="h-3 w-3" /> CONCLUÍDA / ENTREGUE (GARANTIA ATIVA)
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-bold text-blue-800 border border-blue-300">
+                    <span className="inline-flex items-center rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-bold text-blue-800 border border-blue-300 print:text-[8px] print:py-0">
                       COMPROVANTE DE ENTRADA (1 PÁGINA)
                     </span>
                   )}
@@ -504,7 +506,7 @@ export function TermoGarantiaModal({
             </div>
 
             {/* Dados da Empresa */}
-            <div className="text-[9px] text-slate-600 border-b border-slate-200 pb-1 flex flex-wrap justify-between items-center px-0.5">
+            <div className="text-[9px] text-slate-600 border-b border-slate-200 pb-1 flex flex-wrap justify-between items-center px-0.5 print:pb-0.5 print:text-[8px]">
               <span>
                 WhatsApp: <strong className="text-slate-800">(92) 99236-5757</strong>
               </span>
@@ -522,15 +524,15 @@ export function TermoGarantiaModal({
             </div>
 
             {/* DADOS DO CLIENTE & IDENTIFICAÇÃO DO EQUIPAMENTO (LADO A LADO) */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 print:gap-1.5">
               {/* 1. DADOS DO CLIENTE */}
-              <section className="rounded border border-slate-200 bg-slate-50/70 p-2">
-                <h2 className="text-[9.5px] font-black uppercase tracking-wider text-slate-800 border-b border-slate-200 pb-0.5 mb-1.5 flex items-center justify-between">
+              <section className="rounded border border-slate-200 bg-slate-50/70 p-2 print:p-1.5 print:border-slate-300">
+                <h2 className="text-[9.5px] font-black uppercase tracking-wider text-slate-800 border-b border-slate-200 pb-0.5 mb-1.5 flex items-center justify-between print:mb-1 print:text-[8.5px]">
                   <span>1. DADOS DO CLIENTE</span>
                 </h2>
-                <div className="grid grid-cols-2 gap-1 text-[9.5px]">
+                <div className="grid grid-cols-2 gap-1 text-[9.5px] print:text-[8.5px]">
                   <div className="col-span-2">
-                    <span className="block text-[8px] uppercase font-bold text-slate-500">
+                    <span className="block text-[8px] uppercase font-bold text-slate-500 print:text-[7.5px]">
                       Nome:
                     </span>
                     <span className="font-bold text-slate-900 truncate block">
@@ -538,7 +540,7 @@ export function TermoGarantiaModal({
                     </span>
                   </div>
                   <div>
-                    <span className="block text-[8px] uppercase font-bold text-slate-500">
+                    <span className="block text-[8px] uppercase font-bold text-slate-500 print:text-[7.5px]">
                       Telefone / WhatsApp:
                     </span>
                     <span className="font-semibold text-slate-900">
@@ -546,7 +548,7 @@ export function TermoGarantiaModal({
                     </span>
                   </div>
                   <div>
-                    <span className="block text-[8px] uppercase font-bold text-slate-500">
+                    <span className="block text-[8px] uppercase font-bold text-slate-500 print:text-[7.5px]">
                       CPF / Documento:
                     </span>
                     <span className="font-medium text-slate-900">
@@ -557,13 +559,13 @@ export function TermoGarantiaModal({
               </section>
 
               {/* 2. IDENTIFICAÇÃO DO EQUIPAMENTO */}
-              <section className="rounded border border-slate-200 bg-slate-50/70 p-2">
-                <h2 className="text-[9.5px] font-black uppercase tracking-wider text-slate-800 border-b border-slate-200 pb-0.5 mb-1.5 flex items-center justify-between">
+              <section className="rounded border border-slate-200 bg-slate-50/70 p-2 print:p-1.5 print:border-slate-300">
+                <h2 className="text-[9.5px] font-black uppercase tracking-wider text-slate-800 border-b border-slate-200 pb-0.5 mb-1.5 flex items-center justify-between print:mb-1 print:text-[8.5px]">
                   <span>2. IDENTIFICAÇÃO DO EQUIPAMENTO</span>
                 </h2>
-                <div className="grid grid-cols-2 gap-1 text-[9.5px]">
+                <div className="grid grid-cols-2 gap-1 text-[9.5px] print:text-[8.5px]">
                   <div>
-                    <span className="block text-[8px] uppercase font-bold text-slate-500">
+                    <span className="block text-[8px] uppercase font-bold text-slate-500 print:text-[7.5px]">
                       Aparelho / Modelo:
                     </span>
                     <span className="font-bold text-slate-900 truncate block">
@@ -571,7 +573,7 @@ export function TermoGarantiaModal({
                     </span>
                   </div>
                   <div>
-                    <span className="block text-[8px] uppercase font-bold text-slate-500">
+                    <span className="block text-[8px] uppercase font-bold text-slate-500 print:text-[7.5px]">
                       IMEI / Nº Série:
                     </span>
                     <span className="font-medium text-slate-900 truncate block">
@@ -579,13 +581,13 @@ export function TermoGarantiaModal({
                     </span>
                   </div>
                   <div>
-                    <span className="block text-[8px] uppercase font-bold text-slate-500">
+                    <span className="block text-[8px] uppercase font-bold text-slate-500 print:text-[7.5px]">
                       Tipo:
                     </span>
                     <span className="font-medium text-slate-900">{os.aparelho}</span>
                   </div>
                   <div>
-                    <span className="block text-[8px] uppercase font-bold text-slate-500">
+                    <span className="block text-[8px] uppercase font-bold text-slate-500 print:text-[7.5px]">
                       Acessórios:
                     </span>
                     <span className="font-medium text-slate-900 truncate block">
@@ -597,34 +599,34 @@ export function TermoGarantiaModal({
             </div>
 
             {/* SERVIÇO EXECUTADO & ORÇAMENTO */}
-            <section className="rounded border border-slate-200 bg-slate-50/70 p-2">
-              <h2 className="text-[9.5px] font-black uppercase tracking-wider text-slate-800 border-b border-slate-200 pb-0.5 mb-1.5">
+            <section className="rounded border border-slate-200 bg-slate-50/70 p-2 print:p-1.5 print:border-slate-300">
+              <h2 className="text-[9.5px] font-black uppercase tracking-wider text-slate-800 border-b border-slate-200 pb-0.5 mb-1.5 print:mb-1 print:text-[8.5px]">
                 {modo === "finalizada"
                   ? "3. SERVIÇOS EXECUTADOS E VALORES FINAIS"
                   : "3. DEFEITO RELATADO E ORÇAMENTO INICIAL"}
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[9.5px]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[9.5px] print:gap-1.5 print:text-[8.5px]">
                 <div>
-                  <span className="block text-[8px] uppercase font-bold text-slate-500">
+                  <span className="block text-[8px] uppercase font-bold text-slate-500 print:text-[7.5px]">
                     Defeito Relatado:
                   </span>
-                  <p className="font-medium text-slate-900 bg-white p-1 rounded border border-slate-200 text-[9.5px]">
+                  <p className="font-medium text-slate-900 bg-white p-1 rounded border border-slate-200 text-[9.5px] print:text-[8px] print:p-0.5">
                     {os.defeito_relatado}
                   </p>
                   {observacoesFisicas && (
-                    <p className="mt-0.5 text-[8.5px] text-slate-600">
+                    <p className="mt-0.5 text-[8.5px] text-slate-600 print:text-[7.5px]">
                       <strong>Obs. Físicas:</strong> {observacoesFisicas}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <span className="block text-[8px] uppercase font-bold text-slate-500">
+                  <span className="block text-[8px] uppercase font-bold text-slate-500 print:text-[7.5px]">
                     {modo === "finalizada"
                       ? "Diagnóstico / Solução Realizada:"
                       : "Diagnóstico Técnico Inicial:"}
                   </span>
-                  <p className="font-medium text-slate-900 bg-white p-1 rounded border border-slate-200 text-[9.5px]">
+                  <p className="font-medium text-slate-900 bg-white p-1 rounded border border-slate-200 text-[9.5px] print:text-[8px] print:p-0.5">
                     {os.diagnostico ||
                       (modo === "finalizada"
                         ? "Reparo efetuado e aprovado em testes técnicos."
@@ -634,30 +636,32 @@ export function TermoGarantiaModal({
               </div>
 
               {/* Tabela de Valores */}
-              <div className="mt-1.5 grid grid-cols-4 gap-1 rounded bg-white p-1.5 border border-slate-200 text-center text-[9.5px]">
+              <div className="mt-1.5 grid grid-cols-4 gap-1 rounded bg-white p-1.5 border border-slate-200 text-center text-[9.5px] print:mt-1 print:p-1 print:text-[8px]">
                 <div>
-                  <span className="block text-[8px] uppercase text-slate-500 font-semibold">
+                  <span className="block text-[8px] uppercase text-slate-500 font-semibold print:text-[7px]">
                     Peças / Comp.
                   </span>
                   <span className="font-bold text-slate-800">{moeda(os.valor_pecas)}</span>
                 </div>
                 <div>
-                  <span className="block text-[8px] uppercase text-slate-500 font-semibold">
+                  <span className="block text-[8px] uppercase text-slate-500 font-semibold print:text-[7px]">
                     Mão de Obra
                   </span>
                   <span className="font-bold text-slate-800">{moeda(os.valor_mao_obra)}</span>
                 </div>
                 <div className="border-l border-slate-200 pl-1">
-                  <span className="block text-[8px] uppercase text-slate-600 font-extrabold">
+                  <span className="block text-[8px] uppercase text-slate-600 font-extrabold print:text-[7px]">
                     {modo === "finalizada" ? "Total Pago" : "Total Estimado"}
                   </span>
-                  <span className="text-xs font-black text-slate-950">{moeda(total)}</span>
+                  <span className="text-xs font-black text-slate-950 print:text-[10px]">
+                    {moeda(total)}
+                  </span>
                 </div>
                 <div className="border-l border-slate-200 pl-1">
-                  <span className="block text-[8px] uppercase text-emerald-700 font-bold">
+                  <span className="block text-[8px] uppercase text-emerald-700 font-bold print:text-[7px]">
                     Garantia
                   </span>
-                  <span className="text-[9.5px] font-bold text-emerald-800">
+                  <span className="text-[9.5px] font-bold text-emerald-800 print:text-[8px]">
                     {os.garantia_dias ? `${os.garantia_dias} dias` : "90 dias"}
                   </span>
                 </div>
@@ -665,14 +669,14 @@ export function TermoGarantiaModal({
             </section>
 
             {/* 4. CONFERÊNCIA DE ENTRADA DO APARELHO (CHECKLIST EM 2 COLUNAS) */}
-            <section className="rounded border border-slate-200 bg-slate-50/70 p-2">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-0.5 mb-1">
-                <h2 className="text-[9.5px] font-black uppercase tracking-wider text-slate-800">
+            <section className="rounded border border-slate-200 bg-slate-50/70 p-2 print:p-1.5 print:border-slate-300">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-0.5 mb-1 print:mb-0.5">
+                <h2 className="text-[9.5px] font-black uppercase tracking-wider text-slate-800 print:text-[8.5px]">
                   {modo === "finalizada"
                     ? "4. CHECKLIST DE TESTES DE SAÍDA E ENTREGA"
                     : "4. CONFERÊNCIA DE ENTRADA DO APARELHO (CHECKLIST)"}
                 </h2>
-                <span className="text-[8.5px] text-slate-600 font-medium">
+                <span className="text-[8.5px] text-slate-600 font-medium print:text-[7.5px]">
                   {itensComDefeito.length > 0 ? (
                     <span className="text-rose-700 font-bold">
                       ⚠️ {itensComDefeito.length} avaria(s) anotada(s)
@@ -684,21 +688,21 @@ export function TermoGarantiaModal({
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-[9px]">
+              <div className="grid grid-cols-2 gap-2 text-[9px] print:gap-1.5 print:text-[8px]">
                 {/* Coluna 1 do Checklist */}
                 <table className="w-full border-collapse border border-slate-200 bg-white">
                   <thead>
-                    <tr className="bg-slate-100 text-slate-700 text-[8px]">
-                      <th className="border border-slate-200 py-0.5 px-1.5 text-left font-bold">
+                    <tr className="bg-slate-100 text-slate-700 text-[8px] print:text-[7px]">
+                      <th className="border border-slate-200 py-0.5 px-1.5 text-left font-bold print:py-0 print:px-1">
                         Item
                       </th>
-                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-6 text-emerald-700">
+                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-6 text-emerald-700 print:py-0 print:px-0.5">
                         OK
                       </th>
-                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-8 text-rose-700">
+                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-8 text-rose-700 print:py-0 print:px-0.5">
                         Def.
                       </th>
-                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-6 text-slate-500">
+                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-6 text-slate-500 print:py-0 print:px-0.5">
                         N/V
                       </th>
                     </tr>
@@ -708,16 +712,16 @@ export function TermoGarantiaModal({
                       const st = conferencia[item];
                       return (
                         <tr key={item} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"}>
-                          <td className="border border-slate-200 py-0.5 px-1.5 font-medium text-slate-800 truncate max-w-[130px]">
+                          <td className="border border-slate-200 py-0.5 px-1.5 font-medium text-slate-800 truncate max-w-[130px] print:py-0 print:px-1 print:text-[7.5px]">
                             {item}
                           </td>
-                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-emerald-600">
+                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-emerald-600 print:py-0 print:px-0.5">
                             {st === "OK" ? "✓" : ""}
                           </td>
-                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-rose-600">
+                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-rose-600 print:py-0 print:px-0.5">
                             {st === "Defeito" ? "✓" : ""}
                           </td>
-                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-slate-400">
+                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-slate-400 print:py-0 print:px-0.5">
                             {st === "N/V" ? "✓" : ""}
                           </td>
                         </tr>
@@ -729,17 +733,17 @@ export function TermoGarantiaModal({
                 {/* Coluna 2 do Checklist */}
                 <table className="w-full border-collapse border border-slate-200 bg-white">
                   <thead>
-                    <tr className="bg-slate-100 text-slate-700 text-[8px]">
-                      <th className="border border-slate-200 py-0.5 px-1.5 text-left font-bold">
+                    <tr className="bg-slate-100 text-slate-700 text-[8px] print:text-[7px]">
+                      <th className="border border-slate-200 py-0.5 px-1.5 text-left font-bold print:py-0 print:px-1">
                         Item
                       </th>
-                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-6 text-emerald-700">
+                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-6 text-emerald-700 print:py-0 print:px-0.5">
                         OK
                       </th>
-                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-8 text-rose-700">
+                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-8 text-rose-700 print:py-0 print:px-0.5">
                         Def.
                       </th>
-                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-6 text-slate-500">
+                      <th className="border border-slate-200 py-0.5 px-1 text-center font-bold w-6 text-slate-500 print:py-0 print:px-0.5">
                         N/V
                       </th>
                     </tr>
@@ -749,16 +753,16 @@ export function TermoGarantiaModal({
                       const st = conferencia[item];
                       return (
                         <tr key={item} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"}>
-                          <td className="border border-slate-200 py-0.5 px-1.5 font-medium text-slate-800 truncate max-w-[130px]">
+                          <td className="border border-slate-200 py-0.5 px-1.5 font-medium text-slate-800 truncate max-w-[130px] print:py-0 print:px-1 print:text-[7.5px]">
                             {item}
                           </td>
-                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-emerald-600">
+                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-emerald-600 print:py-0 print:px-0.5">
                             {st === "OK" ? "✓" : ""}
                           </td>
-                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-rose-600">
+                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-rose-600 print:py-0 print:px-0.5">
                             {st === "Defeito" ? "✓" : ""}
                           </td>
-                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-slate-400">
+                          <td className="border border-slate-200 py-0.5 px-1 text-center font-bold text-slate-400 print:py-0 print:px-0.5">
                             {st === "N/V" ? "✓" : ""}
                           </td>
                         </tr>
@@ -769,7 +773,7 @@ export function TermoGarantiaModal({
               </div>
 
               {midias.length > 0 && (
-                <div className="mt-1 flex items-center gap-1.5 text-[8.5px] font-medium text-slate-600">
+                <div className="mt-1 flex items-center gap-1.5 text-[8.5px] font-medium text-slate-600 print:mt-0.5 print:text-[7.5px]">
                   <Camera className="h-3 w-3 text-primary" />
                   Registro Fotográfico: {midias.length} arquivo(s) arquivado(s) no sistema digital.
                 </div>
@@ -777,13 +781,13 @@ export function TermoGarantiaModal({
             </section>
 
             {/* TERMOS E CONDIÇÕES */}
-            <section className="rounded border border-slate-200 bg-slate-50/70 p-2 text-[8px] leading-tight text-slate-700">
-              <h3 className="font-bold text-slate-900 uppercase text-[8.5px] mb-0.5">
+            <section className="rounded border border-slate-200 bg-slate-50/70 p-2 text-[8px] leading-tight text-slate-700 print:p-1.5 print:text-[7.5px] print:border-slate-300">
+              <h3 className="font-bold text-slate-900 uppercase text-[8.5px] mb-0.5 print:text-[7.5px]">
                 {modo === "finalizada"
                   ? "TERMOS DE GARANTIA E ENTREGA"
                   : "CONDIÇÕES DA ORDEM DE SERVIÇO E GUARDA"}
               </h3>
-              <ul className="grid grid-cols-2 gap-x-3 gap-y-0.5 list-disc list-inside">
+              <ul className="grid grid-cols-2 gap-x-3 gap-y-0.5 list-disc list-inside print:gap-x-2">
                 {modo === "finalizada" ? (
                   <>
                     <li>Cliente testou e recebeu o equipamento em perfeito funcionamento.</li>
@@ -806,12 +810,12 @@ export function TermoGarantiaModal({
             </section>
 
             {/* ASSINATURAS */}
-            <div className="pt-2 grid grid-cols-2 gap-8 text-center text-[9.5px]">
+            <div className="pt-2 grid grid-cols-2 gap-8 text-center text-[9.5px] print:pt-1.5 print:gap-6 print:text-[8px]">
               <div>
                 <div className="border-t border-slate-400 pt-0.5 font-bold text-slate-900">
                   {os.clientes?.nome || "Assinatura do Cliente"}
                 </div>
-                <p className="text-[8px] text-slate-500">
+                <p className="text-[8px] text-slate-500 print:text-[7px]">
                   {modo === "finalizada"
                     ? "Cliente (Declara recebimento e aceite)"
                     : "Cliente (Autorização de entrada)"}
@@ -821,7 +825,7 @@ export function TermoGarantiaModal({
                 <div className="border-t border-slate-400 pt-0.5 font-bold text-slate-900">
                   {os.profiles?.nome || "BR3 Tech (Recepção)"}
                 </div>
-                <p className="text-[8px] text-slate-500">
+                <p className="text-[8px] text-slate-500 print:text-[7px]">
                   {modo === "finalizada"
                     ? "Técnico Responsável (Entrega efetuada)"
                     : "Técnico Responsável (Recepção)"}

@@ -201,21 +201,33 @@
 }
 
 @media print {
+  @page {
+    margin: 4mm 6mm !important;
+    size: A4 portrait;
+  }
+
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
   html,
   body {
     background: white !important;
     color: black !important;
-    height: auto !important;
+    height: 100% !important;
+    max-height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
+    overflow: hidden !important;
   }
+
   body::before {
     display: none !important;
-  }
-  @page {
-    margin: 8mm;
-    size: A4 portrait;
   }
 
   /* Oculta tudo na tela durante a impressão para que nenhum elemento de fundo vaze */
@@ -235,12 +247,19 @@
     top: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
+    max-height: 288mm !important;
+    box-sizing: border-box !important;
     margin: 0 !important;
     padding: 0 !important;
     border: none !important;
     box-shadow: none !important;
     background: white !important;
     color: black !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    overflow: hidden !important;
   }
 
   .print-page-exact {
