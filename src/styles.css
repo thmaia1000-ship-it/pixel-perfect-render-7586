@@ -283,4 +283,17 @@
     page-break-after: avoid !important;
     page-break-before: avoid !important;
   }
+
+  /* Otimização específica para cupom térmico 80mm */
+  .relatorio-termico-80mm {
+    width: 76mm !important;
+    max-width: 76mm !important;
+    margin: 0 auto !important;
+    padding: 1.5mm 1mm !important;
+    font-size: 10.5px !important;
+    line-height: 1.25 !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+  }
 }

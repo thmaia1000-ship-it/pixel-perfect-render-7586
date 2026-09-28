@@ -193,7 +193,19 @@ function DetalheOS() {
                 size="sm"
                 className="gap-1.5 text-xs text-muted-foreground"
               >
-                <FileText className="h-3.5 w-3.5" /> Via de Entrada (2 Vias)
+                <FileText className="h-3.5 w-3.5" /> Via de Entrada (A4)
+              </Button>
+              <Button
+                onClick={() => {
+                  setModoDocumento("termica_80mm");
+                  setTermoAberto(true);
+                }}
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs text-muted-foreground"
+                title="Imprimir cupom para impressora térmica de 80mm"
+              >
+                <Printer className="h-3.5 w-3.5 text-emerald-600" /> Cupom 80mm
               </Button>
               <Button
                 onClick={() => {
@@ -208,18 +220,31 @@ function DetalheOS() {
               </Button>
             </>
           ) : (
-            <Button
-              onClick={() => {
-                setModoDocumento("duas_vias");
-                setTermoAberto(true);
-              }}
-              variant="outline"
-              size="sm"
-              className="gap-1.5 font-medium border-border"
-            >
-              <Printer className="h-4 w-4 text-primary" /> Imprimir Relatório de Entrada (2 Vias
-              PDF)
-            </Button>
+            <>
+              <Button
+                onClick={() => {
+                  setModoDocumento("duas_vias");
+                  setTermoAberto(true);
+                }}
+                variant="outline"
+                size="sm"
+                className="gap-1.5 font-medium border-border"
+              >
+                <Printer className="h-4 w-4 text-primary" /> Entrada (A4 2 Vias)
+              </Button>
+              <Button
+                onClick={() => {
+                  setModoDocumento("termica_80mm");
+                  setTermoAberto(true);
+                }}
+                variant="outline"
+                size="sm"
+                className="gap-1.5 font-medium border-border text-foreground hover:bg-secondary"
+                title="Imprimir cupom para impressora térmica de 80mm"
+              >
+                <Printer className="h-4 w-4 text-emerald-600" /> Cupom 80mm
+              </Button>
+            </>
           )}
           <span
             className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold ${STATUS_CLASS[status]}`}

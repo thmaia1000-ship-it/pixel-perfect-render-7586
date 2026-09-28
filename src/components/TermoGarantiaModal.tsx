@@ -21,7 +21,7 @@ import {
 } from "@/lib/conferencia-aparelho";
 import { moeda, dataCurta, dataHora, linkWhatsApp } from "@/lib/br3";
 
-export type ModoDocumentoOS = "duas_vias" | "entrada" | "finalizada";
+export type ModoDocumentoOS = "duas_vias" | "entrada" | "termica_80mm" | "finalizada";
 
 interface TermoGarantiaModalProps {
   aberto: boolean;
@@ -210,7 +210,9 @@ export function TermoGarantiaModal({
                   ? `Comprovante de OS Finalizada`
                   : modo === "duas_vias"
                     ? `Relatório de Entrada (2 Vias na Folha A4)`
-                    : `Relatório de Entrada de Equipamento`}
+                    : modo === "termica_80mm"
+                      ? `Cupom Térmico 80mm (2 Vias Loja + Cliente)`
+                      : `Relatório de Entrada de Equipamento`}
                 <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-mono text-primary">
                   OS #{os.numero}
                 </span>
@@ -224,14 +226,16 @@ export function TermoGarantiaModal({
                 </button>
               </h3>
               <p className="text-xs text-muted-foreground">
-                Documento de controle físico da loja e garantia do cliente em 1 página A4.
+                {modo === "termica_80mm"
+                  ? "Formato otimizado em 2 vias para impressoras térmicas de cupom de 80mm."
+                  : "Documento de controle físico da loja e garantia do cliente em 1 página A4."}
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Seletor de Modelo de Impressão */}
-            <div className="flex rounded-lg border border-border bg-secondary/50 p-0.5 text-xs font-medium">
+            <div className="flex flex-wrap rounded-lg border border-border bg-secondary/50 p-0.5 text-xs font-medium">
               <button
                 type="button"
                 onClick={() => setModo("duas_vias")}
@@ -242,7 +246,19 @@ export function TermoGarantiaModal({
                 }`}
                 title="Imprime 1 folha A4 dividida: 1ª Via Loja e 2ª Via Cliente"
               >
-                2 Vias (Loja + Cliente)
+                2 Vias (A4)
+              </button>
+              <button
+                type="button"
+                onClick={() => setModo("termica_80mm")}
+                className={`rounded-md px-2.5 py-1 transition-colors ${
+                  modo === "termica_80mm"
+                    ? "bg-primary text-primary-foreground font-semibold shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                title="Imprime cupom para impressora térmica de bobina 80mm (2 Vias: Loja + Cliente)"
+              >
+                Cupom 80mm
               </button>
               <button
                 type="button"
@@ -252,9 +268,9 @@ export function TermoGarantiaModal({
                     ? "bg-primary text-primary-foreground font-semibold shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
-                title="Relatório de Entrada completo em 1 página"
+                title="Relatório de Entrada completo em 1 página A4"
               >
-                Via Completa (1 Página)
+                Via Completa (A4)
               </button>
               <button
                 type="button"
@@ -282,6 +298,27 @@ export function TermoGarantiaModal({
             </Button>
           </div>
         </div>
+
+        {/* Ajuste dinâmico de tamanho de papel conforme o modelo selecionado */}
+        {modo === "termica_80mm" ? (
+          <style>{`
+            @media print {
+              @page {
+                size: 80mm auto !important;
+                margin: 2mm 2mm !important;
+              }
+            }
+          `}</style>
+        ) : (
+          <style>{`
+            @media print {
+              @page {
+                size: A4 portrait !important;
+                margin: 4mm 6mm !important;
+              }
+            }
+          `}</style>
+        )}
 
         {/* ========================================================================= */}
         {/* DOCUMENTO IMPRESSO / FORMATO 1: "duas_vias" (LOJA + CLIENTE NA MESMA FOLHA) */}
@@ -507,6 +544,209 @@ export function TermoGarantiaModal({
                   </div>
                   <p className="text-[8px] text-slate-500">Equipamento recebido na assistência</p>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* DOCUMENTO IMPRESSO / FORMATO 4: "termica_80mm" (BOBINA TÉRMICA DE 80MM)   */}
+        {/* ========================================================================= */}
+        {modo === "termica_80mm" && (
+          <div
+            id="documento-impresso-ativo"
+            className="relatorio-impresso-selecionado relatorio-termico-80mm mx-auto max-w-[340px] bg-white text-black p-4 rounded-lg border border-slate-300 font-mono text-[11px] leading-tight shadow-md print:shadow-none print:border-none print:p-0 print:max-w-none print:w-[76mm] space-y-3"
+          >
+            {/* ==================== 1ª VIA: LOJA / TÉCNICO ==================== */}
+            <div className="space-y-1.5 border border-dashed border-black p-2.5 rounded bg-white">
+              {/* Topo Loja */}
+              <div className="text-center space-y-0.5 pb-1.5 border-b-2 border-black">
+                <div className="flex justify-center pb-0.5">
+                  <Logo size="sm" />
+                </div>
+                <div className="font-black text-[13px] tracking-wide text-black">BR3 TECH</div>
+                <div className="text-[9.5px] font-bold">ASSISTÊNCIA TÉCNICA ESPECIALIZADA</div>
+                <div className="text-[9px] font-sans">WhatsApp: (92) 99236-5757 · Manaus/AM</div>
+              </div>
+
+              {/* Identificação da OS */}
+              <div className="text-center py-1 border-b border-dashed border-black bg-slate-100 print:bg-transparent">
+                <div className="font-black text-[11px] uppercase tracking-wider">
+                  1ª VIA — CONTROLE DA LOJA
+                </div>
+                <div className="font-black text-[13px]">ORDEM DE SERVIÇO Nº #{os.numero}</div>
+                <div className="text-[9.5px]">Entrada: {dataCriacaoFormatada}</div>
+              </div>
+
+              {/* Dados do Cliente e Aparelho */}
+              <div className="space-y-1 py-1 border-b border-dashed border-black text-[10px]">
+                <div>
+                  <span className="font-bold">CLIENTE: </span>
+                  <span className="font-bold">{os.clientes?.nome || "Não informado"}</span>
+                </div>
+                <div>
+                  <span className="font-bold">CONTATO: </span>
+                  <span>{os.clientes?.telefone || "Não informado"}</span>
+                </div>
+                <div>
+                  <span className="font-bold">APARELHO: </span>
+                  <span className="font-bold">{modeloAparelho}</span>
+                </div>
+                {os.imei && (
+                  <div>
+                    <span className="font-bold">IMEI/SÉRIE: </span>
+                    <span>{os.imei}</span>
+                  </div>
+                )}
+                {os.acessorios && (
+                  <div>
+                    <span className="font-bold">ACESSÓRIOS: </span>
+                    <span>{os.acessorios}</span>
+                  </div>
+                )}
+                {observacoesFisicas && (
+                  <div>
+                    <span className="font-bold">OBS. FÍSICAS: </span>
+                    <span>{observacoesFisicas}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Defeito Relatado */}
+              <div className="py-1 border-b border-dashed border-black text-[10px]">
+                <div className="font-bold uppercase">Defeito Relatado:</div>
+                <p className="bg-slate-50 print:bg-transparent p-1 rounded mt-0.5 border border-slate-200 print:border-black/30 text-[9.5px]">
+                  {os.defeito_relatado}
+                </p>
+              </div>
+
+              {/* Checklist de Entrada */}
+              <div className="py-1 border-b border-dashed border-black text-[9.5px] space-y-0.5">
+                <div className="font-bold uppercase">Checklist de Entrada:</div>
+                <div>✓ {itensOK.length} itens testados OK</div>
+                {itensComDefeito.length > 0 ? (
+                  <div className="font-bold text-black mt-0.5">
+                    ⚠️ Avarias anotadas: {itensComDefeito.join(", ")}
+                  </div>
+                ) : (
+                  <div>✓ Sem avarias iniciais anotadas</div>
+                )}
+                {midias.length > 0 && <div>📷 {midias.length} foto(s)/vídeo(s) arquivados</div>}
+              </div>
+
+              {/* Valores & Prazos */}
+              <div className="py-1 border-b border-dashed border-black text-[10px] space-y-0.5">
+                <div className="flex justify-between font-bold text-[11px]">
+                  <span>TOTAL ESTIMADO:</span>
+                  <span>{moeda(total)}</span>
+                </div>
+                <div className="flex justify-between text-[9.5px]">
+                  <span>Previsão de Retorno:</span>
+                  <span>{dataCurta(os.prazo)}</span>
+                </div>
+                <div className="flex justify-between text-[9.5px]">
+                  <span>Técnico Responsável:</span>
+                  <span>{os.profiles?.nome || "BR3 Tech"}</span>
+                </div>
+              </div>
+
+              {/* Assinatura da Loja */}
+              <div className="pt-2 text-center text-[9px] space-y-1">
+                <p className="text-[8px] italic">
+                  Autorizo a abertura do equipamento e a elaboração do diagnóstico técnico.
+                </p>
+                <div className="pt-5 border-b border-black w-4/5 mx-auto"></div>
+                <div className="font-bold">Assinatura do Cliente</div>
+              </div>
+            </div>
+
+            {/* Linha de Destaque / Serrilha da Guilhotina */}
+            <div className="py-1 text-center border-y border-dashed border-black font-bold text-[9px] tracking-wider my-2">
+              ✂ - - - DESTACAR AQUI - - - ✂
+            </div>
+
+            {/* ==================== 2ª VIA: COMPROVANTE DO CLIENTE ==================== */}
+            <div className="space-y-1.5 border border-dashed border-black p-2.5 rounded bg-white">
+              {/* Topo Cliente */}
+              <div className="text-center space-y-0.5 pb-1.5 border-b-2 border-black">
+                <div className="flex justify-center pb-0.5">
+                  <Logo size="sm" />
+                </div>
+                <div className="font-black text-[13px] tracking-wide text-black">BR3 TECH</div>
+                <div className="text-[9.5px] font-bold">ASSISTÊNCIA TÉCNICA ESPECIALIZADA</div>
+                <div className="text-[9px] font-sans">WhatsApp Suporte: (92) 99236-5757</div>
+              </div>
+
+              {/* Identificação da OS Cliente */}
+              <div className="text-center py-1 border-b border-dashed border-black bg-slate-100 print:bg-transparent">
+                <div className="font-black text-[11px] uppercase tracking-wider">
+                  2ª VIA — COMPROVANTE DO CLIENTE
+                </div>
+                <div className="font-black text-[13px]">ORDEM DE SERVIÇO Nº #{os.numero}</div>
+                <div className="text-[9.5px]">Entrada: {dataCriacaoFormatada}</div>
+              </div>
+
+              {/* Dados do Aparelho & Cliente */}
+              <div className="space-y-1 py-1 border-b border-dashed border-black text-[10px]">
+                <div>
+                  <span className="font-bold">CLIENTE: </span>
+                  <span className="font-bold">{os.clientes?.nome || "Não informado"}</span>
+                </div>
+                <div>
+                  <span className="font-bold">APARELHO: </span>
+                  <span className="font-bold">{modeloAparelho}</span>
+                </div>
+                {os.imei && (
+                  <div>
+                    <span className="font-bold">IMEI/SÉRIE: </span>
+                    <span>{os.imei}</span>
+                  </div>
+                )}
+                <div>
+                  <span className="font-bold">DEFEITO: </span>
+                  <span>{os.defeito_relatado}</span>
+                </div>
+                <div>
+                  <span className="font-bold">CHECKLIST: </span>
+                  <span>
+                    {itensOK.length} itens OK
+                    {itensComDefeito.length > 0 && ` · Avarias: ${itensComDefeito.join(", ")}`}
+                  </span>
+                </div>
+              </div>
+
+              {/* Orçamento & Previsão */}
+              <div className="py-1 border-b border-dashed border-black text-[10px] space-y-0.5">
+                <div className="flex justify-between font-bold text-[11px]">
+                  <span>TOTAL ESTIMADO:</span>
+                  <span>{moeda(total)}</span>
+                </div>
+                <div className="flex justify-between text-[9.5px]">
+                  <span>Previsão de Retorno:</span>
+                  <span>{dataCurta(os.prazo)}</span>
+                </div>
+                <div className="flex justify-between text-[9.5px]">
+                  <span>Garantia de Serviços:</span>
+                  <span>{os.garantia_dias || 90} dias após entrega</span>
+                </div>
+              </div>
+
+              {/* Termos Importantes */}
+              <div className="py-1 border-b border-dashed border-black text-[8.5px] space-y-0.5">
+                <div className="font-bold uppercase text-[9px]">Termos Importantes:</div>
+                <p>1. Apresente este cupom para retirada do aparelho.</p>
+                <p>2. Orçamento enviado para aprovação antes de qualquer reparo.</p>
+                <p>3. Aparelhos não retirados em até 90 dias poderão sofrer descarte.</p>
+              </div>
+
+              {/* Assinatura Assistência */}
+              <div className="pt-2 text-center text-[9px] space-y-1">
+                <div className="pt-5 border-b border-black w-4/5 mx-auto"></div>
+                <div className="font-bold">{os.profiles?.nome || "BR3 Tech (Recepção)"}</div>
+                <p className="text-[8px]">Equipamento recebido na assistência</p>
+                <p className="text-[9px] font-bold text-emerald-800 print:text-black pt-1">
+                  Acompanhe sua OS pelo WhatsApp: (92) 99236-5757
+                </p>
               </div>
             </div>
           </div>
