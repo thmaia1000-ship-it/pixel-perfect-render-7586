@@ -186,14 +186,14 @@ function DetalheOS() {
             <>
               <Button
                 onClick={() => {
-                  setModoDocumento("entrada");
+                  setModoDocumento("duas_vias");
                   setTermoAberto(true);
                 }}
                 variant="outline"
                 size="sm"
                 className="gap-1.5 text-xs text-muted-foreground"
               >
-                <FileText className="h-3.5 w-3.5" /> Via de Entrada
+                <FileText className="h-3.5 w-3.5" /> Via de Entrada (2 Vias)
               </Button>
               <Button
                 onClick={() => {
@@ -210,14 +210,15 @@ function DetalheOS() {
           ) : (
             <Button
               onClick={() => {
-                setModoDocumento("entrada");
+                setModoDocumento("duas_vias");
                 setTermoAberto(true);
               }}
               variant="outline"
               size="sm"
               className="gap-1.5 font-medium border-border"
             >
-              <Printer className="h-4 w-4 text-primary" /> Imprimir Relatório de Entrada (PDF)
+              <Printer className="h-4 w-4 text-primary" /> Imprimir Relatório de Entrada (2 Vias
+              PDF)
             </Button>
           )}
           <span

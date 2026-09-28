@@ -77,7 +77,7 @@ export function TermoGarantiaModal({
 }: TermoGarantiaModalProps) {
   const ehEntregue = os.status === "entregue";
   const [modo, setModo] = useState<ModoDocumentoOS>(
-    modoInicial ?? (ehEntregue ? "finalizada" : "entrada"),
+    modoInicial ?? (ehEntregue ? "finalizada" : "duas_vias"),
   );
 
   useEffect(() => {
@@ -86,128 +86,18 @@ export function TermoGarantiaModal({
     } else if (ehEntregue) {
       setModo("finalizada");
     } else {
-      setModo("entrada");
+      setModo("duas_vias");
     }
   }, [modoInicial, ehEntregue, aberto]);
 
   const imprimir = () => {
-    const el = document.getElementById("documento-impresso-ativo");
-    if (!el) {
-      window.print();
-      return;
+    // Remove qualquer iframe remanescente de execuções anteriores
+    const iframeAntigo = document.getElementById("print-iframe-helper");
+    if (iframeAntigo) {
+      iframeAntigo.remove();
     }
-
-    // Cria ou recupera iframe invisível dedicado exclusivamente à impressão do relatório
-    let iframe = document.getElementById("print-iframe-helper") as HTMLIFrameElement | null;
-    if (!iframe) {
-      iframe = document.createElement("iframe");
-      iframe.id = "print-iframe-helper";
-      iframe.style.position = "fixed";
-      iframe.style.right = "0";
-      iframe.style.bottom = "0";
-      iframe.style.width = "0";
-      iframe.style.height = "0";
-      iframe.style.border = "0";
-      iframe.style.visibility = "hidden";
-      document.body.appendChild(iframe);
-    }
-
-    const doc = iframe.contentWindow?.document;
-    if (!doc) {
-      window.print();
-      return;
-    }
-
-    // Copia todas as folhas de estilo do app (Tailwind, fontes, utilitários)
-    const styles = Array.from(document.querySelectorAll("link[rel='stylesheet'], style"))
-      .map((s) => s.outerHTML)
-      .join("\n");
-
-    doc.open();
-    doc.write(`
-      <!DOCTYPE html>
-      <html lang="pt-BR">
-        <head>
-          <meta charset="utf-8" />
-          <title>OS Nº ${os.numero} - BR3 Tech</title>
-          ${styles}
-          <style>
-            @page {
-              size: A4 portrait;
-              margin: 4mm 6mm !important;
-            }
-            *, *::before, *::after {
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-              color-adjust: exact !important;
-              box-sizing: border-box;
-            }
-            html, body {
-              background: #ffffff !important;
-              color: #000000 !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              width: 100% !important;
-              height: auto !important;
-              font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            }
-            .documento-folha-unica {
-              width: 100% !important;
-              max-width: 100% !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              background: #ffffff !important;
-              color: #000000 !important;
-              page-break-inside: avoid !important;
-              break-inside: avoid !important;
-              page-break-after: avoid !important;
-              page-break-before: avoid !important;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="documento-folha-unica">
-            ${el.innerHTML}
-          </div>
-        </body>
-      </html>
-    `);
-    doc.close();
-
-    // Garante que o logo e imagens estejam carregados antes de abrir a janela de impressão
-    const imagens = Array.from(doc.images);
-    let executado = false;
-    const dispararImpressao = () => {
-      if (executado) return;
-      executado = true;
-      setTimeout(() => {
-        try {
-          iframe?.contentWindow?.focus();
-          iframe?.contentWindow?.print();
-        } catch {
-          window.print();
-        }
-      }, 100);
-    };
-
-    if (imagens.length === 0) {
-      dispararImpressao();
-    } else {
-      let carregadas = 0;
-      const onImagemCarregada = () => {
-        carregadas++;
-        if (carregadas >= imagens.length) dispararImpressao();
-      };
-      imagens.forEach((img) => {
-        if (img.complete) {
-          onImagemCarregada();
-        } else {
-          img.onload = onImagemCarregada;
-          img.onerror = onImagemCarregada;
-        }
-      });
-      setTimeout(dispararImpressao, 450);
-    }
+    // Dispara a impressão nativa imediata
+    window.print();
   };
 
   // Intercepta atalho de teclado Ctrl+P / Cmd+P quando o modal estiver aberto
@@ -318,7 +208,9 @@ export function TermoGarantiaModal({
               <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                 {modo === "finalizada"
                   ? `Comprovante de OS Finalizada`
-                  : `Relatório de Entrada de Equipamento`}
+                  : modo === "duas_vias"
+                    ? `Relatório de Entrada (2 Vias na Folha A4)`
+                    : `Relatório de Entrada de Equipamento`}
                 <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-mono text-primary">
                   OS #{os.numero}
                 </span>
@@ -332,7 +224,7 @@ export function TermoGarantiaModal({
                 </button>
               </h3>
               <p className="text-xs text-muted-foreground">
-                Documento de controle físico da loja e garantia do cliente.
+                Documento de controle físico da loja e garantia do cliente em 1 página A4.
               </p>
             </div>
           </div>
@@ -340,18 +232,6 @@ export function TermoGarantiaModal({
           <div className="flex flex-wrap items-center gap-2">
             {/* Seletor de Modelo de Impressão */}
             <div className="flex rounded-lg border border-border bg-secondary/50 p-0.5 text-xs font-medium">
-              <button
-                type="button"
-                onClick={() => setModo("entrada")}
-                className={`rounded-md px-2.5 py-1 transition-colors ${
-                  modo === "entrada"
-                    ? "bg-primary text-primary-foreground font-semibold shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                title="Relatório de Entrada completo em 1 página (Padrão de abertura de OS)"
-              >
-                Via Completa (1 Página)
-              </button>
               <button
                 type="button"
                 onClick={() => setModo("duas_vias")}
@@ -363,6 +243,18 @@ export function TermoGarantiaModal({
                 title="Imprime 1 folha A4 dividida: 1ª Via Loja e 2ª Via Cliente"
               >
                 2 Vias (Loja + Cliente)
+              </button>
+              <button
+                type="button"
+                onClick={() => setModo("entrada")}
+                className={`rounded-md px-2.5 py-1 transition-colors ${
+                  modo === "entrada"
+                    ? "bg-primary text-primary-foreground font-semibold shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                title="Relatório de Entrada completo em 1 página"
+              >
+                Via Completa (1 Página)
               </button>
               <button
                 type="button"
@@ -571,10 +463,22 @@ export function TermoGarantiaModal({
                   <p className="font-medium text-slate-900 bg-slate-50 p-1.5 rounded border border-slate-200 print:p-1 print:text-[8px]">
                     {os.defeito_relatado}
                   </p>
-                  <p className="mt-1 text-[9px] text-slate-600 print:mt-0.5 print:text-[7.5px]">
-                    <strong>Prazo estimado:</strong> {dataCurta(os.prazo)} ·{" "}
-                    <strong>Garantia legal:</strong> {os.garantia_dias || 90} dias após reparo
-                  </p>
+                  <div className="mt-1 text-[9px] text-slate-600 print:mt-0.5 print:text-[7.5px] space-y-0.5">
+                    <p>
+                      <strong>Prazo estimado:</strong> {dataCurta(os.prazo)} ·{" "}
+                      <strong>Garantia legal:</strong> {os.garantia_dias || 90} dias após reparo
+                    </p>
+                    <p>
+                      <strong>Checklist de Entrada:</strong> {itensOK.length} itens OK
+                      {itensComDefeito.length > 0
+                        ? ` · Defeitos anotados: ${itensComDefeito.join(", ")}`
+                        : " · Sem defeitos aparentes"}
+                    </p>
+                    <div className="flex justify-between items-center text-[10px] pt-1 border-t border-slate-200 font-bold print:pt-0.5 print:text-[8.5px]">
+                      <span>Total Previsto / Orçamento:</span>
+                      <span className="text-slate-950 font-black">{moeda(total)}</span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="bg-slate-50 p-2 rounded border border-slate-200 text-[9px] space-y-1 text-slate-700 print:p-1.5 print:space-y-0.5 print:text-[8px]">

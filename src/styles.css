@@ -214,36 +214,33 @@
     color-adjust: exact !important;
   }
 
-  /* Oculta completamente o #root para que as 4 páginas da aplicação de fundo não vão para a impressora */
-  #root {
+  /* Oculta completamente o #root e tudo fora do modal no body para que nenhuma página de fundo vá para a impressora */
+  #root,
+  body > *:not(#modal-termo-garantia) {
     display: none !important;
   }
 
   html,
   body {
-    background: white !important;
-    color: black !important;
-    height: 100% !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    height: auto !important;
+    min-height: auto !important;
     max-height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
 
   body::before {
     display: none !important;
   }
 
-  /* Oculta tudo fora do modal no body */
-  body > *:not(#modal-termo-garantia) {
-    display: none !important;
-  }
-
   #modal-termo-garantia {
     position: static !important;
     display: block !important;
-    background: white !important;
+    background: #ffffff !important;
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
@@ -258,7 +255,7 @@
     margin: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    background: white !important;
+    background: #ffffff !important;
   }
 
   /* Exibe EXCLUSIVAMENTE o relatório selecionado nos botões do modal */
@@ -267,19 +264,17 @@
     display: block !important;
     width: 100% !important;
     max-width: 100% !important;
-    max-height: 288mm !important;
     box-sizing: border-box !important;
     margin: 0 !important;
     padding: 0 !important;
     border: none !important;
     box-shadow: none !important;
-    background: white !important;
-    color: black !important;
+    background: #ffffff !important;
+    color: #000000 !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     page-break-after: avoid !important;
     page-break-before: avoid !important;
-    overflow: hidden !important;
   }
 
   .print-page-exact {
