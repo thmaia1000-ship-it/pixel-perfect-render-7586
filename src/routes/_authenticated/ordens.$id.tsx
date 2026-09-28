@@ -19,6 +19,7 @@ import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ConferenciaEntrada } from "@/components/ConferenciaEntrada";
@@ -180,7 +181,12 @@ function DetalheOS() {
   const copiarLinkAprovacao = () => {
     if (!linkAprovacao) return;
     navigator.clipboard.writeText(linkAprovacao);
-    toast.success("Link de aprovação com assinatura copiado!");
+    toast.success("Link da página de autorização copiado para a área de transferência!");
+  };
+
+  const copiarMensagemCompleta = () => {
+    navigator.clipboard.writeText(mensagemAprovacaoWhatsApp);
+    toast.success("Mensagem completa com o link copiada com sucesso!");
   };
 
   const mensagens = [
@@ -431,51 +437,72 @@ function DetalheOS() {
             </section>
           )}
 
-          {/* CARD DE ENVIO DE LINK (quando status for aguardando aprovação e ainda não assinado) */}
+          {/* CARD DE LINK DE AUTORIZAÇÃO (quando status for aguardando aprovação e ainda não assinado) */}
           {status === "aguardando_aprovacao" &&
             (!assinaturaAutorizacao || assinaturaAutorizacao.recusado) && (
               <section className="rounded-2xl border-2 border-amber-500/40 bg-amber-500/10 p-5 shadow-sm space-y-3">
                 <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200">
                   <PenTool className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                  <h3 className="font-bold text-sm">Aguardando Autorização do Cliente</h3>
+                  <h3 className="font-bold text-sm">Link de Autorização da OS</h3>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Envie o link para o cliente autorizar a execução do serviço com assinatura na tela
-                  pelo WhatsApp, ou abra para assinatura presencial no balcão.
+                  Link gerado para envio manual ao cliente aprovar o orçamento e assinar na tela:
                 </p>
 
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {telefone && (
-                    <a
-                      href={linkWhatsApp(telefone, mensagemAprovacaoWhatsApp)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-500 transition-colors"
-                    >
-                      <Share2 className="h-3.5 w-3.5" /> Enviar WhatsApp
+                {/* Campo do link manual para cópia rápida */}
+                <div className="flex gap-1.5">
+                  <Input
+                    readOnly
+                    value={linkAprovacao}
+                    className="font-mono text-[11px] h-8 bg-background selection:bg-primary/20"
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={copiarLinkAprovacao}
+                    className="h-8 gap-1 text-xs shrink-0 font-bold shadow-sm"
+                    title="Copiar link da página de assinatura"
+                  >
+                    <Copy className="h-3.5 w-3.5" /> Copiar
+                  </Button>
+                </div>
+
+                <div className="space-y-1.5 pt-1">
+                  <Button
+                    asChild
+                    size="sm"
+                    className="w-full text-xs font-bold gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                  >
+                    <a href={linkAprovacao} target="_blank" rel="noreferrer">
+                      <ExternalLink className="h-3.5 w-3.5" /> Acessar Página de Assinatura
                     </a>
-                  )}
+                  </Button>
+
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={copiarLinkAprovacao}
-                    className="gap-1.5 text-xs font-semibold"
+                    onClick={copiarMensagemCompleta}
+                    className="w-full text-xs gap-1.5 text-foreground hover:bg-secondary"
                   >
-                    <Copy className="h-3.5 w-3.5" /> Copiar Link
+                    <Copy className="h-3.5 w-3.5 text-primary" /> Copiar Mensagem Pronta (WhatsApp)
                   </Button>
-                </div>
 
-                <Button
-                  asChild
-                  variant="ghost"
-                  size="sm"
-                  className="w-full text-xs gap-1.5 text-muted-foreground hover:text-foreground"
-                >
-                  <a href={linkAprovacao} target="_blank" rel="noreferrer">
-                    <ExternalLink className="h-3.5 w-3.5" /> Abrir Assinatura na Tela (Balcão)
-                  </a>
-                </Button>
+                  {telefone && (
+                    <div className="text-center pt-0.5">
+                      <a
+                        href={linkWhatsApp(telefone, mensagemAprovacaoWhatsApp)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-emerald-600 transition-colors"
+                      >
+                        <Share2 className="h-3 w-3 text-emerald-600" /> Abrir no WhatsApp (
+                        {telefone})
+                      </a>
+                    </div>
+                  )}
+                </div>
               </section>
             )}
 
@@ -622,14 +649,16 @@ function DetalheOS() {
         </div>
       </div>
 
-      {/* MODAL DE ENVIO RÁPIDO DO LINK DE APROVAÇÃO (aberto automaticamente ao mudar para aguardando aprovação) */}
+      {/* MODAL DE GERAÇÃO DO LINK MANUAL DE AUTORIZAÇÃO / ASSINATURA */}
       {modalLinkAberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4">
+          <div className="relative w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2 text-primary">
                 <PenTool className="h-5 w-5" />
-                <h3 className="text-base font-bold text-foreground">Autorização do Cliente</h3>
+                <h3 className="text-base font-bold text-foreground">
+                  Link de Autorização e Assinatura Digital
+                </h3>
               </div>
               <button
                 type="button"
@@ -641,11 +670,12 @@ function DetalheOS() {
             </div>
 
             <p className="text-xs text-muted-foreground leading-relaxed">
-              A situação da OS foi alterada para <strong>Aguardando aprovação</strong>. Envie o link
-              com o orçamento detalhado para o cliente assinar na tela pelo WhatsApp.
+              A situação da OS foi alterada para <strong>Aguardando aprovação</strong>. O link
+              exclusivo para o cliente visualizar o orçamento e assinar na tela foi gerado abaixo
+              para envio manual:
             </p>
 
-            <div className="rounded-xl border border-border bg-muted/40 p-3 space-y-1.5 text-xs">
+            <div className="rounded-xl border border-border bg-muted/40 p-3 space-y-1 text-xs">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Cliente:</span>
                 <span className="font-bold text-foreground">{nomeCliente}</span>
@@ -660,42 +690,69 @@ function DetalheOS() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              {telefone ? (
-                <a
-                  href={linkWhatsApp(telefone, mensagemAprovacaoWhatsApp)}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={() => setModalLinkAberto(false)}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow hover:bg-emerald-500 transition-colors"
-                >
-                  <Share2 className="h-4 w-4" /> Enviar Link de Assinatura via WhatsApp
-                </a>
-              ) : (
-                <p className="text-xs text-amber-600">
-                  Cliente sem telefone cadastrado para envio automático via WhatsApp.
-                </p>
-              )}
-
+            {/* Campo de link para envio manual com cópia imediata */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-foreground flex items-center justify-between">
+                <span>Link da Página de Assinatura:</span>
+                <span className="text-[10px] text-muted-foreground font-normal">
+                  Acesso público seguro
+                </span>
+              </Label>
               <div className="flex gap-2">
+                <Input
+                  readOnly
+                  value={linkAprovacao}
+                  className="font-mono text-xs bg-background selection:bg-primary/20"
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                />
                 <Button
                   type="button"
-                  variant="outline"
                   onClick={copiarLinkAprovacao}
-                  className="flex-1 gap-1.5 text-xs font-semibold"
+                  className="gap-1.5 font-bold shrink-0 shadow-sm"
                 >
-                  <Copy className="h-3.5 w-3.5" /> Copiar Link
-                </Button>
-
-                <Button asChild variant="outline" className="flex-1 text-xs font-semibold gap-1.5">
-                  <a href={linkAprovacao} target="_blank" rel="noreferrer">
-                    <ExternalLink className="h-3.5 w-3.5" /> Assinar no Balcão
-                  </a>
+                  <Copy className="h-4 w-4" /> Copiar Link
                 </Button>
               </div>
             </div>
 
-            <div className="pt-2 text-center">
+            {/* Opções de acesso e envio */}
+            <div className="space-y-2 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Button
+                  asChild
+                  className="h-10 text-xs font-bold gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                >
+                  <a href={linkAprovacao} target="_blank" rel="noreferrer">
+                    <ExternalLink className="h-4 w-4" /> Acessar Página de Assinatura
+                  </a>
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={copiarMensagemCompleta}
+                  className="h-10 text-xs font-semibold gap-1.5"
+                >
+                  <Copy className="h-4 w-4 text-primary" /> Copiar Mensagem Completa
+                </Button>
+              </div>
+
+              {telefone && (
+                <div className="pt-1 text-center">
+                  <a
+                    href={linkWhatsApp(telefone, mensagemAprovacaoWhatsApp)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-emerald-600 transition-colors"
+                  >
+                    <Share2 className="h-3.5 w-3.5 text-emerald-600" /> Ou se preferir, abrir no
+                    WhatsApp ({telefone})
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2 border-t border-border flex justify-end">
               <Button
                 type="button"
                 variant="ghost"
@@ -703,7 +760,7 @@ function DetalheOS() {
                 onClick={() => setModalLinkAberto(false)}
                 className="text-xs text-muted-foreground"
               >
-                Concluir e fechar
+                Fechar
               </Button>
             </div>
           </div>
