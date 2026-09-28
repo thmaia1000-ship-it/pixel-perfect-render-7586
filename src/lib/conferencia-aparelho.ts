@@ -37,6 +37,15 @@ export interface MidiaConferencia {
   criadoEm: string;
 }
 
+export type AssinaturaAutorizacao = {
+  dataUrl: string;
+  aprovado_em: string;
+  nome_signatario: string;
+  documento_signatario?: string | null;
+  recusado?: boolean;
+  motivo_recusa?: string | null;
+};
+
 /**
  * Cria o checklist padrão inicial (sem seleção inicial para que o técnico marque cada item)
  */
@@ -55,27 +64,30 @@ export function serializarEstadoEConferencia(
   conferencia: ConferenciaChecklist,
   observacoesTexto?: string,
   midias?: MidiaConferencia[],
+  assinaturaAutorizacao?: AssinaturaAutorizacao | null,
 ): string {
   const payload = {
     versao: 1,
     conferencia,
     observacoes: observacoesTexto?.trim() || "",
     midias: midias || [],
+    assinatura_autorizacao: assinaturaAutorizacao || null,
   };
   return JSON.stringify(payload);
 }
 
 /**
- * Desserializa a string de estado físico retornando a conferência, texto livre e mídias anexadas
+ * Desserializa a string de estado físico retornando a conferência, texto livre, mídias anexadas e assinatura de autorização
  */
 export function deserializarEstadoEConferencia(valor?: string | null): {
   conferencia: ConferenciaChecklist;
   observacoes: string;
   midias: MidiaConferencia[];
+  assinaturaAutorizacao: AssinaturaAutorizacao | null;
 } {
   const padrao = criarConferenciaPadrao();
   if (!valor || !valor.trim()) {
-    return { conferencia: padrao, observacoes: "", midias: [] };
+    return { conferencia: padrao, observacoes: "", midias: [], assinaturaAutorizacao: null };
   }
 
   try {
@@ -88,6 +100,7 @@ export function deserializarEstadoEConferencia(valor?: string | null): {
         },
         observacoes: typeof parsed.observacoes === "string" ? parsed.observacoes : "",
         midias: Array.isArray(parsed.midias) ? parsed.midias : [],
+        assinaturaAutorizacao: parsed.assinatura_autorizacao || null,
       };
     }
   } catch {
@@ -98,5 +111,6 @@ export function deserializarEstadoEConferencia(valor?: string | null): {
     conferencia: padrao,
     observacoes: valor,
     midias: [],
+    assinaturaAutorizacao: null,
   };
 }
