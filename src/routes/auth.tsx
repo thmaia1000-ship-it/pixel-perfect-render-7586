@@ -32,7 +32,7 @@ export const Route = createFileRoute("/auth")({
 const emailSchema = z.string().trim().email("Informe um e-mail válido").max(255);
 const senhaSchema = z.string().min(8, "A senha precisa ter pelo menos 8 caracteres").max(72);
 
-type Modo = "login" | "recuperar" | "cadastro";
+type Modo = "login" | "recuperar";
 
 function Acesso() {
   const navigate = useNavigate();
@@ -40,7 +40,6 @@ function Acesso() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
-  const [nome, setNome] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
@@ -70,39 +69,6 @@ function Acesso() {
       const senhaOk = senhaSchema.safeParse(senha);
       if (!senhaOk.success) {
         setErro(senhaOk.error.issues[0]!.message);
-        return;
-      }
-
-      if (modo === "cadastro") {
-        const nomeOk = z.string().trim().min(2, "Informe o nome completo").max(100).safeParse(nome);
-        if (!nomeOk.success) {
-          setErro(nomeOk.error.issues[0]!.message);
-          return;
-        }
-        const { data, error } = await supabase.auth.signUp({
-          email: emailOk.data,
-          password: senhaOk.data,
-          options: {
-            emailRedirectTo: window.location.origin,
-            data: { nome: nomeOk.data },
-          },
-        });
-        if (error) {
-          setErro(
-            /database error|BR3_SOMENTE_ADMIN/i.test(error.message)
-              ? "O sistema já possui um administrador. Peça a ele para criar a sua conta."
-              : error.message,
-          );
-          return;
-        }
-        if (data.session) {
-          toast.success("Conta de administrador criada.");
-          await new Promise((r) => setTimeout(r, 150));
-          navigate({ to: "/painel" });
-        } else {
-          toast.success("Conta criada. Confirme o e-mail pelo link que enviamos para entrar.");
-          setModo("login");
-        }
         return;
       }
 
@@ -144,12 +110,7 @@ function Acesso() {
     }
   }
 
-  const titulo =
-    modo === "login"
-      ? "Entrar no sistema"
-      : modo === "recuperar"
-        ? "Recuperar senha"
-        : "Criar conta de administrador";
+  const titulo = modo === "login" ? "Entrar no sistema" : "Recuperar senha";
 
   return (
     <div className="flex min-h-screen flex-col bg-transparent">
@@ -173,18 +134,6 @@ function Acesso() {
           </div>
 
           <form onSubmit={enviar} className="mt-6 grid gap-4">
-            {modo === "cadastro" && (
-              <div className="grid gap-1.5">
-                <Label htmlFor="nome">Nome completo</Label>
-                <Input
-                  id="nome"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  maxLength={100}
-                  autoComplete="name"
-                />
-              </div>
-            )}
             <div className="grid gap-1.5">
               <Label htmlFor="email">E-mail</Label>
               <Input
@@ -207,7 +156,7 @@ function Acesso() {
                     value={senha}
                     onChange={(e) => setSenha(e.target.value)}
                     maxLength={72}
-                    autoComplete={modo === "cadastro" ? "new-password" : "current-password"}
+                    autoComplete="current-password"
                     className="pr-10"
                   />
                   <button
@@ -231,13 +180,7 @@ function Acesso() {
             )}
 
             <Button type="submit" disabled={enviando}>
-              {enviando
-                ? "Aguarde..."
-                : modo === "login"
-                  ? "Entrar"
-                  : modo === "recuperar"
-                    ? "Enviar link"
-                    : "Criar conta"}
+              {enviando ? "Aguarde..." : modo === "login" ? "Entrar" : "Enviar link"}
             </Button>
           </form>
 
@@ -265,23 +208,6 @@ function Acesso() {
               >
                 Esqueci minha senha
               </button>
-            )}
-            {modo === "login" && (
-              <>
-                <button
-                  type="button"
-                  className="text-left font-medium text-primary hover:underline"
-                  onClick={() => {
-                    setErro(null);
-                    setModo("cadastro");
-                  }}
-                >
-                  Criar a primeira conta de administrador
-                </button>
-                <p className="text-muted-foreground">
-                  Depois da primeira conta, novos usuários são criados pelo administrador.
-                </p>
-              </>
             )}
           </div>
         </div>

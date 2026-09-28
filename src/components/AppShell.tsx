@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { LogOut, LayoutDashboard, Wrench, Users, Menu } from "lucide-react";
+import { LogOut, LayoutDashboard, Wrench, Users, ShieldCheck, Menu } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { Logo } from "@/components/Logo";
@@ -11,6 +11,7 @@ const NAV = [
   { to: "/painel", label: "Painel", icon: LayoutDashboard },
   { to: "/ordens", label: "Ordens de serviço", icon: Wrench },
   { to: "/clientes", label: "Clientes", icon: Users },
+  { to: "/usuarios", label: "Administração", icon: ShieldCheck },
 ] as const;
 
 export function AppShell({
