@@ -38,7 +38,7 @@ export function Logo({ className = "", size = "md", showText = true }: LogoProps
             <span className="text-foreground/95">Tech</span>
           </span>
           <span className="text-[10px] uppercase font-semibold tracking-widest text-muted-foreground mt-0.5">
-            Assistência Técnica
+            Laboratório de Tecnologia
           </span>
         </span>
       )}

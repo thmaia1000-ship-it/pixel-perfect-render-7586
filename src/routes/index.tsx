@@ -84,7 +84,7 @@ function Entrada() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary shadow-sm shadow-primary/20">
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              Assistência técnica especializada
+              Laboratório de tecnologia especializado
             </div>
             <h1 className="mt-4 max-w-2xl text-3xl font-extrabold leading-tight md:text-5xl text-foreground drop-shadow-sm">
               O controle completo do Laboratório da BR3 Tech em um só lugar
