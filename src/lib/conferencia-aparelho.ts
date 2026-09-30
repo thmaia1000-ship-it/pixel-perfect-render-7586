@@ -21,11 +21,101 @@ export const ITENS_CONFERENCIA_ENTRADA = [
   "Acompanha cabo/carregador",
 ] as const;
 
+/**
+ * Itens do Checklist de Saída / Encerramento da Ordem de Serviço
+ */
+export const ITENS_CHECKLIST_SAIDA = [
+  "Aparelho liga e inicializa perfeitamente",
+  "Tela / Display sem manchas ou burn-in",
+  "Touchscreen 100% responsivo",
+  "Câmeras frontal e traseira focando e nítidas",
+  "Áudio auricular e viva-voz limpos sem chiados",
+  "Microfone gravando áudio com clareza",
+  "Carregamento testado e subindo carga",
+  "Wi-Fi e Bluetooth conectando",
+  "Rede de chip / Dados móveis funcionando",
+  "Sensores (Proximidade / Giroscópio) OK",
+  "Biometria / Reconhecimento facial OK",
+  "Botões Power e Volume firmes",
+  "Limpeza e higienização física concluídas",
+  "Parafusos e carcaça perfeitamente alinhados",
+] as const;
+
 export type ItemConferenciaNome = (typeof ITENS_CONFERENCIA_ENTRADA)[number];
+export type ItemChecklistSaidaNome = (typeof ITENS_CHECKLIST_SAIDA)[number];
 
 export type StatusConferencia = "OK" | "Defeito" | "N/V" | null;
 
 export type ConferenciaChecklist = Record<string, StatusConferencia | undefined>;
+
+/**
+ * Testes de diagnóstico de hardware inspirados no menu de serviço (*#0*#)
+ */
+export type TesteHardwareId =
+  | "red"
+  | "green"
+  | "blue"
+  | "white"
+  | "black"
+  | "touch"
+  | "receiver"
+  | "speaker"
+  | "mic"
+  | "vibration"
+  | "dimming"
+  | "camera_front"
+  | "camera_back"
+  | "sensor"
+  | "sub_key";
+
+export interface ItemTesteHardware {
+  id: TesteHardwareId;
+  titulo: string;
+  descricao: string;
+  categoria: "display" | "audio" | "sensores" | "cameras" | "geral";
+}
+
+export const LISTA_TESTES_HARDWARE: ItemTesteHardware[] = [
+  { id: "red", titulo: "Red (Vermelho)", descricao: "Teste de pixels mortos e fidelidade de cor vermelha", categoria: "display" },
+  { id: "green", titulo: "Green (Verde)", descricao: "Teste de pixels mortos e fidelidade de cor verde", categoria: "display" },
+  { id: "blue", titulo: "Blue (Azul)", descricao: "Teste de pixels mortos e fidelidade de cor azul", categoria: "display" },
+  { id: "white", titulo: "White (Branco)", descricao: "Inspeção de manchas, uniformidade da tela e iluminação", categoria: "display" },
+  { id: "black", titulo: "Black (Preto)", descricao: "Contraste, vazamento de luz e pureza de preto", categoria: "display" },
+  { id: "touch", titulo: "Touch Grid (Grade)", descricao: "Mapeamento e precisão de toque em todas as áreas da tela", categoria: "display" },
+  { id: "receiver", titulo: "Receiver (Auricular)", descricao: "Teste de áudio do alto-falante superior de chamadas", categoria: "audio" },
+  { id: "speaker", titulo: "Speaker (Viva-voz)", descricao: "Teste de alto-falante principal e potência estéreo", categoria: "audio" },
+  { id: "mic", titulo: "Microphone (Microfone)", descricao: "Gravação e eco para teste do microfone principal e cancelamento", categoria: "audio" },
+  { id: "vibration", titulo: "Vibration (Vibração)", descricao: "Ativação do motor de vibração / feedback tátil", categoria: "geral" },
+  { id: "dimming", titulo: "Dimming (Brilho)", descricao: "Teste de controle de intensidade de iluminação do display", categoria: "display" },
+  { id: "camera_back", titulo: "Mega Cam (Traseira)", descricao: "Câmera principal traseira, autofoco e resolução", categoria: "cameras" },
+  { id: "camera_front", titulo: "Front Cam (Frontal)", descricao: "Câmera frontal para selfies e chamadas", categoria: "cameras" },
+  { id: "sensor", titulo: "Sensor (Acelerômetro/Luz)", descricao: "Leitura de sensores de aceleração, giroscópio e proximidade", categoria: "sensores" },
+  { id: "sub_key", titulo: "Sub Key (Teclas Físicas)", descricao: "Teste de acionamento dos botões Power e Volume", categoria: "geral" },
+];
+
+export interface ResultadoTesteHardware {
+  id: TesteHardwareId;
+  status: "aprovado" | "reprovado" | "ignorado";
+  dataHora: string;
+  detalhes?: string;
+}
+
+export interface DiagnosticoExecutado {
+  executadoEm: string;
+  aparelhoInfo?: string;
+  testes: Record<string, ResultadoTesteHardware>;
+  observacoes?: string;
+  totalAprovados: number;
+  totalReprovados: number;
+}
+
+export interface EncerramentoOS {
+  checklistSaida: ConferenciaChecklist;
+  diagnosticoHardware?: DiagnosticoExecutado | null;
+  observacoesSaida?: string;
+  encerradoEm: string;
+  tecnicoNome?: string;
+}
 
 export interface MidiaConferencia {
   id: string;
@@ -58,6 +148,17 @@ export function criarConferenciaPadrao(): ConferenciaChecklist {
 }
 
 /**
+ * Cria o checklist padrão de saída
+ */
+export function criarChecklistSaidaPadrao(): ConferenciaChecklist {
+  const padrao: ConferenciaChecklist = {};
+  for (const item of ITENS_CHECKLIST_SAIDA) {
+    padrao[item] = null;
+  }
+  return padrao;
+}
+
+/**
  * Serializa a conferência, texto livre de estado físico e mídias em uma string estruturada para salvar no banco
  */
 export function serializarEstadoEConferencia(
@@ -65,6 +166,7 @@ export function serializarEstadoEConferencia(
   observacoesTexto?: string,
   midias?: MidiaConferencia[],
   assinaturaAutorizacao?: AssinaturaAutorizacao | null,
+  encerramento?: EncerramentoOS | null,
 ): string {
   const payload = {
     versao: 1,
@@ -72,22 +174,30 @@ export function serializarEstadoEConferencia(
     observacoes: observacoesTexto?.trim() || "",
     midias: midias || [],
     assinatura_autorizacao: assinaturaAutorizacao || null,
+    encerramento: encerramento || null,
   };
   return JSON.stringify(payload);
 }
 
 /**
- * Desserializa a string de estado físico retornando a conferência, texto livre, mídias anexadas e assinatura de autorização
+ * Desserializa a string de estado físico retornando a conferência, texto livre, mídias anexadas, assinatura de autorização e encerramento
  */
 export function deserializarEstadoEConferencia(valor?: string | null): {
   conferencia: ConferenciaChecklist;
   observacoes: string;
   midias: MidiaConferencia[];
   assinaturaAutorizacao: AssinaturaAutorizacao | null;
+  encerramento: EncerramentoOS | null;
 } {
   const padrao = criarConferenciaPadrao();
   if (!valor || !valor.trim()) {
-    return { conferencia: padrao, observacoes: "", midias: [], assinaturaAutorizacao: null };
+    return {
+      conferencia: padrao,
+      observacoes: "",
+      midias: [],
+      assinaturaAutorizacao: null,
+      encerramento: null,
+    };
   }
 
   try {
@@ -101,6 +211,7 @@ export function deserializarEstadoEConferencia(valor?: string | null): {
         observacoes: typeof parsed.observacoes === "string" ? parsed.observacoes : "",
         midias: Array.isArray(parsed.midias) ? parsed.midias : [],
         assinaturaAutorizacao: parsed.assinatura_autorizacao || null,
+        encerramento: parsed.encerramento || null,
       };
     }
   } catch {
@@ -112,5 +223,7 @@ export function deserializarEstadoEConferencia(valor?: string | null): {
     observacoes: valor,
     midias: [],
     assinaturaAutorizacao: null,
+    encerramento: null,
   };
 }
+

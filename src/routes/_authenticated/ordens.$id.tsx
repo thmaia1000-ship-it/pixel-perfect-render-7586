@@ -25,8 +25,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { ConferenciaEntrada } from "@/components/ConferenciaEntrada";
 import { UploadMidiaConferencia } from "@/components/UploadMidiaConferencia";
 import { TermoGarantiaModal, type ModoDocumentoOS } from "@/components/TermoGarantiaModal";
+import { ModalEncerramentoOS } from "@/components/ModalEncerramentoOS";
 import { supabase } from "@/integrations/supabase/client";
-import { deserializarEstadoEConferencia } from "@/lib/conferencia-aparelho";
+import {
+  deserializarEstadoEConferencia,
+  serializarEstadoEConferencia,
+  type EncerramentoOS,
+} from "@/lib/conferencia-aparelho";
 import {
   PROXIMOS_STATUS,
   STATUS_CLASS,
@@ -72,6 +77,7 @@ function DetalheOS() {
   const [salvando, setSalvando] = useState(false);
   const [termoAberto, setTermoAberto] = useState(false);
   const [modalLinkAberto, setModalLinkAberto] = useState(false);
+  const [modalEncerramentoAberto, setModalEncerramentoAberto] = useState(false);
   const [modoDocumento, setModoDocumento] = useState<ModoDocumentoOS>("entrada");
 
   const { data, isLoading } = useQuery({
@@ -170,7 +176,28 @@ function DetalheOS() {
     observacoes: observacoesFisicas,
     midias,
     assinaturaAutorizacao,
+    encerramento,
   } = deserializarEstadoEConferencia(os.estado_fisico);
+
+  async function salvarEncerramento(novoEncerramento: EncerramentoOS) {
+    if (!os) return;
+    const { data: user } = await supabase.auth.getUser();
+    const novoEstadoFisico = serializarEstadoEConferencia(
+      conferencia,
+      observacoesFisicas,
+      midias,
+      assinaturaAutorizacao,
+      novoEncerramento,
+    );
+
+    const { error } = await supabase
+      .from("ordens_servico")
+      .update({ estado_fisico: novoEstadoFisico })
+      .eq("id", os.id);
+
+    if (error) throw error;
+    await queryClient.invalidateQueries();
+  }
 
   const linkAprovacao =
     typeof window !== "undefined" ? `${window.location.origin}/aprovacao/${os.id}` : "";
@@ -352,6 +379,126 @@ function DetalheOS() {
             </div>
 
             <UploadMidiaConferencia midias={midias} somenteLeitura />
+          </section>
+
+          {/* CHECKLIST DE SAÍDA E TESTES DE HARDWARE (*#0*#) */}
+          <section className="rounded-2xl border-2 border-primary/30 bg-card p-5 space-y-4 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-bold uppercase tracking-tight text-foreground flex items-center gap-2">
+                  <ClipboardCheck className="h-5 w-5 text-emerald-500" />
+                  <span>CHECKLIST DE SAÍDA E TESTES DE HARDWARE (*#0*#)</span>
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Conferência final de bancada e bateria de testes de componentes executada no aparelho.
+                </p>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setModalEncerramentoAberto(true)}
+                className="gap-1.5 text-xs font-bold border-primary text-primary hover:bg-primary/10 shadow-sm"
+              >
+                <ClipboardCheck className="h-4 w-4" />
+                <span>
+                  {encerramento ? "Editar Checklist de Saída" : "Preencher Checklist de Saída"}
+                </span>
+              </Button>
+            </div>
+
+            {encerramento ? (
+              <div className="space-y-3 pt-1">
+                {/* Resumo dos Itens de Saída */}
+                <div className="rounded-xl border border-border/70 bg-background/60 p-3 text-xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-foreground">
+                      Inspeção de Saída Concluída
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {encerramento.encerradoEm ? dataHora(encerramento.encerradoEm) : "Registrado"}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {Object.entries(encerramento.checklistSaida || {}).map(([item, status]) => (
+                      <span
+                        key={item}
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border ${
+                          status === "OK"
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                            : status === "Defeito"
+                              ? "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400"
+                              : "bg-muted border-border text-muted-foreground"
+                        }`}
+                      >
+                        <span>{status === "OK" ? "✓" : status === "Defeito" ? "✕" : "—"}</span>
+                        <span className="truncate max-w-[160px]">{item}</span>
+                      </span>
+                    ))}
+                  </div>
+
+                  {encerramento.observacoesSaida && (
+                    <p className="text-[11px] text-muted-foreground pt-1 border-t border-border/50">
+                      <strong>Obs:</strong> {encerramento.observacoesSaida}
+                    </p>
+                  )}
+                </div>
+
+                {/* Resumo do Laudo de Hardware (*#0*#) */}
+                {encerramento.diagnosticoHardware && (
+                  <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3.5 text-xs space-y-2">
+                    <div className="flex items-center justify-between font-bold text-emerald-600 dark:text-emerald-400">
+                      <span className="flex items-center gap-1.5">
+                        <CheckCircle2 className="h-4 w-4" /> Laudo de Hardware (*#0*#) via QR Code
+                      </span>
+                      <span className="font-mono text-[11px]">
+                        {encerramento.diagnosticoHardware.totalAprovados} Aprovados ·{" "}
+                        {encerramento.diagnosticoHardware.totalReprovados} Falhas
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1">
+                      {Object.entries(encerramento.diagnosticoHardware.testes || {}).map(
+                        ([teste, res]) => (
+                          <div
+                            key={teste}
+                            className={`p-1.5 rounded border text-[11px] flex justify-between items-center ${
+                              res.status === "aprovado"
+                                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+                                : res.status === "reprovado"
+                                  ? "bg-rose-500/10 border-rose-500/20 text-rose-500"
+                                  : "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            <span className="capitalize">{teste.replace("_", " ")}</span>
+                            <span className="font-bold">
+                              {res.status === "aprovado" ? "✓" : res.status === "reprovado" ? "✕" : "—"}
+                            </span>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-border p-4 text-center space-y-2 bg-background/40">
+                <p className="text-xs text-muted-foreground">
+                  Nenhum checklist de saída preenchido ainda.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setModalEncerramentoAberto(true)}
+                  className="gap-1.5 text-xs font-bold"
+                >
+                  <ClipboardCheck className="h-3.5 w-3.5 text-primary" /> Abrir Checklist & QR Code de Testes
+                </Button>
+              </div>
+            )}
           </section>
 
           <section className="rounded-2xl border border-border bg-card p-5">
@@ -603,14 +750,37 @@ function DetalheOS() {
                     />
                   </div>
                   <div className="grid gap-2">
+                    {/* Botão de destaque para Checklist de Saída quando estiver em reparo ou pronta */}
+                    {(status === "em_reparo" || status === "pronta") && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setModalEncerramentoAberto(true)}
+                        className="gap-2 font-bold border-emerald-500/50 text-emerald-500 hover:bg-emerald-500/10"
+                      >
+                        <ClipboardCheck className="h-4 w-4" /> Checklist de Saída & QR Code
+                      </Button>
+                    )}
+
                     {PROXIMOS_STATUS[status].map((s) => (
                       <Button
                         key={s}
                         variant={
-                          s === "cancelada" || s === "orcamento_recusado" ? "outline" : "default"
+                          s === "cancelada" || s === "orcamento_recusado"
+                            ? "outline"
+                            : s === "pronta" || s === "entregue"
+                              ? "default"
+                              : "default"
                         }
                         disabled={salvando}
-                        onClick={() => mudarStatus(s)}
+                        onClick={() => {
+                          if (s === "pronta" || s === "entregue") {
+                            // Abre o modal de checklist de saída para que o técnico possa conferir e concluir
+                            setModalEncerramentoAberto(true);
+                          } else {
+                            mudarStatus(s);
+                          }
+                        }}
                       >
                         {STATUS_LABEL[s]}
                       </Button>
@@ -766,6 +936,20 @@ function DetalheOS() {
           </div>
         </div>
       )}
+
+      <ModalEncerramentoOS
+        aberto={modalEncerramentoAberto}
+        onFechar={() => setModalEncerramentoAberto(false)}
+        osId={os.id}
+        osNumero={os.numero}
+        aparelhoModelo={modeloAparelho}
+        encerramentoAtual={encerramento}
+        onSalvarEncerramento={salvarEncerramento}
+        podeConcluirOS={status !== "entregue"}
+        onConcluirOS={async () => {
+          await mudarStatus("entregue");
+        }}
+      />
 
       <TermoGarantiaModal
         aberto={termoAberto}

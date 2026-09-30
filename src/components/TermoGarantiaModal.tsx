@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import {
   ITENS_CONFERENCIA_ENTRADA,
+  ITENS_CHECKLIST_SAIDA,
+  deserializarEstadoEConferencia,
   type ConferenciaChecklist,
   type MidiaConferencia,
 } from "@/lib/conferencia-aparelho";
@@ -128,16 +130,26 @@ export function TermoGarantiaModal({
     toast.success(`Nº da OS (${os.numero}) copiado para a área de transferência!`);
   };
 
-  // Itens com alteração na conferência de entrada
-  const itensComDefeito = ITENS_CONFERENCIA_ENTRADA.filter(
-    (item) => conferencia[item] === "Defeito",
+  // Recupera dados de encerramento se existirem
+  const { encerramento } = deserializarEstadoEConferencia(os.estado_fisico);
+  const checklistAtivo =
+    modo === "finalizada" && encerramento?.checklistSaida
+      ? encerramento.checklistSaida
+      : conferencia;
+
+  const listaItensAtiva =
+    modo === "finalizada" ? ITENS_CHECKLIST_SAIDA : ITENS_CONFERENCIA_ENTRADA;
+
+  // Itens com alteração na conferência
+  const itensComDefeito = listaItensAtiva.filter(
+    (item) => checklistAtivo[item] === "Defeito",
   );
-  const itensOK = ITENS_CONFERENCIA_ENTRADA.filter((item) => conferencia[item] === "OK");
+  const itensOK = listaItensAtiva.filter((item) => checklistAtivo[item] === "OK");
 
   // Divisão do checklist em duas colunas para garantir encaixe perfeito em 1 página impressa
-  const meioChecklist = Math.ceil(ITENS_CONFERENCIA_ENTRADA.length / 2);
-  const coluna1Checklist = ITENS_CONFERENCIA_ENTRADA.slice(0, meioChecklist);
-  const coluna2Checklist = ITENS_CONFERENCIA_ENTRADA.slice(meioChecklist);
+  const meioChecklist = Math.ceil(listaItensAtiva.length / 2);
+  const coluna1Checklist = listaItensAtiva.slice(0, meioChecklist);
+  const coluna2Checklist = listaItensAtiva.slice(meioChecklist);
 
   const modalConteudo = (
     <div
@@ -992,7 +1004,7 @@ export function TermoGarantiaModal({
                   </thead>
                   <tbody>
                     {coluna1Checklist.map((item, idx) => {
-                      const st = conferencia[item];
+                      const st = checklistAtivo[item];
                       return (
                         <tr key={item} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"}>
                           <td className="border border-slate-200 py-0.5 px-1.5 font-medium text-slate-800 truncate max-w-[130px] print:py-0 print:px-1 print:text-[7.5px]">
@@ -1033,7 +1045,7 @@ export function TermoGarantiaModal({
                   </thead>
                   <tbody>
                     {coluna2Checklist.map((item, idx) => {
-                      const st = conferencia[item];
+                      const st = checklistAtivo[item];
                       return (
                         <tr key={item} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"}>
                           <td className="border border-slate-200 py-0.5 px-1.5 font-medium text-slate-800 truncate max-w-[130px] print:py-0 print:px-1 print:text-[7.5px]">
@@ -1059,6 +1071,18 @@ export function TermoGarantiaModal({
                 <div className="mt-1 flex items-center gap-1.5 text-[8.5px] font-medium text-slate-600 print:mt-0.5 print:text-[7.5px]">
                   <Camera className="h-3 w-3 text-primary" />
                   Registro Fotográfico: {midias.length} arquivo(s) arquivado(s) no sistema digital.
+                </div>
+              )}
+
+              {encerramento?.diagnosticoHardware && (
+                <div className="mt-1 flex items-center justify-between text-[8px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 p-1 rounded print:mt-0.5 print:py-0.5 print:text-[7px]">
+                  <span>
+                    ✓ Bateria de Testes de Hardware (*#0*#) executada:{" "}
+                    {encerramento.diagnosticoHardware.totalAprovados} itens aprovados
+                    {encerramento.diagnosticoHardware.totalReprovados > 0 &&
+                      `, ${encerramento.diagnosticoHardware.totalReprovados} com falha`}
+                  </span>
+                  <span className="font-mono text-[7px] text-emerald-700">Laudo Digital Registrado</span>
                 </div>
               )}
             </section>

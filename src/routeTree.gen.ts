@@ -14,6 +14,9 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
+import { Route as AprovacaoIdRouteImport } from './routes/aprovacao.$id'
+import { Route as DiagnosticoIdRouteImport } from './routes/diagnostico.$id'
 import { Route as AuthenticatedClientesIndexRouteImport } from './routes/_authenticated/clientes.index'
 import { Route as AuthenticatedOrdensIndexRouteImport } from './routes/_authenticated/ordens.index'
 import { Route as AuthenticatedOrdensIdRouteImport } from './routes/_authenticated/ordens.$id'
@@ -43,6 +46,21 @@ const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AprovacaoIdRoute = AprovacaoIdRouteImport.update({
+  id: '/aprovacao/$id',
+  path: '/aprovacao/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiagnosticoIdRoute = DiagnosticoIdRouteImport.update({
+  id: '/diagnostico/$id',
+  path: '/diagnostico/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedClientesIndexRoute =
   AuthenticatedClientesIndexRouteImport.update({
     id: '/clientes/',
@@ -71,6 +89,9 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/aprovacao/$id': typeof AprovacaoIdRoute
+  '/diagnostico/$id': typeof DiagnosticoIdRoute
   '/ordens/$id': typeof AuthenticatedOrdensIdRoute
   '/ordens/nova': typeof AuthenticatedOrdensNovaRoute
   '/clientes/': typeof AuthenticatedClientesIndexRoute
@@ -81,6 +102,9 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/aprovacao/$id': typeof AprovacaoIdRoute
+  '/diagnostico/$id': typeof DiagnosticoIdRoute
   '/ordens/$id': typeof AuthenticatedOrdensIdRoute
   '/ordens/nova': typeof AuthenticatedOrdensNovaRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
@@ -93,6 +117,9 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
+  '/aprovacao/$id': typeof AprovacaoIdRoute
+  '/diagnostico/$id': typeof DiagnosticoIdRoute
   '/_authenticated/ordens/$id': typeof AuthenticatedOrdensIdRoute
   '/_authenticated/ordens/nova': typeof AuthenticatedOrdensNovaRoute
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
@@ -105,6 +132,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/redefinir-senha'
     | '/painel'
+    | '/usuarios'
+    | '/aprovacao/$id'
+    | '/diagnostico/$id'
     | '/ordens/$id'
     | '/ordens/nova'
     | '/clientes/'
@@ -115,6 +145,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/redefinir-senha'
     | '/painel'
+    | '/usuarios'
+    | '/aprovacao/$id'
+    | '/diagnostico/$id'
     | '/ordens/$id'
     | '/ordens/nova'
     | '/clientes'
@@ -126,6 +159,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/redefinir-senha'
     | '/_authenticated/painel'
+    | '/_authenticated/usuarios'
+    | '/aprovacao/$id'
+    | '/diagnostico/$id'
     | '/_authenticated/ordens/$id'
     | '/_authenticated/ordens/nova'
     | '/_authenticated/clientes/'
@@ -137,6 +173,8 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
+  AprovacaoIdRoute: typeof AprovacaoIdRoute
+  DiagnosticoIdRoute: typeof DiagnosticoIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -176,6 +214,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/usuarios': {
+      id: '/_authenticated/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof AuthenticatedUsuariosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/aprovacao/$id': {
+      id: '/aprovacao/$id'
+      path: '/aprovacao/$id'
+      fullPath: '/aprovacao/$id'
+      preLoaderRoute: typeof AprovacaoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagnostico/$id': {
+      id: '/diagnostico/$id'
+      path: '/diagnostico/$id'
+      fullPath: '/diagnostico/$id'
+      preLoaderRoute: typeof DiagnosticoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/clientes/': {
       id: '/_authenticated/clientes/'
       path: '/clientes'
@@ -209,6 +268,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+  AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedOrdensIdRoute: typeof AuthenticatedOrdensIdRoute
   AuthenticatedOrdensNovaRoute: typeof AuthenticatedOrdensNovaRoute
   AuthenticatedClientesIndexRoute: typeof AuthenticatedClientesIndexRoute
@@ -217,6 +277,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+  AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedOrdensIdRoute: AuthenticatedOrdensIdRoute,
   AuthenticatedOrdensNovaRoute: AuthenticatedOrdensNovaRoute,
   AuthenticatedClientesIndexRoute: AuthenticatedClientesIndexRoute,
@@ -231,6 +292,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   RedefinirSenhaRoute: RedefinirSenhaRoute,
+  AprovacaoIdRoute: AprovacaoIdRoute,
+  DiagnosticoIdRoute: DiagnosticoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
