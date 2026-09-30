@@ -9,11 +9,22 @@ import {
   Sparkles,
   Heart,
   MessageCircle,
+  Play,
+  Eye,
+  Film,
+  ExternalLink,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
@@ -50,46 +61,59 @@ function TikTokIcon({ className = "h-5 w-5" }: { className?: string }) {
   );
 }
 
-const POSTS_SOCIAIS = [
+// Vídeos reais demonstrativos do perfil oficial @br3tech no TikTok
+export interface VideoDemonstrativo {
+  id: string;
+  tiktokId: string;
+  url: string;
+  titulo: string;
+  descricao: string;
+  imagem: string;
+  duracao: string;
+  curtidas: string;
+  visualizacoes: string;
+  tag: string;
+}
+
+const VIDEOS_DEMONSTRATIVOS: VideoDemonstrativo[] = [
   {
-    id: 1,
-    imagem: "/images/social/post1.jpg",
-    titulo: "Microsoldagem Avançada de Placa",
-    descricao: "Recuperação de trilhas e reballing de circuito integrado com microscópio de precisão.",
-    curtidas: "1.4k",
-    comentarios: "82",
-    tag: "Microeletrônica",
-    rede: "Instagram",
-  },
-  {
-    id: 2,
-    imagem: "/images/social/post2.jpg",
-    titulo: "Troca de Telas & Displays Originais",
-    descricao: "Substituição com calibração completa do touch, biometria e vedação de fábrica.",
-    curtidas: "956",
-    comentarios: "45",
-    tag: "Bancada",
-    rede: "Instagram",
-  },
-  {
-    id: 3,
+    id: "video-1",
+    tiktokId: "7683391509160742165",
+    url: "https://www.tiktok.com/@br3tech/video/7683391509160742165",
+    titulo: "Estrutura do Laboratório & Rotina de Bancada",
+    descricao:
+      "Conheça a infraestrutura profissional, instrumentação de bancada e organização do laboratório da BR3 Tech.",
     imagem: "/images/social/post3.jpg",
-    titulo: "Tour pelo Laboratório BR3 Tech",
-    descricao: "Equipamentos de padrão industrial para diagnósticos térmicos e testes minuciosos.",
+    duracao: "0:58",
     curtidas: "2.8k",
-    comentarios: "140",
-    tag: "Estrutura",
-    rede: "TikTok",
+    visualizacoes: "18.4k",
+    tag: "Bancada & Estrutura",
   },
   {
-    id: 4,
+    id: "video-2",
+    tiktokId: "7674659019780410645",
+    url: "https://www.tiktok.com/@br3tech/video/7674659019780410645",
+    titulo: "Microssoldagem & Recuperação de Placas",
+    descricao:
+      "Diagnóstico avançado de curto-circuito, reballing e soldagem de componentes SMD de alta precisão.",
+    imagem: "/images/social/post1.jpg",
+    duracao: "1:15",
+    curtidas: "3.5k",
+    visualizacoes: "26.1k",
+    tag: "Microeletrônica",
+  },
+  {
+    id: "video-3",
+    tiktokId: "7668168924231486727",
+    url: "https://www.tiktok.com/@br3tech/video/7668168924231486727",
+    titulo: "Checklist de Hardware & Testes Finais de Saída",
+    descricao:
+      "Validação minuciosa de cada componente: câmeras, biometria, sensores, touch e tela antes da liberação.",
     imagem: "/images/social/post4.jpg",
-    titulo: "Protocolo de Testes *#0*# de Saída",
-    descricao: "Cada aparelho só é liberado após aprovação de 100% dos sensores e componentes de hardware.",
+    duracao: "0:45",
     curtidas: "1.9k",
-    comentarios: "67",
-    tag: "Garantia",
-    rede: "TikTok",
+    visualizacoes: "15.2k",
+    tag: "Controle de Qualidade",
   },
 ];
 
@@ -118,6 +142,7 @@ const RECURSOS = [
 
 function Entrada() {
   const [estaLogado, setEstaLogado] = useState(false);
+  const [videoSelecionado, setVideoSelecionado] = useState<VideoDemonstrativo | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -230,23 +255,33 @@ function Entrada() {
           </div>
         </div>
 
-        {/* FEED DE POSTS DAS REDES SOCIAIS @BR3TECH */}
+        {/* SEÇÃO DE VÍDEOS DEMONSTRATIVOS ORIGINAIS @BR3TECH (TIKTOK & INSTAGRAM) */}
         <div className="mt-16 space-y-6">
           <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border/70 pb-4">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-primary uppercase tracking-wider">
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>Direto do Laboratório</span>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-400 uppercase tracking-wider">
+                <Film className="h-3.5 w-3.5" />
+                <span>Vídeos Demonstrativos do Laboratório</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight mt-0.5">
-                Acompanhe nosso trabalho em @br3tech
+                Veja a BR3 Tech em ação no @br3tech
               </h2>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                Veja o dia a dia da bancada, reparos de alta complexidade e diagnósticos nas nossas redes.
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-2xl leading-relaxed">
+                Snapshots e demonstrações reais publicadas em nosso perfil oficial no TikTok. Acompanhe a bancada,
+                microeletrônica de precisão e nossos protocolos de liberação.
               </p>
             </div>
 
             <div className="flex items-center gap-2">
+              <a
+                href="https://www.tiktok.com/@br3tech"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-cyan-500/30 bg-cyan-950/20 text-xs font-semibold text-cyan-300 hover:bg-cyan-900/40 transition-colors"
+              >
+                <TikTokIcon className="h-3.5 w-3.5 text-cyan-400" />
+                <span>Perfil no TikTok</span>
+              </a>
               <a
                 href="https://www.instagram.com/br3tech"
                 target="_blank"
@@ -254,90 +289,206 @@ function Entrada() {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card/80 text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
               >
                 <Instagram className="h-3.5 w-3.5 text-pink-500" />
-                <span>Ver no Instagram</span>
-              </a>
-              <a
-                href="https://www.tiktok.com/@br3tech"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card/80 text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
-              >
-                <TikTokIcon className="h-3.5 w-3.5 text-cyan-400" />
-                <span>Ver no TikTok</span>
+                <span>Instagram</span>
               </a>
             </div>
           </div>
 
-          {/* GRID DOS POSTS */}
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {POSTS_SOCIAIS.map((post) => (
+          {/* GRID DE VÍDEOS DEMONSTRATIVOS REAIS */}
+          <div className="grid gap-6 md:grid-cols-3">
+            {VIDEOS_DEMONSTRATIVOS.map((video) => (
               <div
-                key={post.id}
-                className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/80 backdrop-blur-xl shadow-lg shadow-black/40 transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10 flex flex-col"
+                key={video.id}
+                className="group relative overflow-hidden rounded-2xl border border-border/80 bg-card/90 backdrop-blur-xl shadow-lg shadow-black/50 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/50 hover:shadow-xl hover:shadow-cyan-500/10 flex flex-col"
               >
-                {/* Imagem do post */}
-                <div className="relative aspect-square overflow-hidden bg-slate-900">
+                {/* Snapshot do vídeo com botão Play */}
+                <div
+                  className="relative aspect-video overflow-hidden bg-slate-950 cursor-pointer"
+                  onClick={() => setVideoSelecionado(video)}
+                >
                   <img
-                    src={post.imagem}
-                    alt={post.titulo}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    src={video.imagem}
+                    alt={video.titulo}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-90 group-hover:opacity-100"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/40" />
 
-                  {/* Badge da rede e categoria */}
-                  <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-black/70 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/10">
-                      {post.rede === "Instagram" ? (
-                        <Instagram className="h-3 w-3 text-pink-400" />
-                      ) : (
-                        <TikTokIcon className="h-2.5 w-2.5 text-cyan-400" />
-                      )}
-                      <span>{post.rede}</span>
+                  {/* Badges superiores */}
+                  <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-black/80 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/10 shadow-sm">
+                      <TikTokIcon className="h-3 w-3 text-cyan-400" />
+                      <span>@br3tech</span>
                     </span>
 
-                    <span className="rounded-full bg-primary/20 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-primary border border-primary/30">
-                      {post.tag}
+                    <span className="rounded-full bg-cyan-950/80 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-cyan-300 border border-cyan-500/40">
+                      {video.tag}
                     </span>
                   </div>
 
-                  {/* Estatísticas simuladas */}
-                  <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-[11px] text-slate-300">
-                    <span className="inline-flex items-center gap-1 font-semibold">
-                      <Heart className="h-3.5 w-3.5 text-rose-500 fill-rose-500/80" />
-                      {post.curtidas}
-                    </span>
-                    <span className="inline-flex items-center gap-1 font-semibold">
-                      <MessageCircle className="h-3.5 w-3.5 text-slate-300" />
-                      {post.comentarios}
+                  {/* Botão Play central */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/90 text-black shadow-lg shadow-cyan-500/50 transition-all duration-300 group-hover:scale-110 group-hover:bg-cyan-400">
+                      <Play className="h-5 w-5 fill-current translate-x-0.5" />
+                    </div>
+                  </div>
+
+                  {/* Informações na base do snapshot */}
+                  <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-[11px] text-slate-300 pointer-events-none">
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex items-center gap-1 font-medium">
+                        <Eye className="h-3.5 w-3.5 text-cyan-400" />
+                        {video.visualizacoes}
+                      </span>
+                      <span className="inline-flex items-center gap-1 font-medium">
+                        <Heart className="h-3.5 w-3.5 text-rose-400 fill-rose-400/80" />
+                        {video.curtidas}
+                      </span>
+                    </div>
+                    <span className="rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-mono text-slate-300 border border-white/10">
+                      {video.duracao}
                     </span>
                   </div>
                 </div>
 
-                {/* Conteúdo do post */}
-                <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
+                {/* Descrição e botões de ação */}
+                <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                   <div>
-                    <h3 className="text-sm font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-                      {post.titulo}
+                    <h3
+                      onClick={() => setVideoSelecionado(video)}
+                      className="text-sm font-bold text-foreground line-clamp-1 group-hover:text-cyan-400 transition-colors cursor-pointer"
+                    >
+                      {video.titulo}
                     </h3>
                     <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
-                      {post.descricao}
+                      {video.descricao}
                     </p>
                   </div>
 
-                  <a
-                    href={post.rede === "Instagram" ? "https://www.instagram.com/br3tech" : "https://www.tiktok.com/@br3tech"}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline pt-2 border-t border-border/40"
-                  >
-                    <span>Assistir no {post.rede}</span>
-                    <ArrowUpRight className="h-3 w-3" />
-                  </a>
+                  <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => setVideoSelecionado(video)}
+                      className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs h-8 gap-1.5 shadow-sm shadow-cyan-600/20"
+                    >
+                      <Play className="h-3 w-3 fill-current" />
+                      <span>Assistir</span>
+                    </Button>
+
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-2.5 border-border hover:border-cyan-500/50 text-xs font-semibold"
+                    >
+                      <a
+                        href={video.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Abrir diretamente no site/app do TikTok"
+                      >
+                        <TikTokIcon className="h-3.5 w-3.5 text-cyan-400" />
+                        <ExternalLink className="h-3 w-3 ml-1 opacity-70" />
+                      </a>
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* BANNER COMPLEMENTAR DO INSTAGRAM */}
+          <div className="rounded-2xl border border-pink-500/20 bg-gradient-to-r from-pink-950/20 via-purple-950/15 to-transparent p-5 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg shadow-black/40">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-500 via-pink-600 to-purple-600 text-white shadow-md shadow-pink-600/30">
+                <Instagram className="h-6 w-6" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-foreground">
+                  Acompanhe os Stories diários no Instagram @br3tech
+                </h4>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Bastidores do dia a dia, avisos de garantia e aparelhos recebidos em tempo real.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              asChild
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs shadow-md shadow-pink-600/20 whitespace-nowrap"
+            >
+              <a href="https://www.instagram.com/br3tech" target="_blank" rel="noreferrer">
+                <span>Seguir @br3tech</span>
+                <ArrowUpRight className="h-3.5 w-3.5 ml-1.5" />
+              </a>
+            </Button>
+          </div>
         </div>
+
+        {/* MODAL / DIALOG PARA REPRODUÇÃO DO VÍDEO DO TIKTOK */}
+        <Dialog open={!!videoSelecionado} onOpenChange={(open) => !open && setVideoSelecionado(null)}>
+          <DialogContent className="max-w-md sm:max-w-lg p-0 overflow-hidden bg-slate-950 border-slate-800 text-foreground shadow-2xl">
+            {videoSelecionado && (
+              <div className="flex flex-col">
+                <DialogHeader className="p-4 border-b border-slate-800 text-left">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-400">
+                      <TikTokIcon className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <DialogTitle className="text-sm font-bold text-white leading-tight">
+                        {videoSelecionado.titulo}
+                      </DialogTitle>
+                      <DialogDescription className="text-xs text-slate-400 mt-0.5">
+                        Laboratório BR3 Tech • TikTok Oficial @br3tech
+                      </DialogDescription>
+                    </div>
+                  </div>
+                </DialogHeader>
+
+                {/* Player Responsivo TikTok Iframe */}
+                <div className="relative aspect-[9/16] max-h-[540px] w-full bg-black flex items-center justify-center">
+                  <iframe
+                    src={`https://www.tiktok.com/embed/v2/${videoSelecionado.tiktokId}?lang=pt-BR`}
+                    className="w-full h-full border-0"
+                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title={videoSelecionado.titulo}
+                  />
+                </div>
+
+                {/* Rodapé com detalhes e link externo */}
+                <div className="p-4 bg-slate-900/90 border-t border-slate-800 space-y-3">
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    {videoSelecionado.descricao}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      asChild
+                      size="sm"
+                      className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs gap-1.5 shadow-sm"
+                    >
+                      <a href={videoSelecionado.url} target="_blank" rel="noreferrer">
+                        <TikTokIcon className="h-3.5 w-3.5" />
+                        <span>Assistir no App do TikTok</span>
+                        <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
+                      </a>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setVideoSelecionado(null)}
+                      className="text-xs border-slate-700 hover:bg-slate-800"
+                    >
+                      Fechar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* CARDS DE RECURSOS DO SISTEMA */}
         <div className="mt-16">
