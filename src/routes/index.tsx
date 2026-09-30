@@ -209,12 +209,11 @@ function Entrada() {
             </div>
 
             <h1 className="mt-4 max-w-2xl text-3xl font-extrabold leading-tight md:text-5xl text-foreground drop-shadow-sm">
-              O controle completo do Laboratório da BR3 Tech em um só lugar
+              O controle completo para seu Laboratório ou assistência técnica em um só lugar
             </h1>
 
             <p className="mt-4 max-w-xl text-base text-muted-foreground leading-relaxed">
-              Gestão de ponta a ponta: entrada com checklist fotográfico, aprovação com assinatura digital,
-              testes de hardware de saída (*#0*#) e controle integrado de peças e garantias.
+              Gestão de ponta a ponta: entrada com checklist fotográfico, aprovação com assinatura digital, testes de hardware de saída e controle integrado de peças e garantias.
             </p>
 
             {/* BOTÕES DE REDES SOCIAIS NA HOME (substituindo o botão duplicado) */}
