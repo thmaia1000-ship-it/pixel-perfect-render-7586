@@ -93,13 +93,35 @@ export function TermoGarantiaModal({
   }, [modoInicial, ehEntregue, aberto]);
 
   const imprimir = () => {
+    // Força fundo branco e esquema de cores claro no navegador para eliminar qualquer borda escura da página
+    const prevColorScheme = document.documentElement.style.colorScheme;
+    const prevBodyBg = document.body.style.backgroundColor;
+
+    document.documentElement.style.colorScheme = "light";
+    document.body.style.backgroundColor = "#ffffff";
+
+    let restaurado = false;
+    const restaurarEstilos = () => {
+      if (restaurado) return;
+      restaurado = true;
+      document.documentElement.style.colorScheme = prevColorScheme;
+      document.body.style.backgroundColor = prevBodyBg;
+      window.removeEventListener("afterprint", restaurarEstilos);
+    };
+
+    window.addEventListener("afterprint", restaurarEstilos);
+
     // Remove qualquer iframe remanescente de execuções anteriores
     const iframeAntigo = document.getElementById("print-iframe-helper");
     if (iframeAntigo) {
       iframeAntigo.remove();
     }
+
     // Dispara a impressão nativa imediata
     window.print();
+
+    // Fallback caso afterprint não dispare (ex: em alguns navegadores/mobile)
+    setTimeout(restaurarEstilos, 3000);
   };
 
   // Intercepta atalho de teclado Ctrl+P / Cmd+P quando o modal estiver aberto
@@ -165,9 +187,9 @@ export function TermoGarantiaModal({
   const modalConteudo = (
     <div
       id="modal-termo-garantia"
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 p-3 sm:p-4 backdrop-blur-sm print:p-0 print:bg-white print:static print:inset-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 p-3 sm:p-4 backdrop-blur-sm print:p-0 print:!bg-white print:!bg-none print:static print:inset-auto print:!backdrop-blur-none"
     >
-      <div className="relative w-full max-w-4xl rounded-2xl border border-border bg-background p-4 sm:p-6 shadow-2xl print:border-none print:shadow-none print:p-0 print:w-full print:max-w-none">
+      <div className="relative w-full max-w-4xl rounded-2xl border border-border bg-background p-4 sm:p-6 shadow-2xl print:border-none print:shadow-none print:p-0 print:w-full print:max-w-none print:!bg-white">
         {/* BANNER DE FINALIZAÇÃO DE ABERTURA DA OS (quando aplicável) */}
         {mostrarAcoesFinalizacao && (
           <div className="mb-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3.5 sm:p-4 text-emerald-950 dark:text-emerald-200 print:hidden shadow-sm">
@@ -322,13 +344,46 @@ export function TermoGarantiaModal({
           </div>
         </div>
 
-        {/* Ajuste dinâmico de tamanho de papel conforme o modelo selecionado */}
+        {/* Ajuste dinâmico de tamanho de papel conforme o modelo selecionado e remoção completa de bordas pretas */}
         {modo === "termica_80mm" ? (
           <style>{`
             @media print {
               @page {
                 size: 80mm auto !important;
                 margin: 2mm 2mm !important;
+              }
+              :root, html, body {
+                color-scheme: light !important;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                color: #000000 !important;
+              }
+              body::before, body::after, html::before, html::after {
+                display: none !important;
+                content: none !important;
+                background: none !important;
+              }
+              #root, body > *:not(#modal-termo-garantia) {
+                display: none !important;
+              }
+              #modal-termo-garantia {
+                position: static !important;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+              }
+              #modal-termo-garantia > div {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
               }
             }
           `}</style>
@@ -338,6 +393,57 @@ export function TermoGarantiaModal({
               @page {
                 size: A4 portrait !important;
                 margin: 4mm 6mm !important;
+              }
+              :root, html, body {
+                color-scheme: light !important;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                color: #000000 !important;
+              }
+              body::before, body::after, html::before, html::after {
+                display: none !important;
+                content: none !important;
+                background: none !important;
+              }
+              #root, body > *:not(#modal-termo-garantia) {
+                display: none !important;
+              }
+              #modal-termo-garantia {
+                position: static !important;
+                display: block !important;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                inset: auto !important;
+              }
+              #modal-termo-garantia > div {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+              }
+              .relatorio-impresso-selecionado {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                border: none !important;
+                box-shadow: none !important;
+                outline: none !important;
+              }
+              .relatorio-impresso-selecionado > div,
+              .print-page-exact > div {
+                border-color: #e2e8f0 !important;
+                box-shadow: none !important;
               }
             }
           `}</style>

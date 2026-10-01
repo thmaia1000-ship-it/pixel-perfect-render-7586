@@ -214,26 +214,40 @@
     color-adjust: exact !important;
   }
 
-  /* Oculta completamente o #root e tudo fora do modal no body para que nenhuma página de fundo vá para a impressora */
-  #root,
-  body > *:not(#modal-termo-garantia) {
-    display: none !important;
+  /* Força modo claro total para eliminar bordas e fundos pretos da página */
+  :root,
+  html {
+    color-scheme: light !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
   }
 
-  html,
   body {
+    color-scheme: light !important;
     background: #ffffff !important;
+    background-color: #ffffff !important;
     color: #000000 !important;
     height: auto !important;
     min-height: auto !important;
-    max-height: 100% !important;
+    max-height: none !important;
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
     overflow: visible !important;
   }
 
-  body::before {
+  body::before,
+  body::after,
+  html::before,
+  html::after {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+  }
+
+  /* Oculta completamente o #root e tudo fora do modal no body para que nenhuma página de fundo vá para a impressora */
+  #root,
+  body > *:not(#modal-termo-garantia) {
     display: none !important;
   }
 
@@ -241,11 +255,16 @@
     position: static !important;
     display: block !important;
     background: #ffffff !important;
+    background-color: #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     inset: auto !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
   #modal-termo-garantia > div {
@@ -256,6 +275,7 @@
     width: 100% !important;
     max-width: 100% !important;
     background: #ffffff !important;
+    background-color: #ffffff !important;
   }
 
   /* Exibe EXCLUSIVAMENTE o relatório selecionado nos botões do modal */
@@ -271,6 +291,7 @@
     box-shadow: none !important;
     outline: none !important;
     background: #ffffff !important;
+    background-color: #ffffff !important;
     color: #000000 !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
@@ -281,7 +302,7 @@
   /* Remove grandes bordas pretas nos impressos e garante visual limpo */
   .relatorio-impresso-selecionado > div,
   .print-page-exact > div {
-    border: none !important;
+    border-color: #e2e8f0 !important;
     box-shadow: none !important;
     outline: none !important;
   }
@@ -303,6 +324,7 @@
     line-height: 1.25 !important;
     color: #000000 !important;
     background: #ffffff !important;
+    background-color: #ffffff !important;
     box-sizing: border-box !important;
   }
 }
