@@ -104,6 +104,31 @@ export function ModalEncerramentoOS({
   const [concluindo, setConcluindo] = useState(false);
   const [mostrarQrCodeModal, setMostrarQrCodeModal] = useState(false);
 
+  // Sincroniza estado do checklist e observações ao abrir o modal
+  useEffect(() => {
+    if (aberto) {
+      const inicial: ConferenciaChecklist = {};
+      for (const item of ITENS_CHECKLIST_SAIDA) {
+        inicial[item] = encerramentoAtual?.checklistSaida?.[item] ?? null;
+      }
+      setChecklist(inicial);
+      setObsSaida(encerramentoAtual?.observacoesSaida || "");
+    }
+  }, [aberto, encerramentoAtual]);
+
+  // Fecha o modal ao pressionar a tecla Escape
+  useEffect(() => {
+    if (!aberto) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onFechar();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [aberto, onFechar]);
+
   const diagnosticoHardware = encerramentoAtual?.diagnosticoHardware;
 
   const toggleItem = (item: string, status: "OK" | "Defeito" | "N/V") => {
@@ -175,9 +200,17 @@ export function ModalEncerramentoOS({
     }
   };
 
+  if (!aberto) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-4 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-3xl rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-2xl space-y-5 my-auto max-h-[92vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-4 backdrop-blur-sm overflow-y-auto cursor-pointer"
+      onClick={onFechar}
+    >
+      <div
+        className="relative w-full max-w-3xl rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-2xl space-y-5 my-auto max-h-[92vh] overflow-y-auto cursor-default"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Cabeçalho */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/80 pb-4">
           <div>
@@ -210,7 +243,8 @@ export function ModalEncerramentoOS({
               variant="ghost"
               size="sm"
               onClick={onFechar}
-              className="h-8 w-8 p-0 text-muted-foreground"
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+              title="Fechar (Esc)"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -482,7 +516,13 @@ export function ModalEncerramentoOS({
 
         {/* Rodapé e Ações */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border">
-          <Button type="button" variant="outline" size="sm" onClick={onFechar} className="text-xs">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onFechar}
+            className="text-xs cursor-pointer hover:bg-secondary font-semibold"
+          >
             Fechar
           </Button>
 
