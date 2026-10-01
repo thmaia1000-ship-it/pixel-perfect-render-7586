@@ -74,6 +74,7 @@ interface BotaoSubKeyConfig {
   nome: string;
   teclaFisicaLabel: string;
   teclasEvent: string[];
+  keyCodes: number[];
   freqAudio: number;
   corBg: string;
   corBorder: string;
@@ -91,12 +92,12 @@ const BOTOES_SUB_KEY: BotaoSubKeyConfig[] = [
     nome: "Volume (+)",
     teclaFisicaLabel: "Botão Aumentar Volume",
     teclasEvent: ["AudioVolumeUp", "VolumeUp", "+", "ArrowUp", "KeyW"],
+    keyCodes: [24, 175, 38, 87, 107, 187], // 24: Android KEYCODE_VOLUME_UP, 175: Web VK_VOLUME_UP
     freqAudio: 880,
     corBg: "bg-blue-600 hover:bg-blue-500",
     corBorder: "border-blue-500",
     corText: "text-blue-400",
-    corAtiva:
-      "border-blue-500 bg-blue-500/20 text-blue-300 ring-2 ring-blue-500 shadow-lg shadow-blue-500/25",
+    corAtiva: "border-blue-500 bg-blue-500/20 text-blue-300 ring-2 ring-blue-500 shadow-lg shadow-blue-500/25",
     corBadge: "bg-blue-500/20 text-blue-300 border-blue-500/40",
     obrigatorio: true,
     instrucao: "Pressione a tecla física de VOLUME (+) na lateral do smartphone",
@@ -107,12 +108,12 @@ const BOTOES_SUB_KEY: BotaoSubKeyConfig[] = [
     nome: "Volume (-)",
     teclaFisicaLabel: "Botão Diminuir Volume",
     teclasEvent: ["AudioVolumeDown", "VolumeDown", "-", "ArrowDown", "KeyS"],
+    keyCodes: [25, 174, 40, 83, 109, 189], // 25: Android KEYCODE_VOLUME_DOWN, 174: Web VK_VOLUME_DOWN
     freqAudio: 660,
     corBg: "bg-amber-600 hover:bg-amber-500",
     corBorder: "border-amber-500",
     corText: "text-amber-400",
-    corAtiva:
-      "border-amber-500 bg-amber-500/20 text-amber-300 ring-2 ring-amber-500 shadow-lg shadow-amber-500/25",
+    corAtiva: "border-amber-500 bg-amber-500/20 text-amber-300 ring-2 ring-amber-500 shadow-lg shadow-amber-500/25",
     corBadge: "bg-amber-500/20 text-amber-300 border-amber-500/40",
     obrigatorio: true,
     instrucao: "Pressione a tecla física de VOLUME (-) na lateral do smartphone",
@@ -123,12 +124,12 @@ const BOTOES_SUB_KEY: BotaoSubKeyConfig[] = [
     nome: "Power / Liga",
     teclaFisicaLabel: "Botão Power / Desbloqueio",
     teclasEvent: ["Power", "Sleep", "WakeUp", "KeyP"],
+    keyCodes: [26, 182, 183, 80], // 26: Android KEYCODE_POWER, 182/183: Sleep
     freqAudio: 520,
     corBg: "bg-rose-600 hover:bg-rose-500",
     corBorder: "border-rose-500",
     corText: "text-rose-400",
-    corAtiva:
-      "border-rose-500 bg-rose-500/20 text-rose-300 ring-2 ring-rose-500 shadow-lg shadow-rose-500/25",
+    corAtiva: "border-rose-500 bg-rose-500/20 text-rose-300 ring-2 ring-rose-500 shadow-lg shadow-rose-500/25",
     corBadge: "bg-rose-500/20 text-rose-300 border-rose-500/40",
     obrigatorio: true,
     instrucao: "Pressione o botão POWER / LIGA do aparelho",
@@ -139,12 +140,12 @@ const BOTOES_SUB_KEY: BotaoSubKeyConfig[] = [
     nome: "Ação / Bixby",
     teclaFisicaLabel: "Botão Lateral de Ação ou Assistente",
     teclasEvent: ["LaunchAssistant", "F1", "F2", "Camera", "KeyA"],
+    keyCodes: [27, 231, 112, 113, 65], // 27: Camera, 231: Assist, 112/113: F1/F2
     freqAudio: 1040,
     corBg: "bg-purple-600 hover:bg-purple-500",
     corBorder: "border-purple-500",
     corText: "text-purple-400",
-    corAtiva:
-      "border-purple-500 bg-purple-500/20 text-purple-300 ring-2 ring-purple-500 shadow-lg shadow-purple-500/25",
+    corAtiva: "border-purple-500 bg-purple-500/20 text-purple-300 ring-2 ring-purple-500 shadow-lg shadow-purple-500/25",
     corBadge: "bg-purple-500/20 text-purple-300 border-purple-500/40",
     obrigatorio: false,
     instrucao: "Pressione o botão extra (se disponível) ou avance se não possuir",
@@ -185,18 +186,14 @@ function PaginaDiagnosticoAparelho() {
   const [touchGrid, setTouchGrid] = useState<boolean[]>(Array(TOTAL_CELULAS_TOUCH).fill(false));
   const [vibrandoAgora, setVibrandoAgora] = useState(false);
   const [somTocando, setSomTocando] = useState(false);
-  const [sensorValues, setSensorValues] = useState<{ x: number; y: number; z: number } | null>(
-    null,
-  );
+  const [sensorValues, setSensorValues] = useState<{ x: number; y: number; z: number } | null>(null);
   const [gravandoAudio, setGravandoAudio] = useState(false);
   const [segundosRestantesMic, setSegundosRestantesMic] = useState(3);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [teclasDetectadas, setTeclasDetectadas] = useState<string[]>([]);
   // Estados da rotina interativa do Sub Key (Teclas Físicas)
   const [subKeyEtapaIndex, setSubKeyEtapaIndex] = useState<number>(0);
-  const [subKeyStatus, setSubKeyStatus] = useState<
-    Record<string, "pendente" | "aprovado" | "falha" | "ignorado">
-  >({
+  const [subKeyStatus, setSubKeyStatus] = useState<Record<string, "pendente" | "aprovado" | "falha" | "ignorado">>({
     vol_up: "pendente",
     vol_down: "pendente",
     power: "pendente",
@@ -433,7 +430,7 @@ function PaginaDiagnosticoAparelho() {
     } else {
       if (!window.isSecureContext) {
         toast.warning(
-          "Atenção: Seu navegador pode exigir que as permissões de câmera/microfone sejam liberadas no ícone do cadeado da barra de endereços.",
+          "Atenção: Seu navegador pode exigir que as permissões de câmera/microfone sejam liberadas no ícone do cadeado da barra de endereços."
         );
       } else {
         toast.error("Permissões negadas. Ative o acesso nas configurações do navegador.");
@@ -513,7 +510,7 @@ function PaginaDiagnosticoAparelho() {
   const acionarBotaoSubKey = (
     botaoId: string,
     status: "aprovado" | "falha" | "ignorado" = "aprovado",
-    origem: "hardware" | "toque" = "toque",
+    origem: "hardware" | "toque" = "toque"
   ) => {
     const botaoCfg = BOTOES_SUB_KEY.find((b) => b.id === botaoId);
     if (!botaoCfg) return;
@@ -521,27 +518,45 @@ function PaginaDiagnosticoAparelho() {
     if (status === "aprovado") {
       tocarBeepCurto(botaoCfg.freqAudio, 140);
       if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-        try {
-          navigator.vibrate([70]);
-        } catch {}
+        try { navigator.vibrate(80); } catch {}
       }
+      dispararRumbleAcustico(120);
       setSubKeyAnimando(true);
       setTimeout(() => setSubKeyAnimando(false), 450);
     } else if (status === "falha") {
       tocarBeepCurto(320, 200);
       if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-        try {
-          navigator.vibrate([100, 50, 100]);
-        } catch {}
+        try { navigator.vibrate([100, 50, 100]); } catch {}
       }
     }
 
-    setSubKeyStatus((prev) => ({ ...prev, [botaoId]: status }));
+    setSubKeyStatus((prev) => {
+      const next = { ...prev, [botaoId]: status };
+
+      // Se todos os obrigatórios foram testados com aprovação
+      const todosObrigOk =
+        next.vol_up === "aprovado" &&
+        next.vol_down === "aprovado" &&
+        next.power === "aprovado";
+
+      if (todosObrigOk) {
+        tocarSucessoSubKey();
+        toast.success("🎉 Todas as teclas físicas validadas com sucesso! Concluindo...", {
+          duration: 2200,
+        });
+        setTimeout(() => {
+          concluirRotinaSubKey("aprovado");
+        }, 650);
+      }
+
+      return next;
+    });
+
     setTeclasDetectadas((prev) => (prev.includes(botaoCfg.nome) ? prev : [...prev, botaoCfg.nome]));
 
     const msg =
       status === "aprovado"
-        ? `${botaoCfg.nome}: Acionamento confirmado (${origem === "hardware" ? "Tecla Física Detectada" : "Clique Mecânico Confirmado"})!`
+        ? `${botaoCfg.nome}: Validado com sucesso (${origem === "hardware" ? "Tecla Física Detectada" : "Toque Sentido no Display"})!`
         : status === "falha"
           ? `${botaoCfg.nome}: Registrada falha mecânica/elétrica!`
           : `${botaoCfg.nome}: Botão ausente neste aparelho (ignorado).`;
@@ -555,9 +570,9 @@ function PaginaDiagnosticoAparelho() {
     });
 
     if (status === "aprovado") {
-      toast.success(msg, { duration: 1800 });
+      toast.success(msg, { duration: 1500 });
     } else if (status === "falha") {
-      toast.error(msg, { duration: 2500 });
+      toast.error(msg, { duration: 2200 });
     } else {
       toast.info(msg, { duration: 1500 });
     }
@@ -567,47 +582,131 @@ function PaginaDiagnosticoAparelho() {
     if (currentIndex < BOTOES_SUB_KEY.length - 1 && currentIndex === subKeyEtapaIndex) {
       setTimeout(() => {
         setSubKeyEtapaIndex(currentIndex + 1);
-      }, 400);
+      }, 350);
     }
   };
 
-  // Listener de teclas físicas (Sub Key) com normalização de eventos
+  // Listener de teclas físicas (Sub Key) com suporte a Android (KeyCodes 24/25/26), iOS e Web
   useEffect(() => {
     if (testeAtivo !== "sub_key") return;
 
-    const handleKey = (e: KeyboardEvent) => {
-      const key = e.key;
-      const code = e.code;
+    const testarCorrespondenciaTecla = (e: KeyboardEvent) => {
+      const key = (e.key || "").toLowerCase();
+      const code = (e.code || "").toLowerCase();
+      const keyCode = e.keyCode || e.which;
 
-      // 1. Tenta bater com o botão atualmente em foco na rotina
-      const botaoAtual = BOTOES_SUB_KEY[subKeyEtapaIndex];
-      const matchAtual =
-        botaoAtual &&
-        botaoAtual.teclasEvent.some(
-          (k) => k.toLowerCase() === key?.toLowerCase() || k.toLowerCase() === code?.toLowerCase(),
-        );
-
-      if (matchAtual) {
+      // 1. Volume Up
+      if (
+        keyCode === 24 || // Android KEYCODE_VOLUME_UP
+        keyCode === 175 || // VK_VOLUME_UP
+        keyCode === 38 || // ArrowUp
+        keyCode === 87 || // KeyW
+        keyCode === 107 ||
+        keyCode === 187 ||
+        key === "audiovolumeup" ||
+        key === "volumeup" ||
+        key === "+" ||
+        code === "audiovolumeup" ||
+        code === "arrowup"
+      ) {
         e.preventDefault();
-        acionarBotaoSubKey(botaoAtual.id, "aprovado", "hardware");
+        acionarBotaoSubKey("vol_up", "aprovado", "hardware");
         return;
       }
 
-      // 2. Se for outra tecla de hardware suportada
-      const outroBotao = BOTOES_SUB_KEY.find((b) =>
-        b.teclasEvent.some(
-          (k) => k.toLowerCase() === key?.toLowerCase() || k.toLowerCase() === code?.toLowerCase(),
-        ),
+      // 2. Volume Down
+      if (
+        keyCode === 25 || // Android KEYCODE_VOLUME_DOWN
+        keyCode === 174 || // VK_VOLUME_DOWN
+        keyCode === 40 || // ArrowDown
+        keyCode === 83 || // KeyS
+        keyCode === 109 ||
+        keyCode === 189 ||
+        key === "audiovolumedown" ||
+        key === "volumedown" ||
+        key === "-" ||
+        code === "audiovolumedown" ||
+        code === "arrowdown"
+      ) {
+        e.preventDefault();
+        acionarBotaoSubKey("vol_down", "aprovado", "hardware");
+        return;
+      }
+
+      // 3. Power / Sleep
+      if (
+        keyCode === 26 || // Android KEYCODE_POWER
+        keyCode === 182 ||
+        keyCode === 183 ||
+        keyCode === 80 || // KeyP
+        key === "power" ||
+        key === "sleep" ||
+        key === "wakeup" ||
+        code === "power"
+      ) {
+        e.preventDefault();
+        acionarBotaoSubKey("power", "aprovado", "hardware");
+        return;
+      }
+
+      // 4. Assist / Bixby / Camera
+      if (
+        keyCode === 27 || // KEYCODE_CAMERA
+        keyCode === 231 || // KEYCODE_ASSIST
+        keyCode === 112 || // F1
+        keyCode === 113 || // F2
+        keyCode === 65 || // KeyA
+        key === "launchassistant" ||
+        key === "camera" ||
+        code === "launchassistant"
+      ) {
+        e.preventDefault();
+        acionarBotaoSubKey("assist", "aprovado", "hardware");
+        return;
+      }
+
+      // 5. Se bater com a lista configurada de qualquer botão
+      const botaoEncontrado = BOTOES_SUB_KEY.find(
+        (b) =>
+          b.keyCodes.includes(keyCode) ||
+          b.teclasEvent.some(
+            (te) => te.toLowerCase() === key || te.toLowerCase() === code
+          )
       );
 
-      if (outroBotao) {
+      if (botaoEncontrado) {
         e.preventDefault();
-        acionarBotaoSubKey(outroBotao.id, "aprovado", "hardware");
+        acionarBotaoSubKey(botaoEncontrado.id, "aprovado", "hardware");
       }
     };
 
-    window.addEventListener("keydown", handleKey, { capture: true });
-    return () => window.removeEventListener("keydown", handleKey, { capture: true });
+    window.addEventListener("keydown", testarCorrespondenciaTecla, { capture: true, passive: false });
+    window.addEventListener("keyup", testarCorrespondenciaTecla, { capture: true, passive: false });
+    document.addEventListener("keydown", testarCorrespondenciaTecla, { capture: true, passive: false });
+    document.addEventListener("keyup", testarCorrespondenciaTecla, { capture: true, passive: false });
+
+    // Detecção física do botão Power através do ciclo de tela desligada / ligada
+    let telaApagouNoPower = false;
+    const handleVisibilidadePower = () => {
+      if (document.visibilityState === "hidden") {
+        telaApagouNoPower = true;
+      } else if (document.visibilityState === "visible" && telaApagouNoPower) {
+        telaApagouNoPower = false;
+        acionarBotaoSubKey("power", "aprovado", "hardware");
+        toast.success("Botão físico Power / Liga detectado com sucesso pelo ciclo de tela!", {
+          duration: 2500,
+        });
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilidadePower);
+
+    return () => {
+      window.removeEventListener("keydown", testarCorrespondenciaTecla, { capture: true } as any);
+      window.removeEventListener("keyup", testarCorrespondenciaTecla, { capture: true } as any);
+      document.removeEventListener("keydown", testarCorrespondenciaTecla, { capture: true } as any);
+      document.removeEventListener("keyup", testarCorrespondenciaTecla, { capture: true } as any);
+      document.removeEventListener("visibilitychange", handleVisibilidadePower);
+    };
   }, [testeAtivo, subKeyEtapaIndex]);
 
   // Função para tocar tom de áudio (Receiver 1000Hz ou Speaker 440Hz)
@@ -661,10 +760,7 @@ function PaginaDiagnosticoAparelho() {
       osc.type = "sawtooth";
       osc.frequency.setValueAtTime(55, ctx.currentTime);
       gain.gain.setValueAtTime(0.85, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(
-        0.001,
-        ctx.currentTime + Math.min(duracaoMs, 1200) / 1000,
-      );
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + Math.min(duracaoMs, 1200) / 1000);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start();
@@ -674,15 +770,14 @@ function PaginaDiagnosticoAparelho() {
 
   // Vibração com padrões variados (suporte aprimorado para Android, iOS e Web)
   const acionarVibracao = (padrao: number | number[] = [400, 200, 400, 200, 600]) => {
-    const duracaoTotal = Array.isArray(padrao) ? padrao.reduce((acc, v) => acc + v, 0) : padrao;
+    const duracaoTotal = Array.isArray(padrao)
+      ? padrao.reduce((acc, v) => acc + v, 0)
+      : padrao;
 
     setVibrandoAgora(true);
-    setTimeout(
-      () => {
-        setVibrandoAgora(false);
-      },
-      Math.max(duracaoTotal, 350),
-    );
+    setTimeout(() => {
+      setVibrandoAgora(false);
+    }, Math.max(duracaoTotal, 350));
 
     let vibrouHardware = false;
 
@@ -755,7 +850,7 @@ function PaginaDiagnosticoAparelho() {
 
     if (!navigator?.mediaDevices?.getUserMedia) {
       toast.error(
-        "Acesso à câmera indisponível neste navegador. Em redes locais, certifique-se de liberar as permissões no cadeado da barra de endereço.",
+        "Acesso à câmera indisponível neste navegador. Em redes locais, certifique-se de liberar as permissões no cadeado da barra de endereço."
       );
       return;
     }
@@ -764,11 +859,7 @@ function PaginaDiagnosticoAparelho() {
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: facingMode },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
+          video: { facingMode: { ideal: facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } },
           audio: false,
         });
       } catch {
@@ -796,7 +887,7 @@ function PaginaDiagnosticoAparelho() {
       toast.error(
         e?.name === "NotAllowedError"
           ? "Permissão de câmera negada. Toque no ícone do cadeado no topo do navegador para liberar."
-          : `Acesso à câmera indisponível: ${e?.message || "permissão negada"}`,
+          : `Acesso à câmera indisponível: ${e?.message || "permissão negada"}`
       );
     }
   };
@@ -808,7 +899,7 @@ function PaginaDiagnosticoAparelho() {
 
     if (!navigator?.mediaDevices?.getUserMedia) {
       toast.error(
-        "Acesso ao microfone indisponível. Libere o acesso no ícone de configurações/cadeado da barra de endereços.",
+        "Acesso ao microfone indisponível. Libere o acesso no ícone de configurações/cadeado da barra de endereços."
       );
       return;
     }
@@ -886,7 +977,7 @@ function PaginaDiagnosticoAparelho() {
       toast.error(
         e?.name === "NotAllowedError"
           ? "Permissão de microfone negada. Toque no cadeado da barra de endereço para autorizar."
-          : `Não foi possível acessar o microfone: ${e?.message || "bloqueado"}`,
+          : `Não foi possível acessar o microfone: ${e?.message || "bloqueado"}`
       );
     }
   };
@@ -908,7 +999,7 @@ function PaginaDiagnosticoAparelho() {
   const gravarResultado = (
     id: TesteHardwareId,
     status: "aprovado" | "reprovado" | "ignorado",
-    detalhes?: string,
+    detalhes?: string
   ) => {
     pararRecursosAtuais();
     setResultados((prev) => ({
@@ -926,12 +1017,9 @@ function PaginaDiagnosticoAparelho() {
       const nextItem = LISTA_TESTES_HARDWARE[currentIndex + 1];
 
       if (nextItem) {
-        toast.info(
-          `Teste ${status === "aprovado" ? "aprovado" : "registrado"}! Próximo: ${nextItem.titulo}...`,
-          {
-            duration: 1600,
-          },
-        );
+        toast.info(`Teste ${status === "aprovado" ? "aprovado" : "registrado"}! Próximo: ${nextItem.titulo}...`, {
+          duration: 1600,
+        });
         setTimeout(() => {
           abrirTeste(nextItem.id);
         }, 350);
@@ -999,8 +1087,34 @@ function PaginaDiagnosticoAparelho() {
     toast.success(
       statusEfetivo === "aprovado"
         ? "Sub Key aprovado! Registrado no laudo da OS."
-        : "Sub Key finalizado com falhas registradas.",
+        : "Sub Key finalizado com falhas registradas."
     );
+  };
+
+  // Aprovação expressa de todas as teclas físicas com 1 clique
+  const aprovarTodosBotoesSubKey = () => {
+    tocarSucessoSubKey();
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      try { navigator.vibrate([100, 50, 150]); } catch {}
+    }
+    dispararRumbleAcustico(200);
+
+    setSubKeyStatus({
+      vol_up: "aprovado",
+      vol_down: "aprovado",
+      power: "aprovado",
+      assist: "aprovado",
+    });
+    setTeclasDetectadas(["Volume (+)", "Volume (-)", "Power / Liga", "Ação / Bixby"]);
+    toast.success("✨ Todas as teclas físicas foram aprovadas com sucesso!", { duration: 2000 });
+
+    setTimeout(() => {
+      gravarResultado(
+        "sub_key",
+        "aprovado",
+        "Volume (+): OK · Volume (-): OK · Power / Liga: OK · Ação / Bixby: OK (Validação Expressa)"
+      );
+    }, 400);
   };
 
   // Inicializa o teste selecionado
@@ -1116,15 +1230,11 @@ function PaginaDiagnosticoAparelho() {
             <div>
               <h2 className="text-lg font-bold text-white">Identificação do Técnico Necessária</h2>
               <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-                As ordens de serviço e laudos de hardware da BR3 Tech são restritos. Entre com sua
-                conta no celular para carregar o equipamento e salvar o checklist de saída.
+                As ordens de serviço e laudos de hardware da BR3 Tech são restritos. Entre com sua conta no celular para carregar o equipamento e salvar o checklist de saída.
               </p>
             </div>
             <div className="pt-2 space-y-2">
-              <Button
-                asChild
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-11 gap-2 shadow-lg shadow-primary/20"
-              >
+              <Button asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-11 gap-2 shadow-lg shadow-primary/20">
                 <Link to="/auth" search={{ returnTo: `/diagnostico/${id}` }}>
                   <LogIn className="h-4 w-4" />
                   <span>Fazer Login como Técnico no Celular</span>
@@ -1140,9 +1250,7 @@ function PaginaDiagnosticoAparelho() {
               </Button>
             </div>
             <p className="text-[11px] text-slate-500 bg-slate-950 p-2.5 rounded-lg border border-slate-850">
-              💡 <strong>Dica:</strong> No computador, no modal de encerramento da OS, marque a
-              opção <em>"Login Automático via QR Code"</em> para entrar no celular sem precisar
-              digitar sua senha!
+              💡 <strong>Dica:</strong> No computador, no modal de encerramento da OS, marque a opção <em>"Login Automático via QR Code"</em> para entrar no celular sem precisar digitar sua senha!
             </p>
           </div>
         </div>
@@ -1182,12 +1290,8 @@ function PaginaDiagnosticoAparelho() {
   const totalAprovados = Object.values(resultados).filter((r) => r.status === "aprovado").length;
   const totalReprovados = Object.values(resultados).filter((r) => r.status === "reprovado").length;
   const proximoPendente = LISTA_TESTES_HARDWARE.find((item) => !resultados[item.id]);
-  const activeTestIndex = testeAtivo
-    ? LISTA_TESTES_HARDWARE.findIndex((item) => item.id === testeAtivo)
-    : -1;
-  const activeTestConfig = testeAtivo
-    ? LISTA_TESTES_HARDWARE.find((item) => item.id === testeAtivo)
-    : null;
+  const activeTestIndex = testeAtivo ? LISTA_TESTES_HARDWARE.findIndex((item) => item.id === testeAtivo) : -1;
+  const activeTestConfig = testeAtivo ? LISTA_TESTES_HARDWARE.find((item) => item.id === testeAtivo) : null;
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col selection:bg-primary/30">
@@ -1343,11 +1447,7 @@ function PaginaDiagnosticoAparelho() {
                     size="sm"
                     type="button"
                     onClick={() =>
-                      gravarResultado(
-                        "touch",
-                        "reprovado",
-                        "Zona morta / falha no digitalizador de toque",
-                      )
+                      gravarResultado("touch", "reprovado", "Zona morta / falha no digitalizador de toque")
                     }
                     className="bg-rose-900/85 hover:bg-rose-800 text-rose-200 border border-rose-700/60 text-[11px] font-bold h-7 px-2.5 rounded-full shadow-lg"
                   >
@@ -1387,9 +1487,7 @@ function PaginaDiagnosticoAparelho() {
                   <Volume2 className="h-10 w-10 text-primary" />
                 </div>
                 <h2 className="text-xl font-black uppercase">
-                  {testeAtivo === "receiver"
-                    ? "Receiver (Auricular de Chamada)"
-                    : "Speaker (Alto-falante Viva-voz)"}
+                  {testeAtivo === "receiver" ? "Receiver (Auricular de Chamada)" : "Speaker (Alto-falante Viva-voz)"}
                 </h2>
                 <p className="text-xs text-slate-400 max-w-sm">
                   {testeAtivo === "receiver"
@@ -1432,9 +1530,7 @@ function PaginaDiagnosticoAparelho() {
             <div className="flex-1 flex flex-col items-center justify-between p-6 bg-slate-950 text-center">
               <div className="pt-8 space-y-4 max-w-sm w-full">
                 <div className="mx-auto w-20 h-20 rounded-full bg-red-500/20 border-2 border-red-500 flex items-center justify-center relative">
-                  <Radio
-                    className={`h-10 w-10 text-red-500 ${gravandoAudio ? "animate-ping" : ""}`}
-                  />
+                  <Radio className={`h-10 w-10 text-red-500 ${gravandoAudio ? "animate-ping" : ""}`} />
                   {gravandoAudio && (
                     <span className="absolute -top-1 -right-1 bg-red-600 text-white font-mono text-[11px] font-bold px-2 py-0.5 rounded-full shadow">
                       {segundosRestantesMic}s
@@ -1445,8 +1541,7 @@ function PaginaDiagnosticoAparelho() {
                 <div>
                   <h2 className="text-xl font-black uppercase">Microfone (Gravação & Loopback)</h2>
                   <p className="text-xs text-slate-400 mt-1">
-                    Grave um áudio de voz ("1, 2, 3 testando") e ouça a reprodução para certificar a
-                    captação limpa.
+                    Grave um áudio de voz ("1, 2, 3 testando") e ouça a reprodução para certificar a captação limpa.
                   </p>
                 </div>
 
@@ -1457,9 +1552,7 @@ function PaginaDiagnosticoAparelho() {
                       Permissão de microfone negada no navegador
                     </p>
                     <p className="text-[11px] text-slate-300">
-                      Toque no ícone de cadeado/ajustes no topo da tela do navegador, acesse{" "}
-                      <strong>Permissões</strong> e marque <strong>Microfone</strong> como{" "}
-                      <em>Permitir</em>.
+                      Toque no ícone de cadeado/ajustes no topo da tela do navegador, acesse <strong>Permissões</strong> e marque <strong>Microfone</strong> como <em>Permitir</em>.
                     </p>
                   </div>
                 )}
@@ -1524,14 +1617,10 @@ function PaginaDiagnosticoAparelho() {
                   </div>
                   <div className="text-left">
                     <h3 className="text-xs font-black uppercase tracking-wider text-white">
-                      {testeAtivo === "camera_front"
-                        ? "Front Cam (Câmera Frontal)"
-                        : "Mega Cam (Câmera Traseira)"}
+                      {testeAtivo === "camera_front" ? "Front Cam (Câmera Frontal)" : "Mega Cam (Câmera Traseira)"}
                     </h3>
                     <p className="text-[10px] text-slate-400">
-                      {testeAtivo === "camera_front"
-                        ? "Sensor frontal de selfie"
-                        : "Sensor principal traseiro com foco"}
+                      {testeAtivo === "camera_front" ? "Sensor frontal de selfie" : "Sensor principal traseiro com foco"}
                     </p>
                   </div>
                 </div>
@@ -1557,8 +1646,7 @@ function PaginaDiagnosticoAparelho() {
                     <AlertTriangle className="h-8 w-8 mx-auto text-rose-400" />
                     <h4 className="font-bold text-sm text-white">Permissão de Câmera Bloqueada</h4>
                     <p className="text-xs text-slate-400">
-                      Libere o acesso da câmera nas configurações ou ícone de cadeado do navegador
-                      para exibir o visor.
+                      Libere o acesso da câmera nas configurações ou ícone de cadeado do navegador para exibir o visor.
                     </p>
                     <Button
                       size="sm"
@@ -1648,17 +1736,12 @@ function PaginaDiagnosticoAparelho() {
                       : "bg-amber-500/20 border-2 border-amber-500"
                   }`}
                 >
-                  <Vibrate
-                    className={`h-12 w-12 text-amber-400 ${vibrandoAgora ? "animate-pulse" : ""}`}
-                  />
+                  <Vibrate className={`h-12 w-12 text-amber-400 ${vibrandoAgora ? "animate-pulse" : ""}`} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black uppercase text-white">
-                    Vibration (Motor de Vibração)
-                  </h2>
+                  <h2 className="text-xl font-black uppercase text-white">Vibration (Motor de Vibração)</h2>
                   <p className="text-xs text-slate-400 mt-1">
-                    Sinta a resposta mecânica e tátil do aparelho clicando nos padrões de teste
-                    abaixo:
+                    Sinta a resposta mecânica e tátil do aparelho clicando nos padrões de teste abaixo:
                   </p>
                 </div>
 
@@ -1713,9 +1796,7 @@ function PaginaDiagnosticoAparelho() {
                     <span>💡 Resposta Háptica & Mecânica Integrada</span>
                   </div>
                   <p className="text-[10px] text-slate-400 leading-relaxed">
-                    Dispara o motor de vibração físico e, simultaneamente, oscilação de ressonância
-                    mecânica de 55Hz (sub-grave) nos transdutores de áudio, permitindo sentir a
-                    vibração física até mesmo em navegadores iOS (Apple Safari).
+                    Dispara o motor de vibração físico e, simultaneamente, oscilação de ressonância mecânica de 55Hz (sub-grave) nos transdutores de áudio, permitindo sentir a vibração física até mesmo em navegadores iOS (Apple Safari).
                   </p>
                 </div>
               </div>
@@ -1742,12 +1823,9 @@ function PaginaDiagnosticoAparelho() {
           {testeAtivo === "dimming" && (
             <div className="flex-1 flex flex-col items-center justify-between p-6 bg-gradient-to-b from-white via-slate-500 to-black text-center text-slate-950">
               <div className="pt-10 space-y-3 bg-black/60 text-white p-4 rounded-xl border border-white/20">
-                <h2 className="text-xl font-black uppercase">
-                  Dimming (Transição de Luminosidade)
-                </h2>
+                <h2 className="text-xl font-black uppercase">Dimming (Transição de Luminosidade)</h2>
                 <p className="text-xs text-slate-300">
-                  Teste o gradiente de iluminação do display, verificando se há cintilação ou
-                  flickering.
+                  Teste o gradiente de iluminação do display, verificando se há cintilação ou flickering.
                 </p>
               </div>
 
@@ -1816,312 +1894,259 @@ function PaginaDiagnosticoAparelho() {
           )}
 
           {/* 9. SUB KEY (ROTINA INTERATIVA DE TESTE DE BOTÕES FÍSICOS *#0*#) */}
-          {testeAtivo === "sub_key" &&
-            (() => {
-              const botaoAtual = BOTOES_SUB_KEY[subKeyEtapaIndex] || BOTOES_SUB_KEY[0];
-              const todosObrigatoriosTestados =
-                subKeyStatus.vol_up !== "pendente" &&
-                subKeyStatus.vol_down !== "pendente" &&
-                subKeyStatus.power !== "pendente";
-              const temAlgumaFalha = Object.values(subKeyStatus).some((s) => s === "falha");
+          {testeAtivo === "sub_key" && (() => {
+            const todosObrigatoriosTestados =
+              subKeyStatus.vol_up === "aprovado" &&
+              subKeyStatus.vol_down === "aprovado" &&
+              subKeyStatus.power === "aprovado";
+            const totalAprovados = Object.values(subKeyStatus).filter((s) => s === "aprovado").length;
 
-              return (
-                <div className="flex-1 flex flex-col justify-between p-4 sm:p-6 bg-slate-950 text-white overflow-y-auto">
-                  {/* Cabeçalho do Teste */}
-                  <div className="space-y-4 max-w-md mx-auto w-full pt-2">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                          <KeyRound className="h-5 w-5" />
-                        </div>
-                        <div className="text-left">
-                          <h2 className="text-sm font-black uppercase tracking-wider text-white flex items-center gap-2">
-                            <span>Rotina Sub Key</span>
-                            <span className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded font-mono">
-                              *#0*#
-                            </span>
-                          </h2>
-                          <p className="text-[11px] text-slate-400">
-                            Validação de acionamento dos botões mecânicos
-                          </p>
-                        </div>
+            return (
+              <div className="flex-1 flex flex-col justify-between p-3.5 sm:p-6 bg-slate-950 text-white overflow-y-auto select-none">
+                {/* Cabeçalho do Teste com Ação Expressa */}
+                <div className="space-y-3 max-w-md mx-auto w-full pt-1">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                        <KeyRound className="h-5 w-5" />
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setTesteAtivo(null)}
-                        className="text-slate-400 hover:text-white h-8 px-2"
-                      >
-                        <X className="h-4 w-4 mr-1" /> Sair
-                      </Button>
-                    </div>
-
-                    {/* Rastreador de Etapas (Passos 1 a 4) */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="font-semibold text-slate-300">
-                          Solicitação {subKeyEtapaIndex + 1} de {BOTOES_SUB_KEY.length}:{" "}
-                          <strong className="text-white">{botaoAtual.nome}</strong>
-                        </span>
-                        <span className="font-mono text-xs text-slate-400">
-                          {Object.values(subKeyStatus).filter((s) => s === "aprovado").length}/3 OK
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-4 gap-1.5">
-                        {BOTOES_SUB_KEY.map((b, idx) => {
-                          const status = subKeyStatus[b.id];
-                          const isAtivo = idx === subKeyEtapaIndex;
-                          return (
-                            <button
-                              key={b.id}
-                              type="button"
-                              onClick={() => setSubKeyEtapaIndex(idx)}
-                              className={`p-1.5 rounded-lg border text-left transition-all text-[10px] ${
-                                isAtivo
-                                  ? "border-blue-400 bg-blue-500/20 text-white font-bold ring-2 ring-blue-500/50"
-                                  : status === "aprovado"
-                                    ? "border-emerald-500/50 bg-emerald-950/40 text-emerald-300"
-                                    : status === "falha"
-                                      ? "border-rose-500/50 bg-rose-950/40 text-rose-300"
-                                      : status === "ignorado"
-                                        ? "border-slate-800 bg-slate-900 text-slate-500"
-                                        : "border-slate-800 bg-slate-900/60 text-slate-400 hover:bg-slate-850"
-                              }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="font-mono text-[9px]">{idx + 1}.</span>
-                                {status === "aprovado" ? (
-                                  <Check className="h-3 w-3 text-emerald-400" />
-                                ) : status === "falha" ? (
-                                  <X className="h-3 w-3 text-rose-400" />
-                                ) : isAtivo ? (
-                                  <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-ping" />
-                                ) : null}
-                              </div>
-                              <div className="truncate font-semibold mt-0.5">{b.nome}</div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* CARD CENTRAL DE SOLICITAÇÃO ATIVA DO BOTÃO */}
-                    <div
-                      className={`rounded-2xl border-2 p-5 text-center transition-all ${
-                        subKeyAnimando
-                          ? "scale-98 ring-4 ring-emerald-500 border-emerald-500 bg-emerald-950/40 shadow-2xl shadow-emerald-500/30"
-                          : `${botaoAtual.corAtiva} bg-slate-900/90 shadow-xl`
-                      }`}
-                    >
-                      <div className="space-y-3">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-slate-800/80 border border-slate-700 text-slate-300">
-                          <span className="h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
-                          Solicitação de Acionamento
-                        </div>
-
-                        <div className="space-y-1">
-                          <h3 className="text-xs uppercase tracking-widest text-slate-400 font-semibold">
-                            Por favor, pressione agora:
-                          </h3>
-                          <div className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center justify-center gap-2">
-                            {botaoAtual.id === "vol_up" && (
-                              <Volume2 className="h-7 w-7 text-blue-400" />
-                            )}
-                            {botaoAtual.id === "vol_down" && (
-                              <Volume1 className="h-7 w-7 text-amber-400" />
-                            )}
-                            {botaoAtual.id === "power" && (
-                              <Power className="h-7 w-7 text-rose-400" />
-                            )}
-                            {botaoAtual.id === "assist" && (
-                              <Sparkles className="h-7 w-7 text-purple-400" />
-                            )}
-                            <span>{botaoAtual.nome}</span>
-                          </div>
-                          <p className="text-xs text-slate-300 max-w-xs mx-auto">
-                            {botaoAtual.instrucao}
-                          </p>
-                        </div>
-
-                        {/* Grande botão interativo de confirmação com efeito de clique */}
-                        <div className="pt-2 space-y-2">
-                          <Button
-                            type="button"
-                            onClick={() => acionarBotaoSubKey(botaoAtual.id, "aprovado", "toque")}
-                            className={`w-full h-14 rounded-xl font-black text-sm tracking-wider uppercase shadow-lg transition-transform active:scale-95 ${
-                              subKeyStatus[botaoAtual.id] === "aprovado"
-                                ? "bg-emerald-600 hover:bg-emerald-500 text-white ring-2 ring-emerald-400/50"
-                                : `${botaoAtual.corBg} text-white`
-                            }`}
-                          >
-                            {subKeyStatus[botaoAtual.id] === "aprovado" ? (
-                              <span className="flex items-center gap-2">
-                                <CheckCircle2 className="h-5 w-5" /> Botão Testado OK (Clique para
-                                Re-testar)
-                              </span>
-                            ) : (
-                              <span className="flex items-center gap-2">
-                                <span className="h-2.5 w-2.5 rounded-full bg-white animate-ping" />
-                                Pressionei o Botão / Confirmar Clique
-                              </span>
-                            )}
-                          </Button>
-
-                          <div className="flex items-center justify-center gap-4 pt-1">
-                            <button
-                              type="button"
-                              onClick={() => acionarBotaoSubKey(botaoAtual.id, "falha", "toque")}
-                              className="text-[11px] text-rose-400 hover:text-rose-300 underline font-medium flex items-center gap-1"
-                            >
-                              <AlertTriangle className="h-3 w-3" /> Botão com Defeito / Travado
-                            </button>
-
-                            {!botaoAtual.obrigatorio && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  acionarBotaoSubKey(botaoAtual.id, "ignorado", "toque")
-                                }
-                                className="text-[11px] text-slate-400 hover:text-slate-300 underline font-medium"
-                              >
-                                Não possui este botão (Pular)
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        <p className="text-[10px] text-slate-500 leading-tight pt-1">
-                          Dica: O teste escuta cliques das teclas físicas pelo navegador e permite
-                          confirmação manual caso o Android/iOS reserve o botão para áudio ou
-                          bloqueio.
+                      <div className="text-left">
+                        <h2 className="text-sm font-black uppercase tracking-wider text-white flex items-center gap-2">
+                          <span>Sub Key (Teclas Físicas)</span>
+                          <span className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded font-mono">
+                            *#0*#
+                          </span>
+                        </h2>
+                        <p className="text-[11px] text-slate-400">
+                          Pressione as teclas físicas ou toque nos botões na tela
                         </p>
                       </div>
                     </div>
 
-                    {/* Resumo da Matriz de Teclas Físicas */}
-                    <div className="space-y-2">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block text-left">
-                        Status de Cada Botão Físico
-                      </span>
-                      <div className="grid grid-cols-2 gap-2">
-                        {BOTOES_SUB_KEY.map((b) => {
-                          const status = subKeyStatus[b.id];
-                          return (
-                            <button
-                              key={b.id}
-                              type="button"
-                              onClick={() => {
-                                setSubKeyEtapaIndex(BOTOES_SUB_KEY.findIndex((x) => x.id === b.id));
-                                acionarBotaoSubKey(b.id, "aprovado", "toque");
-                              }}
-                              className={`p-2.5 rounded-xl border text-left flex items-center justify-between text-xs transition-all active:scale-95 ${
-                                status === "aprovado"
-                                  ? "bg-emerald-950/60 border-emerald-500/50 text-emerald-300"
-                                  : status === "falha"
-                                    ? "bg-rose-950/60 border-rose-500/50 text-rose-300"
-                                    : status === "ignorado"
-                                      ? "bg-slate-900 border-slate-800 text-slate-500"
-                                      : "bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-850"
-                              }`}
-                            >
-                              <div>
-                                <div className="font-bold flex items-center gap-1.5">
-                                  <span>{b.nome}</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      type="button"
+                      onClick={() => setTesteAtivo(null)}
+                      className="text-slate-400 hover:text-white h-8 px-2"
+                    >
+                      <X className="h-4 w-4 mr-1" /> Sair
+                    </Button>
+                  </div>
+
+                  {/* BOTÃO MESTRE DE APROVAÇÃO EXPRESSA (1 CLIQUE) */}
+                  <Button
+                    type="button"
+                    onPointerDown={aprovarTodosBotoesSubKey}
+                    onClick={aprovarTodosBotoesSubKey}
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white font-black h-12 rounded-xl shadow-lg shadow-emerald-950/70 border border-emerald-400/40 text-xs sm:text-sm tracking-wide uppercase flex items-center justify-center gap-2 transition-transform"
+                  >
+                    <CheckCircle2 className="h-5 w-5 text-emerald-200" />
+                    <span>Validar Todas as Teclas (100% OK)</span>
+                  </Button>
+
+                  {/* Contador de Progresso */}
+                  <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+                    <span className="text-slate-300 font-semibold flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
+                      Progresso das Teclas:
+                    </span>
+                    <span className="font-mono font-bold text-emerald-400 text-xs">
+                      {totalAprovados} de {BOTOES_SUB_KEY.length} Teclas Testadas
+                    </span>
+                  </div>
+
+                  {/* CARDS GRANDES DE TESTE DE TOQUE IMEDIATO PARA CADA BOTÃO */}
+                  <div className="space-y-2.5 pt-1">
+                    {BOTOES_SUB_KEY.map((b, idx) => {
+                      const status = subKeyStatus[b.id];
+                      const isAprovado = status === "aprovado";
+                      const isFalha = status === "falha";
+
+                      return (
+                        <div
+                          key={b.id}
+                          className={`rounded-2xl border-2 p-3 transition-all ${
+                            isAprovado
+                              ? "bg-emerald-950/50 border-emerald-500/70 ring-1 ring-emerald-500/40 shadow-lg shadow-emerald-950/50"
+                              : isFalha
+                                ? "bg-rose-950/50 border-rose-500/70 ring-1 ring-rose-500/40"
+                                : `${b.corBorder} bg-slate-900/90 shadow-md`
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            {/* Informações do Botão */}
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`w-11 h-11 rounded-xl flex items-center justify-center font-black ${
+                                  isAprovado
+                                    ? "bg-emerald-500 text-white"
+                                    : isFalha
+                                      ? "bg-rose-600 text-white"
+                                      : `${b.corBg} text-white`
+                                }`}
+                              >
+                                {b.id === "vol_up" && <Volume2 className="h-5 w-5" />}
+                                {b.id === "vol_down" && <Volume1 className="h-5 w-5" />}
+                                {b.id === "power" && <Power className="h-5 w-5" />}
+                                {b.id === "assist" && <Sparkles className="h-5 w-5" />}
+                              </div>
+
+                              <div className="text-left">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-black text-sm text-white">{b.nome}</h4>
                                   {!b.obrigatorio && (
-                                    <span className="text-[9px] text-slate-500 font-normal">
-                                      (Opc.)
+                                    <span className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded font-medium">
+                                      Opcional
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[10px] text-slate-400">
-                                  {status === "aprovado"
-                                    ? "✓ Respondendo"
-                                    : status === "falha"
-                                      ? "✕ Falhou"
-                                      : status === "ignorado"
-                                        ? "— Ignorado"
-                                        : "Pendente toque"}
-                                </div>
+                                <p className="text-[11px] text-slate-300">
+                                  {isAprovado
+                                    ? "✓ Acionamento validado no aparelho"
+                                    : isFalha
+                                      ? "✕ Registrado defeito físico"
+                                      : b.teclaFisicaLabel}
+                                </p>
                               </div>
+                            </div>
 
-                              <span
-                                className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                                  status === "aprovado"
-                                    ? "bg-emerald-500/20 text-emerald-300"
-                                    : status === "falha"
-                                      ? "bg-rose-500/20 text-rose-300"
-                                      : "bg-slate-800 text-slate-400"
-                                }`}
-                              >
-                                {status === "aprovado"
-                                  ? "OK"
-                                  : status === "falha"
-                                    ? "ERRO"
-                                    : "TESTAR"}
-                              </span>
+                            {/* Botão de Toque Direto com Resposta Imediata */}
+                            <button
+                              type="button"
+                              onPointerDown={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                acionarBotaoSubKey(b.id, "aprovado", "toque");
+                              }}
+                              onTouchStart={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                acionarBotaoSubKey(b.id, "aprovado", "toque");
+                              }}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                acionarBotaoSubKey(b.id, "aprovado", "toque");
+                              }}
+                              className={`h-11 px-3.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all active:scale-90 flex items-center justify-center gap-1.5 shadow-md ${
+                                isAprovado
+                                  ? "bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/40 ring-2 ring-emerald-300"
+                                  : isFalha
+                                    ? "bg-rose-700 text-white"
+                                    : `${b.corBg} text-white shadow-lg ring-2 ring-white/20 animate-pulse`
+                              }`}
+                            >
+                              {isAprovado ? (
+                                <>
+                                  <Check className="h-4 w-4" />
+                                  <span>OK</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="h-2 w-2 rounded-full bg-white animate-ping" />
+                                  <span>TESTAR</span>
+                                </>
+                              )}
                             </button>
-                          );
-                        })}
-                      </div>
-                    </div>
+                          </div>
+
+                          {/* Ações Secundárias (Marcar Falha ou Ignorar se Opcional) */}
+                          <div className="flex items-center justify-end gap-3 mt-2 pt-2 border-t border-slate-800/80">
+                            <button
+                              type="button"
+                              onClick={() => acionarBotaoSubKey(b.id, "falha", "toque")}
+                              className="text-[10px] text-rose-400 hover:text-rose-300 underline font-medium flex items-center gap-1"
+                            >
+                              <AlertTriangle className="h-3 w-3" /> Registrar Falha no Botão
+                            </button>
+
+                            {!b.obrigatorio && status !== "ignorado" && (
+                              <button
+                                type="button"
+                                onClick={() => acionarBotaoSubKey(b.id, "ignorado", "toque")}
+                                className="text-[10px] text-slate-400 hover:text-slate-300 underline font-medium"
+                              >
+                                Aparelho sem este botão (Pular)
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
 
-                  {/* BARRA DE CONCLUSÃO / APROVAÇÃO */}
-                  <div className="pt-4 pb-2 max-w-md mx-auto w-full space-y-2">
-                    {todosObrigatoriosTestados && !temAlgumaFalha && (
-                      <div className="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs text-center font-medium animate-in fade-in">
-                        🎉 Todos os botões físicos obrigatórios foram testados com sucesso!
-                      </div>
-                    )}
+                  <p className="text-[10px] text-slate-400 text-center leading-tight pt-1">
+                    💡 Dica: Pressione o botão físico no celular ou toque diretamente no botão TESTAR acima. O teste detecta automaticamente cliques físicos, ciclos de tela do botão Power e toques no visor.
+                  </p>
+                </div>
 
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        onClick={() => concluirRotinaSubKey("aprovado")}
-                        disabled={!todosObrigatoriosTestados}
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white font-bold h-12 shadow-lg"
-                      >
-                        <Check className="h-5 w-5 mr-1" />
-                        {todosObrigatoriosTestados
-                          ? "Concluir Sub Key (Aprovado)"
-                          : "Aguardando Testes..."}
-                      </Button>
-
-                      <Button
-                        type="button"
-                        onClick={() => concluirRotinaSubKey("reprovado")}
-                        variant="destructive"
-                        className="px-4 font-bold h-12 shadow-lg"
-                      >
-                        <X className="h-5 w-5 mr-1" /> Registrar Falha
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setSubKeyEtapaIndex(0);
-                          setSubKeyStatus({
-                            vol_up: "pendente",
-                            vol_down: "pendente",
-                            power: "pendente",
-                            assist: "pendente",
-                          });
-                          setTeclasDetectadas([]);
-                          setSubKeyUltimaAcao(null);
-                          toast.info("Rotina Sub Key reiniciada.");
-                        }}
-                        className="border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800 px-3 h-12"
-                        title="Reiniciar rotina"
-                      >
-                        <RotateCcw className="h-4 w-4" />
-                      </Button>
+                {/* BARRA DE CONCLUSÃO / APROVAÇÃO NO RODAPÉ */}
+                <div className="pt-3 pb-2 max-w-md mx-auto w-full space-y-2 shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                  {todosObrigatoriosTestados && (
+                    <div className="p-2.5 rounded-xl bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs text-center font-bold animate-in fade-in flex items-center justify-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      <span>Todas as teclas obrigatórias aprovadas!</span>
                     </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      onPointerDown={() => {
+                        if (todosObrigatoriosTestados) {
+                          concluirRotinaSubKey("aprovado");
+                        } else {
+                          aprovarTodosBotoesSubKey();
+                        }
+                      }}
+                      onClick={() => {
+                        if (todosObrigatoriosTestados) {
+                          concluirRotinaSubKey("aprovado");
+                        } else {
+                          aprovarTodosBotoesSubKey();
+                        }
+                      }}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold h-12 shadow-lg shadow-emerald-950/60 rounded-xl flex items-center justify-center gap-2"
+                    >
+                      <Check className="h-5 w-5" />
+                      <span>{todosObrigatoriosTestados ? "Concluir Sub Key (Aprovado)" : "Aprovar e Avançar"}</span>
+                    </Button>
+
+                    <Button
+                      type="button"
+                      onClick={() => concluirRotinaSubKey("reprovado")}
+                      variant="destructive"
+                      className="px-4 font-bold h-12 shadow-lg shadow-rose-950/60 rounded-xl"
+                    >
+                      <X className="h-5 w-5 mr-1" /> Falha
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setSubKeyEtapaIndex(0);
+                        setSubKeyStatus({
+                          vol_up: "pendente",
+                          vol_down: "pendente",
+                          power: "pendente",
+                          assist: "pendente",
+                        });
+                        setTeclasDetectadas([]);
+                        setSubKeyUltimaAcao(null);
+                        toast.info("Rotina Sub Key reiniciada.");
+                      }}
+                      className="border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800 px-3 h-12 rounded-xl"
+                      title="Reiniciar rotina"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-              );
-            })()}
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -2183,8 +2208,7 @@ function PaginaDiagnosticoAparelho() {
                   )}
                 </h2>
                 <p className="text-[11px] text-slate-400">
-                  Libere o acesso da câmera, microfone e áudio para os testes funcionarem sem
-                  bloqueios no dispositivo.
+                  Libere o acesso da câmera, microfone e áudio para os testes funcionarem sem bloqueios no dispositivo.
                 </p>
               </div>
             </div>
@@ -2289,9 +2313,7 @@ function PaginaDiagnosticoAparelho() {
               <div>
                 <p className="font-bold">Como autorizar pelo navegador móvel:</p>
                 <p className="text-slate-300 mt-0.5 leading-relaxed">
-                  Toque no <strong>ícone de ajustes/cadeado</strong> ao lado do endereço no topo do
-                  navegador (Chrome ou Safari), selecione <strong>Permissões</strong> e marque{" "}
-                  <strong>Câmera</strong> e <strong>Microfone</strong> como <em>Permitir</em>.
+                  Toque no <strong>ícone de ajustes/cadeado</strong> ao lado do endereço no topo do navegador (Chrome ou Safari), selecione <strong>Permissões</strong> e marque <strong>Câmera</strong> e <strong>Microfone</strong> como <em>Permitir</em>.
                 </p>
               </div>
             </div>
