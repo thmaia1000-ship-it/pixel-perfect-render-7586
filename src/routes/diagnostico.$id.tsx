@@ -161,6 +161,7 @@ function PaginaDiagnosticoAparelho() {
   const [salvandoDiagnostico, setSalvandoDiagnostico] = useState(false);
   const [concluido, setConcluido] = useState(false);
   const [observacoesTech, setObservacoesTech] = useState("");
+  const [modoSequencial, setModoSequencial] = useState(false);
 
   // Estado do gerenciamento de permissões de hardware
   const [permissoes, setPermissoes] = useState<PermissoesHardwareState>({
@@ -799,7 +800,7 @@ function PaginaDiagnosticoAparelho() {
     }
   };
 
-  // Registra status de um teste
+  // Registra status de um teste com suporte a fluxo sequencial automático
   const gravarResultado = (
     id: TesteHardwareId,
     status: "aprovado" | "reprovado" | "ignorado",
@@ -815,7 +816,53 @@ function PaginaDiagnosticoAparelho() {
         ...(detalhes ? { detalhes } : {}),
       },
     }));
-    setTesteAtivo(null);
+
+    if (modoSequencial) {
+      const currentIndex = LISTA_TESTES_HARDWARE.findIndex((item) => item.id === id);
+      const nextItem = LISTA_TESTES_HARDWARE[currentIndex + 1];
+
+      if (nextItem) {
+        toast.info(`Teste ${status === "aprovado" ? "aprovado" : "registrado"}! Próximo: ${nextItem.titulo}...`, {
+          duration: 1600,
+        });
+        setTimeout(() => {
+          abrirTeste(nextItem.id);
+        }, 350);
+      } else {
+        setModoSequencial(false);
+        setTesteAtivo(null);
+        toast.success("🎉 Bateria completa de testes finalizada com sucesso!", {
+          duration: 3500,
+        });
+      }
+    } else {
+      setTesteAtivo(null);
+    }
+  };
+
+  // Iniciar bateria sequencial completa de testes
+  const iniciarBateriaSequencial = () => {
+    setModoSequencial(true);
+    // Inicia pelo primeiro teste pendente, ou reinicia do início
+    const pendente = LISTA_TESTES_HARDWARE.find((item) => !resultados[item.id]);
+    const testeParaIniciar = pendente ? pendente.id : LISTA_TESTES_HARDWARE[0].id;
+    abrirTeste(testeParaIniciar);
+  };
+
+  // Pular teste atual no modo sequencial
+  const pularParaProximo = () => {
+    if (!testeAtivo) return;
+    const currentIndex = LISTA_TESTES_HARDWARE.findIndex((item) => item.id === testeAtivo);
+    const nextItem = LISTA_TESTES_HARDWARE[currentIndex + 1];
+    if (nextItem) {
+      toast.info(`Pulando para: ${nextItem.titulo}`, { duration: 1200 });
+      abrirTeste(nextItem.id);
+    } else {
+      setModoSequencial(false);
+      pararRecursosAtuais();
+      setTesteAtivo(null);
+      toast.info("Você chegou ao final da bateria de testes.");
+    }
   };
 
   // Finalização da rotina guiada do Sub Key
@@ -1021,6 +1068,9 @@ function PaginaDiagnosticoAparelho() {
   const totalExecutados = Object.keys(resultados).length;
   const totalAprovados = Object.values(resultados).filter((r) => r.status === "aprovado").length;
   const totalReprovados = Object.values(resultados).filter((r) => r.status === "reprovado").length;
+  const proximoPendente = LISTA_TESTES_HARDWARE.find((item) => !resultados[item.id]);
+  const activeTestIndex = testeAtivo ? LISTA_TESTES_HARDWARE.findIndex((item) => item.id === testeAtivo) : -1;
+  const activeTestConfig = testeAtivo ? LISTA_TESTES_HARDWARE.find((item) => item.id === testeAtivo) : null;
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col selection:bg-primary/30">
@@ -1029,6 +1079,51 @@ function PaginaDiagnosticoAparelho() {
       {/* ========================================================================= */}
       {testeAtivo && (
         <div className="fixed inset-0 z-50 flex flex-col bg-black text-white">
+          {/* BARRA SUPERIOR DE CONTROLE E PROGRESSO SEQUENCIAL */}
+          <div className="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-3.5 py-2 flex items-center justify-between text-xs z-50 shrink-0">
+            <div className="flex items-center gap-2 truncate">
+              <span className="font-mono text-[10px] bg-primary/20 text-primary border border-primary/40 px-1.5 py-0.5 rounded font-black">
+                {activeTestIndex + 1}/{totalTestes}
+              </span>
+              <span className="font-bold text-white truncate text-xs">
+                {activeTestConfig?.titulo}
+              </span>
+              {modoSequencial && (
+                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Sequencial
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              {modoSequencial && activeTestIndex < totalTestes - 1 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  type="button"
+                  onClick={pularParaProximo}
+                  className="text-slate-300 hover:text-white h-7 px-2 text-[11px] font-medium"
+                >
+                  Pular <ArrowRight className="h-3 w-3 ml-1" />
+                </Button>
+              )}
+
+              <Button
+                size="sm"
+                variant="ghost"
+                type="button"
+                onClick={() => {
+                  setModoSequencial(false);
+                  pararRecursosAtuais();
+                  setTesteAtivo(null);
+                }}
+                className="text-slate-400 hover:text-white h-7 px-2 text-[11px]"
+              >
+                <X className="h-3.5 w-3.5 mr-1" /> Sair
+              </Button>
+            </div>
+          </div>
           {/* 1. TESTES DE CORES PURAS (RED, GREEN, BLUE, WHITE, BLACK) */}
           {(testeAtivo === "red" ||
             testeAtivo === "green" ||
@@ -1096,6 +1191,11 @@ function PaginaDiagnosticoAparelho() {
                       if (prev[idx]) return prev;
                       const next = [...prev];
                       next[idx] = true;
+                      if (next.every(Boolean)) {
+                        setTimeout(() => {
+                          gravarResultado("touch", "aprovado");
+                        }, 250);
+                      }
                       return next;
                     });
                   }
@@ -1109,6 +1209,11 @@ function PaginaDiagnosticoAparelho() {
                       setTouchGrid((prev) => {
                         const next = [...prev];
                         next[idx] = true;
+                        if (next.every(Boolean)) {
+                          setTimeout(() => {
+                            gravarResultado("touch", "aprovado");
+                          }, 250);
+                        }
                         return next;
                       });
                     }}
@@ -1928,58 +2033,134 @@ function PaginaDiagnosticoAparelho() {
             </div>
           )}
         </div>
-        {/* Banner informativo de execução no próprio aparelho */}
-        <div className="rounded-xl border border-primary/30 bg-primary/10 p-3 text-xs space-y-1">
-          <div className="flex items-center gap-1.5 font-bold text-primary">
-            <Sparkles className="h-4 w-4" />
-            <span>Diagnóstico Ativo Conectado</span>
+        {/* Card Principal: Iniciar Bateria Sequencial de Testes */}
+        <div className="rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-primary/15 via-slate-900 to-slate-950 p-4 shadow-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold shadow-md shadow-primary/30 shrink-0">
+                <Play className="h-5 w-5 fill-current ml-0.5" />
+              </div>
+              <div>
+                <h2 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <span>Bateria de Testes</span>
+                  <span className="text-[10px] bg-primary/20 text-primary border border-primary/40 px-1.5 py-0.2 rounded font-mono font-bold">
+                    *#0*#
+                  </span>
+                </h2>
+                <p className="text-[11px] text-slate-300">
+                  {totalExecutados === 0
+                    ? "Inicie a bateria de testes sequencial contínua de ponta a ponta."
+                    : `${totalExecutados} de ${totalTestes} testes concluídos (${totalAprovados} OK, ${totalReprovados} Falhas).`}
+                </p>
+              </div>
+            </div>
+            <div className="text-right font-mono text-xs font-black text-emerald-400">
+              {Math.round((totalExecutados / totalTestes) * 100)}%
+            </div>
           </div>
-          <p className="text-slate-300 text-[11.5px] leading-relaxed">
-            Execute os módulos de diagnóstico abaixo no próprio aparelho. Ao concluir, salve o laudo para vincular o fechamento com o termo de garantia da OS.
-          </p>
+
+          {/* Barra de progresso */}
+          <div className="w-full bg-slate-800/80 rounded-full h-2 overflow-hidden border border-slate-700/60">
+            <div
+              className="bg-gradient-to-r from-blue-500 to-emerald-500 h-full transition-all duration-300 rounded-full"
+              style={{
+                width: `${Math.max(totalExecutados > 0 ? 5 : 0, Math.round((totalExecutados / totalTestes) * 100))}%`,
+              }}
+            />
+          </div>
+
+          <div className="flex gap-2 pt-1">
+            <Button
+              type="button"
+              onClick={iniciarBateriaSequencial}
+              className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-sm tracking-wide uppercase shadow-lg shadow-primary/30 flex items-center justify-center gap-2"
+            >
+              <Play className="h-4 w-4 fill-current" />
+              {totalExecutados === 0
+                ? "Iniciar Teste"
+                : totalExecutados >= totalTestes
+                  ? "Reiniciar Bateria Completa"
+                  : `Continuar Teste (${proximoPendente?.titulo || "Próximo"})`}
+            </Button>
+
+            {totalExecutados > 0 && totalExecutados < totalTestes && (
+              <Button
+                type="button"
+                onClick={() => {
+                  setModoSequencial(true);
+                  abrirTeste(LISTA_TESTES_HARDWARE[0].id);
+                }}
+                variant="outline"
+                className="border-slate-700 bg-slate-900/80 text-slate-300 hover:bg-slate-800 text-xs font-bold h-12 px-3"
+                title="Reiniciar do 1º teste"
+              >
+                <RotateCcw className="h-4 w-4 mr-1" /> Reiniciar
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Grade de botões inspirada no menu de serviço Samsung *#0*# */}
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-          {LISTA_TESTES_HARDWARE.map((item) => {
-            const res = resultados[item.id];
-            const isOk = res?.status === "aprovado";
-            const isDef = res?.status === "reprovado";
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs px-0.5">
+            <span className="font-bold uppercase tracking-wider text-slate-400 text-[11px]">
+              Grade de Módulos Individuais ({totalTestes})
+            </span>
+            <span className="text-slate-500 text-[10px]">
+              Toque em qualquer teste para executá-lo individualmente
+            </span>
+          </div>
 
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => abrirTeste(item.id)}
-                className={`relative flex flex-col items-center justify-center p-3.5 rounded-xl border text-center transition-all active:scale-95 shadow-sm min-h-[90px] ${
-                  isOk
-                    ? "bg-emerald-950/40 border-emerald-500/60 text-emerald-300"
-                    : isDef
-                      ? "bg-rose-950/40 border-rose-500/60 text-rose-300"
-                      : "bg-slate-900/80 border-slate-800 hover:border-slate-700 text-slate-200 hover:bg-slate-850"
-                }`}
-              >
-                {/* Ícone de status no canto */}
-                {isOk && (
-                  <span className="absolute top-1.5 right-1.5 text-emerald-400">
-                    <CheckCircle2 className="h-4 w-4" />
-                  </span>
-                )}
-                {isDef && (
-                  <span className="absolute top-1.5 right-1.5 text-rose-400">
-                    <XCircle className="h-4 w-4" />
-                  </span>
-                )}
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            {LISTA_TESTES_HARDWARE.map((item, idx) => {
+              const res = resultados[item.id];
+              const isOk = res?.status === "aprovado";
+              const isDef = res?.status === "reprovado";
 
-                <span className="text-xs font-black uppercase tracking-tight line-clamp-1">
-                  {item.titulo}
-                </span>
-                <span className="text-[10px] text-slate-400 line-clamp-2 mt-1 leading-tight">
-                  {item.descricao}
-                </span>
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    // Ao tocar em um teste avulso, abre ele individualmente
+                    setModoSequencial(false);
+                    abrirTeste(item.id);
+                  }}
+                  className={`relative flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all active:scale-95 shadow-sm min-h-[92px] ${
+                    isOk
+                      ? "bg-emerald-950/40 border-emerald-500/60 text-emerald-300"
+                      : isDef
+                        ? "bg-rose-950/40 border-rose-500/60 text-rose-300"
+                        : "bg-slate-900/80 border-slate-800 hover:border-slate-700 text-slate-200 hover:bg-slate-850"
+                  }`}
+                >
+                  {/* Número de ordem sequencial */}
+                  <span className="absolute top-1.5 left-2 font-mono text-[9px] font-bold text-slate-500">
+                    {String(idx + 1).padStart(2, "0")}
+                  </span>
+
+                  {/* Ícone de status no canto */}
+                  {isOk && (
+                    <span className="absolute top-1.5 right-1.5 text-emerald-400">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </span>
+                  )}
+                  {isDef && (
+                    <span className="absolute top-1.5 right-1.5 text-rose-400">
+                      <XCircle className="h-4 w-4" />
+                    </span>
+                  )}
+
+                  <span className="text-xs font-black uppercase tracking-tight line-clamp-1 mt-2">
+                    {item.titulo}
+                  </span>
+                  <span className="text-[10px] text-slate-400 line-clamp-2 mt-1 leading-tight">
+                    {item.descricao}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Campo de observações do técnico */}
