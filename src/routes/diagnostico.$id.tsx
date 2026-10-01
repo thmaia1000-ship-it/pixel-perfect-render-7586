@@ -208,6 +208,12 @@ function PaginaDiagnosticoAparelho() {
     power: "pendente",
     assist: "pendente",
   });
+  const subKeyStatusRef = useRef<Record<string, "pendente" | "aprovado" | "falha" | "ignorado">>({
+    vol_up: "pendente",
+    vol_down: "pendente",
+    power: "pendente",
+    assist: "pendente",
+  });
   const [subKeyUltimaAcao, setSubKeyUltimaAcao] = useState<{
     botaoId: string;
     nome: string;
@@ -612,6 +618,7 @@ function PaginaDiagnosticoAparelho() {
 
     setSubKeyStatus((prev) => {
       const next = { ...prev, [botaoId]: status };
+      subKeyStatusRef.current = next;
 
       // Se todos os obrigatórios foram testados com aprovação
       const todosObrigOk =
@@ -623,8 +630,8 @@ function PaginaDiagnosticoAparelho() {
           duration: 2200,
         });
         setTimeout(() => {
-          concluirRotinaSubKey("aprovado");
-        }, 650);
+          concluirRotinaSubKey("aprovado", next);
+        }, 400);
       }
 
       return next;
@@ -1198,10 +1205,14 @@ function PaginaDiagnosticoAparelho() {
   };
 
   // Finalização da rotina guiada do Sub Key
-  const concluirRotinaSubKey = (statusFinal?: "aprovado" | "reprovado") => {
+  const concluirRotinaSubKey = (
+    statusFinal?: "aprovado" | "reprovado",
+    mapaStatus?: Record<string, "pendente" | "aprovado" | "falha" | "ignorado">,
+  ) => {
+    const statusAtual = mapaStatus || subKeyStatusRef.current;
     const partesDetalhes: string[] = [];
     BOTOES_SUB_KEY.forEach((b) => {
-      const st = subKeyStatus[b.id];
+      const st = statusAtual[b.id];
       if (st === "aprovado") partesDetalhes.push(`${b.nome}: OK`);
       else if (st === "falha") partesDetalhes.push(`${b.nome}: FALHA`);
       else if (st === "ignorado") partesDetalhes.push(`${b.nome}: N/A`);
@@ -1209,9 +1220,9 @@ function PaginaDiagnosticoAparelho() {
     });
 
     const temFalhaObrigatoria =
-      subKeyStatus.vol_up === "falha" ||
-      subKeyStatus.vol_down === "falha" ||
-      subKeyStatus.power === "falha";
+      statusAtual.vol_up === "falha" ||
+      statusAtual.vol_down === "falha" ||
+      statusAtual.power === "falha";
 
     const statusEfetivo = statusFinal ?? (temFalhaObrigatoria ? "reprovado" : "aprovado");
     const detalhesTexto = partesDetalhes.join(" · ");
@@ -1238,22 +1249,20 @@ function PaginaDiagnosticoAparelho() {
     }
     dispararRumbleAcustico(200);
 
-    setSubKeyStatus({
+    const statusAprovado: Record<string, "pendente" | "aprovado" | "falha" | "ignorado"> = {
       vol_up: "aprovado",
       vol_down: "aprovado",
       power: "aprovado",
       assist: "aprovado",
-    });
+    };
+    subKeyStatusRef.current = statusAprovado;
+    setSubKeyStatus(statusAprovado);
     setTeclasDetectadas(["Volume (+)", "Volume (-)", "Power / Liga", "Ação / Bixby"]);
     toast.success("✨ Todas as teclas físicas foram aprovadas com sucesso!", { duration: 2000 });
 
     setTimeout(() => {
-      gravarResultado(
-        "sub_key",
-        "aprovado",
-        "Volume (+): OK · Volume (-): OK · Power / Liga: OK · Ação / Bixby: OK (Validação Expressa)",
-      );
-    }, 400);
+      concluirRotinaSubKey("aprovado", statusAprovado);
+    }, 300);
   };
 
   // Inicializa o teste selecionado
@@ -2132,9 +2141,8 @@ function PaginaDiagnosticoAparelho() {
                     {/* BOTÃO MESTRE DE APROVAÇÃO EXPRESSA (1 CLIQUE) */}
                     <Button
                       type="button"
-                      onPointerDown={aprovarTodosBotoesSubKey}
                       onClick={aprovarTodosBotoesSubKey}
-                      className="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white font-black h-12 rounded-xl shadow-lg shadow-emerald-950/70 border border-emerald-400/40 text-xs sm:text-sm tracking-wide uppercase flex items-center justify-center gap-2 transition-transform"
+                      className="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white font-black h-12 rounded-xl shadow-lg shadow-emerald-950/70 border border-emerald-400/40 text-xs sm:text-sm tracking-wide uppercase flex items-center justify-center gap-2 transition-transform cursor-pointer"
                     >
                       <CheckCircle2 className="h-5 w-5 text-emerald-200" />
                       <span>Validar Todas as Teclas (100% OK)</span>
@@ -2153,7 +2161,7 @@ function PaginaDiagnosticoAparelho() {
 
                     {/* CARDS GRANDES DE TESTE DE TOQUE IMEDIATO PARA CADA BOTÃO */}
                     <div className="space-y-2.5 pt-1">
-                      {BOTOES_SUB_KEY.map((b, idx) => {
+                      {BOTOES_SUB_KEY.map((b) => {
                         const status = subKeyStatus[b.id];
                         const isAprovado = status === "aprovado";
                         const isFalha = status === "falha";
@@ -2161,21 +2169,22 @@ function PaginaDiagnosticoAparelho() {
                         return (
                           <div
                             key={b.id}
-                            className={`rounded-2xl border-2 p-3 transition-all ${
+                            onClick={() => acionarBotaoSubKey(b.id, "aprovado", "toque")}
+                            className={`group rounded-2xl border-2 p-3.5 transition-all cursor-pointer select-none active:scale-[0.98] ${
                               isAprovado
-                                ? "bg-emerald-950/50 border-emerald-500/70 ring-1 ring-emerald-500/40 shadow-lg shadow-emerald-950/50"
+                                ? "bg-emerald-950/60 border-emerald-500/80 ring-2 ring-emerald-500/50 shadow-lg shadow-emerald-950/60"
                                 : isFalha
-                                  ? "bg-rose-950/50 border-rose-500/70 ring-1 ring-rose-500/40"
-                                  : `${b.corBorder} bg-slate-900/90 shadow-md`
+                                  ? "bg-rose-950/60 border-rose-500/80 ring-2 ring-rose-500/50 shadow-lg shadow-rose-950/60"
+                                  : `${b.corBorder} bg-slate-900/90 shadow-md hover:border-slate-500 hover:bg-slate-800/80`
                             }`}
                           >
                             <div className="flex items-center justify-between gap-3">
                               {/* Informações do Botão */}
                               <div className="flex items-center gap-3">
                                 <div
-                                  className={`w-11 h-11 rounded-xl flex items-center justify-center font-black ${
+                                  className={`w-11 h-11 rounded-xl flex items-center justify-center font-black shrink-0 ${
                                     isAprovado
-                                      ? "bg-emerald-500 text-white"
+                                      ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/40"
                                       : isFalha
                                         ? "bg-rose-600 text-white"
                                         : `${b.corBg} text-white`
@@ -2198,7 +2207,7 @@ function PaginaDiagnosticoAparelho() {
                                   </div>
                                   <p className="text-[11px] text-slate-300">
                                     {isAprovado
-                                      ? "✓ Acionamento validado no aparelho"
+                                      ? "✓ Tecla validada com sucesso"
                                       : isFalha
                                         ? "✕ Registrado defeito físico"
                                         : b.teclaFisicaLabel}
@@ -2206,30 +2215,14 @@ function PaginaDiagnosticoAparelho() {
                                 </div>
                               </div>
 
-                              {/* Botão de Toque Direto com Resposta Imediata */}
-                              <button
-                                type="button"
-                                onPointerDown={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  acionarBotaoSubKey(b.id, "aprovado", "toque");
-                                }}
-                                onTouchStart={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  acionarBotaoSubKey(b.id, "aprovado", "toque");
-                                }}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  acionarBotaoSubKey(b.id, "aprovado", "toque");
-                                }}
-                                className={`h-11 px-3.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all active:scale-90 flex items-center justify-center gap-1.5 shadow-md ${
+                              {/* Badge de Toque e Validação Direta */}
+                              <div
+                                className={`h-10 px-4 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-md shrink-0 ${
                                   isAprovado
-                                    ? "bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/40 ring-2 ring-emerald-300"
+                                    ? "bg-emerald-500 text-white shadow-emerald-500/40 ring-2 ring-emerald-300"
                                     : isFalha
                                       ? "bg-rose-700 text-white"
-                                      : `${b.corBg} text-white shadow-lg ring-2 ring-white/20 animate-pulse`
+                                      : `${b.corBg} text-white shadow-lg ring-2 ring-white/20 animate-pulse group-hover:scale-105`
                                 }`}
                               >
                                 {isAprovado ? (
@@ -2240,18 +2233,21 @@ function PaginaDiagnosticoAparelho() {
                                 ) : (
                                   <>
                                     <span className="h-2 w-2 rounded-full bg-white animate-ping" />
-                                    <span>TESTAR</span>
+                                    <span>VALIDAR</span>
                                   </>
                                 )}
-                              </button>
+                              </div>
                             </div>
 
                             {/* Ações Secundárias (Marcar Falha ou Ignorar se Opcional) */}
-                            <div className="flex items-center justify-end gap-3 mt-2 pt-2 border-t border-slate-800/80">
+                            <div className="flex items-center justify-end gap-3 mt-2.5 pt-2 border-t border-slate-800/80">
                               <button
                                 type="button"
-                                onClick={() => acionarBotaoSubKey(b.id, "falha", "toque")}
-                                className="text-[10px] text-rose-400 hover:text-rose-300 underline font-medium flex items-center gap-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  acionarBotaoSubKey(b.id, "falha", "toque");
+                                }}
+                                className="text-[11px] text-rose-400 hover:text-rose-300 underline font-medium flex items-center gap-1 p-0.5 cursor-pointer"
                               >
                                 <AlertTriangle className="h-3 w-3" /> Registrar Falha no Botão
                               </button>
@@ -2259,8 +2255,11 @@ function PaginaDiagnosticoAparelho() {
                               {!b.obrigatorio && status !== "ignorado" && (
                                 <button
                                   type="button"
-                                  onClick={() => acionarBotaoSubKey(b.id, "ignorado", "toque")}
-                                  className="text-[10px] text-slate-400 hover:text-slate-300 underline font-medium"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    acionarBotaoSubKey(b.id, "ignorado", "toque");
+                                  }}
+                                  className="text-[11px] text-slate-400 hover:text-slate-300 underline font-medium p-0.5 cursor-pointer"
                                 >
                                   Aparelho sem este botão (Pular)
                                 </button>
@@ -2272,9 +2271,8 @@ function PaginaDiagnosticoAparelho() {
                     </div>
 
                     <p className="text-[10px] text-slate-400 text-center leading-tight pt-1">
-                      💡 Dica: Pressione o botão físico no celular ou toque diretamente no botão
-                      TESTAR acima. O teste detecta automaticamente cliques físicos, ciclos de tela
-                      do botão Power e toques no visor.
+                      💡 Dica: Pressione o botão físico no celular ou toque em qualquer um dos cards
+                      acima para validar a tecla instantaneamente.
                     </p>
                   </div>
 
@@ -2290,13 +2288,6 @@ function PaginaDiagnosticoAparelho() {
                     <div className="flex gap-2">
                       <Button
                         type="button"
-                        onPointerDown={() => {
-                          if (todosObrigatoriosTestados) {
-                            concluirRotinaSubKey("aprovado");
-                          } else {
-                            aprovarTodosBotoesSubKey();
-                          }
-                        }}
                         onClick={() => {
                           if (todosObrigatoriosTestados) {
                             concluirRotinaSubKey("aprovado");
@@ -2304,7 +2295,7 @@ function PaginaDiagnosticoAparelho() {
                             aprovarTodosBotoesSubKey();
                           }
                         }}
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold h-12 shadow-lg shadow-emerald-950/60 rounded-xl flex items-center justify-center gap-2"
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold h-12 shadow-lg shadow-emerald-950/60 rounded-xl flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <Check className="h-5 w-5" />
                         <span>
@@ -2318,7 +2309,7 @@ function PaginaDiagnosticoAparelho() {
                         type="button"
                         onClick={() => concluirRotinaSubKey("reprovado")}
                         variant="destructive"
-                        className="px-4 font-bold h-12 shadow-lg shadow-rose-950/60 rounded-xl"
+                        className="px-4 font-bold h-12 shadow-lg shadow-rose-950/60 rounded-xl cursor-pointer"
                       >
                         <X className="h-5 w-5 mr-1" /> Falha
                       </Button>
@@ -2328,17 +2319,22 @@ function PaginaDiagnosticoAparelho() {
                         variant="outline"
                         onClick={() => {
                           setSubKeyEtapaIndex(0);
-                          setSubKeyStatus({
+                          const resetStatus: Record<
+                            string,
+                            "pendente" | "aprovado" | "falha" | "ignorado"
+                          > = {
                             vol_up: "pendente",
                             vol_down: "pendente",
                             power: "pendente",
                             assist: "pendente",
-                          });
+                          };
+                          subKeyStatusRef.current = resetStatus;
+                          setSubKeyStatus(resetStatus);
                           setTeclasDetectadas([]);
                           setSubKeyUltimaAcao(null);
                           toast.info("Rotina Sub Key reiniciada.");
                         }}
-                        className="border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800 px-3 h-12 rounded-xl"
+                        className="border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800 px-3 h-12 rounded-xl cursor-pointer"
                         title="Reiniciar rotina"
                       >
                         <RotateCcw className="h-4 w-4" />
