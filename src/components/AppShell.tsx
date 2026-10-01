@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   Menu,
   Smartphone,
+  Banknote,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
@@ -20,6 +21,7 @@ const NAV = [
   { to: "/painel", label: "Painel", icon: LayoutDashboard },
   { to: "/ordens", label: "Ordens de serviço", icon: Wrench },
   { to: "/clientes", label: "Clientes", icon: Users },
+  { to: "/financeiro", label: "Financeiro", icon: Banknote },
   { to: "/usuarios", label: "Administração", icon: ShieldCheck },
 ] as const;
 

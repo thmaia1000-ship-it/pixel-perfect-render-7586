@@ -109,12 +109,20 @@ function Painel() {
           </section>
 
           <section className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <p className="text-sm text-muted-foreground">Faturamento do mês (entregues)</p>
+            <Link
+              to="/financeiro"
+              className="rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary block group"
+            >
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>Faturamento do mês (entregues)</span>
+                <span className="text-xs text-primary font-semibold group-hover:underline">
+                  Financeiro & Recibos →
+                </span>
+              </div>
               <p className="mt-2 font-display text-2xl font-extrabold text-primary">
                 {moeda(faturamento)}
               </p>
-            </div>
+            </Link>
 
             <div className="rounded-2xl border border-border bg-card p-5 md:col-span-2">
               <div className="flex items-center gap-2">
