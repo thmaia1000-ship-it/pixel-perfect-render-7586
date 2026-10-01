@@ -197,6 +197,9 @@ export interface EncerramentoOS {
   observacoesSaida?: string;
   encerradoEm: string;
   tecnicoNome?: string;
+  reabertoEm?: string;
+  reabertoPor?: string;
+  motivoReabertura?: string;
 }
 
 export interface MidiaConferencia {

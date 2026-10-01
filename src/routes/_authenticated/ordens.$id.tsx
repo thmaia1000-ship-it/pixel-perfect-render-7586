@@ -13,6 +13,7 @@ import {
   Share2,
   FileCheck,
   X,
+  RotateCcw,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -26,6 +27,7 @@ import { ConferenciaEntrada } from "@/components/ConferenciaEntrada";
 import { UploadMidiaConferencia } from "@/components/UploadMidiaConferencia";
 import { TermoGarantiaModal, type ModoDocumentoOS } from "@/components/TermoGarantiaModal";
 import { ModalEncerramentoOS } from "@/components/ModalEncerramentoOS";
+import { ModalReaberturaOS } from "@/components/ModalReaberturaOS";
 import { supabase } from "@/integrations/supabase/client";
 import {
   deserializarEstadoEConferencia,
@@ -78,6 +80,7 @@ function DetalheOS() {
   const [termoAberto, setTermoAberto] = useState(false);
   const [modalLinkAberto, setModalLinkAberto] = useState(false);
   const [modalEncerramentoAberto, setModalEncerramentoAberto] = useState(false);
+  const [modalReaberturaAberto, setModalReaberturaAberto] = useState(false);
   const [modoDocumento, setModoDocumento] = useState<ModoDocumentoOS>("entrada");
 
   const { data, isLoading } = useQuery({
@@ -735,10 +738,19 @@ function DetalheOS() {
             <section className="rounded-2xl border border-border bg-card p-5">
               <h2 className="text-base font-bold">Atualizar situação</h2>
               {PROXIMOS_STATUS[status].length === 0 ? (
-                <div className="mt-3 space-y-3">
+                <div className="mt-3 space-y-2.5">
                   <p className="text-sm text-muted-foreground">
                     Esta ordem está encerrada ({STATUS_LABEL[status]}).
                   </p>
+
+                  <Button
+                    type="button"
+                    onClick={() => setModalReaberturaAberto(true)}
+                    className="w-full gap-1.5 text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white shadow-sm cursor-pointer"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" /> Reabrir Ordem de Serviço
+                  </Button>
+
                   <Button
                     onClick={() => {
                       setModoDocumento("finalizada");
@@ -974,6 +986,21 @@ function DetalheOS() {
         midias={midias}
         modoInicial={modoDocumento}
       />
+
+      {modalReaberturaAberto && (
+        <ModalReaberturaOS
+          aberto={modalReaberturaAberto}
+          onFechar={() => setModalReaberturaAberto(false)}
+          osId={os.id}
+          osNumero={os.numero}
+          statusAtual={status}
+          clienteNome={os.clientes?.nome}
+          aparelhoModelo={modeloAparelho}
+          onReabertoSucesso={async () => {
+            await queryClient.invalidateQueries();
+          }}
+        />
+      )}
     </AppShell>
   );
 }
