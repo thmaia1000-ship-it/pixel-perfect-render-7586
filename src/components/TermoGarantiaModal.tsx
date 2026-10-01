@@ -468,7 +468,7 @@ export function TermoGarantiaModal({
               {/* Topo da Via Loja */}
               <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-2 print:pb-1 print:mb-1 print:border-slate-200">
                 <div className="flex items-center gap-2">
-                  <Logo size="sm" />
+                  <Logo size="sm" variant="print" />
                 </div>
                 <div className="text-right">
                   <span className="inline-block rounded bg-slate-900 text-white px-2 py-0.5 text-[10px] font-black uppercase tracking-wider print:text-[9px]">
@@ -594,7 +594,7 @@ export function TermoGarantiaModal({
               {/* Topo da Via Cliente */}
               <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-2 print:pb-1 print:mb-1 print:border-slate-200">
                 <div className="flex items-center gap-2">
-                  <Logo size="sm" />
+                  <Logo size="sm" variant="print" />
                 </div>
                 <div className="text-right">
                   <span className="inline-block rounded bg-primary text-primary-foreground px-2 py-0.5 text-[10px] font-black uppercase tracking-wider print:text-[9px]">
@@ -719,7 +719,7 @@ export function TermoGarantiaModal({
               {/* Topo Loja */}
               <div className="text-center space-y-0.5 pb-1.5 border-b border-black">
                 <div className="flex justify-center pb-0.5">
-                  <Logo size="sm" />
+                  <Logo size="sm" variant="print" />
                 </div>
                 <div className="font-black text-[13px] tracking-wide text-black">BR3 TECH</div>
                 <div className="text-[9.5px] font-bold">ASSISTÊNCIA TÉCNICA ESPECIALIZADA</div>
@@ -836,7 +836,7 @@ export function TermoGarantiaModal({
               {/* Topo Cliente */}
               <div className="text-center space-y-0.5 pb-1.5 border-b border-black">
                 <div className="flex justify-center pb-0.5">
-                  <Logo size="sm" />
+                  <Logo size="sm" variant="print" />
                 </div>
                 <div className="font-black text-[13px] tracking-wide text-black">BR3 TECH</div>
                 <div className="text-[9.5px] font-bold">ASSISTÊNCIA TÉCNICA ESPECIALIZADA</div>
@@ -942,7 +942,7 @@ export function TermoGarantiaModal({
             {/* Cabeçalho Oficial */}
             <div className="flex items-center justify-between border-b border-slate-200 pb-2 print:pb-1 print:border-slate-200">
               <div className="flex items-center gap-2">
-                <Logo size="sm" />
+                <Logo size="sm" variant="print" />
               </div>
               <div className="text-right">
                 <h1 className="text-xs sm:text-sm font-black uppercase tracking-tight text-slate-900 print:text-xs">

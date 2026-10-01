@@ -2,9 +2,15 @@ interface LogoProps {
   className?: string;
   size?: "sm" | "md" | "lg" | "xl";
   showText?: boolean;
+  variant?: "default" | "print";
 }
 
-export function Logo({ className = "", size = "md", showText = true }: LogoProps) {
+export function Logo({
+  className = "",
+  size = "md",
+  showText = true,
+  variant = "default",
+}: LogoProps) {
   const sizeMap = {
     sm: "h-8 w-8",
     md: "h-10 w-10",
@@ -19,25 +25,65 @@ export function Logo({ className = "", size = "md", showText = true }: LogoProps
     xl: "text-2xl",
   };
 
+  const ehImpresso = variant === "print";
+
   return (
     <span className={`inline-flex items-center gap-2.5 select-none ${className}`}>
       <span className="relative flex shrink-0 items-center justify-center">
         <img
           src="/images/logo3d.jpg"
           alt="Br3 Tech"
-          className={`${sizeMap[size]} rounded-xl object-cover bg-black/80 border border-primary/40 shadow-md shadow-primary/20 transition-all hover:scale-105 hover:border-primary`}
+          className={`${sizeMap[size]} rounded-xl object-cover ${
+            ehImpresso
+              ? "bg-white border border-slate-300 shadow-none"
+              : "bg-black/80 border border-primary/40 shadow-md shadow-primary/20 transition-all hover:scale-105 hover:border-primary"
+          }`}
         />
-        <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary shadow-sm shadow-primary animate-pulse" />
+        {!ehImpresso && (
+          <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary shadow-sm shadow-primary animate-pulse" />
+        )}
       </span>
+
       {showText && (
         <span className="flex flex-col leading-none">
           <span
-            className={`font-display font-extrabold tracking-tight text-foreground ${textMap[size]}`}
+            className={`font-display font-extrabold tracking-tight ${
+              ehImpresso
+                ? "!text-slate-950 print:!text-black"
+                : "text-foreground print:!text-slate-950"
+            } ${textMap[size]}`}
           >
-            Br<span className="text-primary">3</span>{" "}
-            <span className="text-foreground/95">Tech</span>
+            <span
+              className={
+                ehImpresso
+                  ? "!text-slate-950 print:!text-black"
+                  : "text-foreground print:!text-slate-950"
+              }
+            >
+              Br
+            </span>
+            <span
+              className={ehImpresso ? "text-cyan-600 font-black print:text-black" : "text-primary"}
+            >
+              3
+            </span>{" "}
+            <span
+              className={
+                ehImpresso
+                  ? "!text-slate-950 print:!text-black"
+                  : "text-foreground/95 print:!text-slate-950"
+              }
+            >
+              Tech
+            </span>
           </span>
-          <span className="text-[10px] uppercase font-semibold tracking-widest text-muted-foreground mt-0.5">
+          <span
+            className={`text-[10px] uppercase font-semibold tracking-widest mt-0.5 ${
+              ehImpresso
+                ? "!text-slate-600 print:!text-slate-700"
+                : "text-muted-foreground print:!text-slate-600"
+            }`}
+          >
             Laboratório de Tecnologia
           </span>
         </span>

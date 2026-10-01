@@ -87,7 +87,7 @@ export function ReciboImpressoModal({ aberto, onFechar, recibo }: ReciboImpresso
       {/* Cabeçalho do Recibo */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-2 print:pb-1">
         <div className="flex items-center gap-2">
-          <Logo size="sm" />
+          <Logo size="sm" variant="print" />
         </div>
         <div className="text-right">
           <div className="flex items-center justify-end gap-1.5">
@@ -449,7 +449,7 @@ export function ReciboImpressoModal({ aberto, onFechar, recibo }: ReciboImpresso
             {/* Topo Térmico */}
             <div className="text-center space-y-0.5 pb-1.5 border-b border-black">
               <div className="flex justify-center pb-0.5">
-                <Logo size="sm" />
+                <Logo size="sm" variant="print" />
               </div>
               <div className="font-black text-[13px] tracking-wide text-black">BR3 TECH</div>
               <div className="text-[9.5px] font-bold">ASSISTÊNCIA TÉCNICA ESPECIALIZADA</div>
