@@ -132,7 +132,22 @@ export function ModalEncerramentoOS({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [aberto, onFechar]);
 
-  const diagnosticoHardware = encerramentoAtual?.diagnosticoHardware;
+  const [diagnosticoHardware, setDiagnosticoHardware] = useState<DiagnosticoExecutado | null>(
+    encerramentoAtual?.diagnosticoHardware || null,
+  );
+
+  // Sincroniza estado do checklist, diagnostico e observações ao abrir o modal
+  useEffect(() => {
+    if (aberto) {
+      const inicial: ConferenciaChecklist = {};
+      for (const item of ITENS_CHECKLIST_SAIDA) {
+        inicial[item] = encerramentoAtual?.checklistSaida?.[item] ?? null;
+      }
+      setChecklist(inicial);
+      setDiagnosticoHardware(encerramentoAtual?.diagnosticoHardware || null);
+      setObsSaida(encerramentoAtual?.observacoesSaida || "");
+    }
+  }, [aberto, encerramentoAtual]);
 
   const toggleItem = (item: string, status: "OK" | "Defeito" | "N/V") => {
     setChecklist((prev) => ({
@@ -157,6 +172,48 @@ export function ModalEncerramentoOS({
     testado: boolean;
   }>({ nivel: null, carregando: null, suportado: false, testado: false });
 
+  const registrarResultadoCarregamento = (status: "aprovado" | "reprovado", detalhes?: string) => {
+    // 1. Atualiza checklist de saída
+    toggleItem("Carregamento testado e subindo carga", status === "aprovado" ? "OK" : "Defeito");
+
+    // 2. Atualiza laudo de testes de hardware
+    setDiagnosticoHardware((prev) => {
+      const testesAtuais = { ...(prev?.testes || {}) };
+      testesAtuais.charging = {
+        id: "charging",
+        status,
+        dataHora: new Date().toISOString(),
+        detalhes:
+          detalhes ||
+          (status === "aprovado"
+            ? "Conector OK · Subindo Carga"
+            : "Falha na entrada de energia / conector"),
+      };
+
+      const totalAprovados = Object.values(testesAtuais).filter(
+        (t) => t.status === "aprovado",
+      ).length;
+      const totalReprovados = Object.values(testesAtuais).filter(
+        (t) => t.status === "reprovado",
+      ).length;
+
+      return {
+        executadoEm: prev?.executadoEm || new Date().toISOString(),
+        aparelhoInfo: prev?.aparelhoInfo || aparelhoModelo,
+        testes: testesAtuais,
+        observacoes: prev?.observacoes || "",
+        totalAprovados,
+        totalReprovados,
+      };
+    });
+
+    toast.success(
+      status === "aprovado"
+        ? "⚡ Teste de Carregamento APROVADO no Laudo de Hardware!"
+        : "✕ Teste de Carregamento registrado com FALHA no Laudo!",
+    );
+  };
+
   const executarTesteCarregamento = async () => {
     setMostrarTesteCarga(true);
     if (typeof navigator !== "undefined" && "getBattery" in navigator) {
@@ -172,11 +229,10 @@ export function ModalEncerramentoOS({
         });
 
         if (carregando) {
-          setChecklist((prev) => ({
-            ...prev,
-            "Carregamento testado e subindo carga": "OK",
-          }));
-          toast.success("⚡ Carregamento ativo detectado! Item marcado como OK.");
+          registrarResultadoCarregamento(
+            "aprovado",
+            `Conector OK · Bateria ${nivel}% · Carregando`,
+          );
         } else {
           toast.info("Aparelho na bateria. Conecte o cabo para detectar subida de carga.");
         }
@@ -189,11 +245,10 @@ export function ModalEncerramentoOS({
             testado: true,
           }));
           if (battery.charging) {
-            setChecklist((prev) => ({
-              ...prev,
-              "Carregamento testado e subindo carga": "OK",
-            }));
-            toast.success("⚡ Carregador conectado! Carga subindo.");
+            registrarResultadoCarregamento(
+              "aprovado",
+              `Cabo conectado · Bateria ${Math.round(battery.level * 100)}% · Carregando`,
+            );
           }
         };
 
@@ -413,131 +468,151 @@ export function ModalEncerramentoOS({
           </div>
         )}
 
-        {/* Resumo do Laudo de Hardware já registrado */}
-        {diagnosticoHardware && (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3.5 space-y-2 text-xs">
-            <div className="flex items-center justify-between font-bold text-emerald-600 dark:text-emerald-400">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4" /> Laudo de Testes de Hardware Registrado via QR
-                Code
-              </span>
-              <span className="font-mono">
-                {diagnosticoHardware.totalAprovados} OK / {diagnosticoHardware.totalReprovados}{" "}
-                Falhas
-              </span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-              {Object.entries(diagnosticoHardware.testes).map(([testeId, res]) => (
-                <div
-                  key={testeId}
-                  className={`p-1.5 rounded border text-[11px] font-medium flex flex-col justify-between ${
-                    res.status === "aprovado"
-                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
-                      : res.status === "reprovado"
-                        ? "bg-rose-500/10 border-rose-500/20 text-rose-500"
-                        : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="capitalize">{testeId.replace("_", " ")}</span>
-                    <span className="font-bold">
-                      {res.status === "aprovado" ? "✓" : res.status === "reprovado" ? "✕" : "—"}
-                    </span>
-                  </div>
-                  {res.detalhes && (
-                    <span
-                      className="text-[9px] text-muted-foreground mt-0.5 line-clamp-1 opacity-90"
-                      title={res.detalhes}
-                    >
-                      {res.detalhes}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Painel de Teste de Carregamento & Conector de Energia */}
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3.5 space-y-2.5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-500 font-bold shrink-0">
-                <Zap className="h-4.5 w-4.5 fill-amber-500" />
-              </div>
-              <div>
-                <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 flex-wrap">
-                  <span>Teste de Carregamento & Conector USB</span>
-                  {checklist["Carregamento testado e subindo carga"] === "OK" && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">
-                      <Check className="h-3 w-3" /> Carga Aprovada (OK)
-                    </span>
-                  )}
-                  {checklist["Carregamento testado e subindo carga"] === "Defeito" && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-500 border border-rose-500/30">
-                      <X className="h-3 w-3" /> Falha no Carregador
-                    </span>
-                  )}
+        {/* ========================================================================= */}
+        {/* LAUDO DE TESTES DE HARDWARE REGISTRADO VIA QR CODE                        */}
+        {/* ========================================================================= */}
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3.5 text-xs">
+          {/* Cabeçalho do Laudo */}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-500/20 pb-2.5">
+            <div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                <h3 className="font-bold text-sm text-emerald-600 dark:text-emerald-400">
+                  Laudo de Testes de Hardware Registrado via QR Code
                 </h3>
-                <p className="text-[11px] text-muted-foreground">
-                  Valide a integridade do conector de carga, alimentação elétrica e subida da
-                  porcentagem de bateria.
-                </p>
               </div>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Validação de componentes, display, sensores e conector de carga no aparelho.
+              </p>
             </div>
 
             <div className="flex items-center gap-2">
+              <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                {diagnosticoHardware
+                  ? `${diagnosticoHardware.totalAprovados} OK / ${diagnosticoHardware.totalReprovados} Falhas`
+                  : "Laudo Aberto"}
+              </span>
               <Button
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={executarTesteCarregamento}
-                className="text-xs font-bold gap-1.5 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer h-8"
+                onClick={() => setMostrarQrCodeModal(!mostrarQrCodeModal)}
+                className="text-xs h-7 gap-1 border-primary/40 text-primary hover:bg-primary/10 cursor-pointer"
               >
-                <Zap className="h-3.5 w-3.5 fill-current" />
-                <span>Testar Carregamento</span>
-              </Button>
-
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => {
-                  toggleItem("Carregamento testado e subindo carga", "OK");
-                  toast.success("✓ Carregamento aprovado!");
-                }}
-                className={`text-xs font-bold gap-1 h-8 cursor-pointer ${
-                  checklist["Carregamento testado e subindo carga"] === "OK"
-                    ? "bg-emerald-600 text-white"
-                    : "bg-secondary text-foreground hover:bg-emerald-600 hover:text-white"
-                }`}
-              >
-                <Check className="h-3.5 w-3.5" />
-                <span>Aprovar Carga</span>
+                <QrCode className="h-3.5 w-3.5" />
+                <span>{mostrarQrCodeModal ? "Ocultar QR Code" : "Abrir Suíte QR Code"}</span>
               </Button>
             </div>
           </div>
 
-          {mostrarTesteCarga && (
-            <div className="rounded-lg bg-background/90 border border-border p-3 space-y-2 text-xs">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2">
-                <div className="flex items-center gap-2">
-                  <BatteryCharging className="h-4 w-4 text-primary" />
-                  <span className="font-semibold text-foreground">
-                    {statusBateria.suportado
-                      ? "Detecção Automática do Aparelho:"
-                      : "Validação em Bancada:"}
-                  </span>
-                  {statusBateria.nivel !== null && (
-                    <span className="font-mono font-bold text-foreground bg-muted px-1.5 py-0.5 rounded">
-                      {statusBateria.nivel}% Bateria
-                    </span>
-                  )}
+          {/* TESTE DE CARREGAMENTO INTEGRADO DIRETAMENTE DENTRO DO LAUDO */}
+          <div className="rounded-xl border border-emerald-500/30 bg-background/90 p-3.5 space-y-2.5 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`h-9 w-9 rounded-xl flex items-center justify-center font-bold shrink-0 transition-colors ${
+                    statusBateria.carregando ||
+                    diagnosticoHardware?.testes?.charging?.status === "aprovado"
+                      ? "bg-emerald-500/20 text-emerald-500 border border-emerald-500/40"
+                      : "bg-amber-500/20 text-amber-500 border border-amber-500/40"
+                  }`}
+                >
+                  <Zap className="h-4.5 w-4.5 fill-current" />
                 </div>
+                <div>
+                  <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5 flex-wrap">
+                    <span>Módulo Charging: Teste de Carregamento & Conector</span>
+                    {diagnosticoHardware?.testes?.charging?.status === "aprovado" ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">
+                        <Check className="h-3 w-3" /> Aprovado no Laudo
+                      </span>
+                    ) : diagnosticoHardware?.testes?.charging?.status === "reprovado" ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-500 border border-rose-500/30">
+                        <X className="h-3 w-3" /> Falha Registrada
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                        Pendente
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Mede corrente elétrica, integridade das portas USB/Lightning e subida de carga
+                    na bateria.
+                  </p>
+                </div>
+              </div>
 
-                <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={executarTesteCarregamento}
+                  className="text-xs font-bold gap-1.5 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer h-8"
+                >
+                  <Zap className="h-3.5 w-3.5 fill-current" />
+                  <span>Detectar Carga</span>
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() =>
+                    registrarResultadoCarregamento(
+                      "aprovado",
+                      statusBateria.nivel !== null
+                        ? `Conector OK · Bateria ${statusBateria.nivel}% · Carregando`
+                        : "Conector OK · Subindo Carga",
+                    )
+                  }
+                  className={`text-xs font-bold gap-1 h-8 cursor-pointer ${
+                    diagnosticoHardware?.testes?.charging?.status === "aprovado"
+                      ? "bg-emerald-600 text-white"
+                      : "bg-secondary text-foreground hover:bg-emerald-600 hover:text-white"
+                  }`}
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  <span>Aprovar Carga</span>
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    registrarResultadoCarregamento(
+                      "reprovado",
+                      "Falha na entrada de energia / conector não carrega",
+                    )
+                  }
+                  className="text-xs font-bold h-8 border-rose-500/40 text-rose-500 hover:bg-rose-500/10 cursor-pointer"
+                  title="Registrar falha no conector"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Painel de leitura em tempo real */}
+            {mostrarTesteCarga && (
+              <div className="rounded-lg bg-secondary/50 border border-border p-2.5 space-y-2 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-1.5">
+                  <div className="flex items-center gap-2">
+                    <BatteryCharging className="h-4 w-4 text-emerald-500" />
+                    <span className="font-semibold text-foreground">
+                      {statusBateria.suportado ? "Leitura do Aparelho:" : "Validação em Bancada:"}
+                    </span>
+                    {statusBateria.nivel !== null && (
+                      <span className="font-mono font-bold text-foreground bg-background px-1.5 py-0.5 rounded border border-border">
+                        {statusBateria.nivel}% Bateria
+                      </span>
+                    )}
+                  </div>
+
                   <span
                     className={`font-bold flex items-center gap-1 ${
-                      statusBateria.carregando ? "text-emerald-500" : "text-muted-foreground"
+                      statusBateria.carregando ? "text-emerald-500" : "text-amber-500"
                     }`}
                   >
                     {statusBateria.carregando ? (
@@ -545,42 +620,85 @@ export function ModalEncerramentoOS({
                         <Zap className="h-3.5 w-3.5 fill-emerald-500" /> Cabo Conectado & Carregando
                       </>
                     ) : (
-                      "Aparelho na Bateria (Aguardando Cabo)"
+                      "Aparelho na Bateria (Conecte o carregador)"
                     )}
                   </span>
                 </div>
-              </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-                <p className="text-[11px] text-muted-foreground">
-                  Conecte o cabo USB no conector do aparelho. Se a corrente for detectada e a carga
-                  subir, aprove o teste.
-                </p>
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => {
-                      toggleItem("Carregamento testado e subindo carga", "OK");
-                      toast.success("✓ Teste de carregamento registrado como Aprovado (OK)");
-                    }}
-                    className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer"
-                  >
-                    <Check className="h-3 w-3 mr-1" /> Carga OK
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => {
-                      toggleItem("Carregamento testado e subindo carga", "Defeito");
-                      toast.error("✕ Teste de carregamento registrado com Falha/Defeito");
-                    }}
-                    className="h-7 text-xs font-bold cursor-pointer"
-                  >
-                    <X className="h-3 w-3 mr-1" /> Falha no Conector
-                  </Button>
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                  <p className="text-[11px] text-muted-foreground">
+                    Ao conectar o cabo do carregador, confirme se a carga sobe e aprove o módulo.
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() =>
+                        registrarResultadoCarregamento(
+                          "aprovado",
+                          statusBateria.nivel !== null
+                            ? `Conector OK · Bateria ${statusBateria.nivel}% · Carregando`
+                            : "Conector OK · Subindo Carga",
+                        )
+                      }
+                      className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer"
+                    >
+                      <Check className="h-3 w-3 mr-1" /> Carga OK
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      onClick={() =>
+                        registrarResultadoCarregamento(
+                          "reprovado",
+                          "Falha na entrada de energia / conector",
+                        )
+                      }
+                      className="h-7 text-xs font-bold cursor-pointer"
+                    >
+                      <X className="h-3 w-3 mr-1" /> Falha no Conector
+                    </Button>
+                  </div>
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Grade de Módulos de Hardware do Laudo */}
+          {diagnosticoHardware && Object.keys(diagnosticoHardware.testes).length > 0 && (
+            <div className="space-y-1.5 pt-0.5">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground block">
+                Módulos Aferidos no Laudo de Hardware:
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                {Object.entries(diagnosticoHardware.testes).map(([testeId, res]) => (
+                  <div
+                    key={testeId}
+                    className={`p-1.5 rounded-lg border text-[11px] font-medium flex flex-col justify-between ${
+                      res.status === "aprovado"
+                        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+                        : res.status === "reprovado"
+                          ? "bg-rose-500/10 border-rose-500/20 text-rose-500"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="capitalize">{testeId.replace("_", " ")}</span>
+                      <span className="font-bold">
+                        {res.status === "aprovado" ? "✓" : res.status === "reprovado" ? "✕" : "—"}
+                      </span>
+                    </div>
+                    {res.detalhes && (
+                      <span
+                        className="text-[9px] text-muted-foreground mt-0.5 line-clamp-1 opacity-90"
+                        title={res.detalhes}
+                      >
+                        {res.detalhes}
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}
