@@ -327,7 +327,7 @@ export function ModalEncerramentoOS({
               {Object.entries(diagnosticoHardware.testes).map(([testeId, res]) => (
                 <div
                   key={testeId}
-                  className={`p-1.5 rounded border text-[11px] font-medium flex items-center justify-between ${
+                  className={`p-1.5 rounded border text-[11px] font-medium flex flex-col justify-between ${
                     res.status === "aprovado"
                       ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
                       : res.status === "reprovado"
@@ -335,8 +335,15 @@ export function ModalEncerramentoOS({
                         : "bg-muted text-muted-foreground"
                   }`}
                 >
-                  <span className="capitalize">{testeId.replace("_", " ")}</span>
-                  <span>{res.status === "aprovado" ? "✓" : res.status === "reprovado" ? "✕" : "—"}</span>
+                  <div className="flex items-center justify-between">
+                    <span className="capitalize">{testeId.replace("_", " ")}</span>
+                    <span className="font-bold">{res.status === "aprovado" ? "✓" : res.status === "reprovado" ? "✕" : "—"}</span>
+                  </div>
+                  {res.detalhes && (
+                    <span className="text-[9px] text-muted-foreground mt-0.5 line-clamp-1 opacity-90" title={res.detalhes}>
+                      {res.detalhes}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

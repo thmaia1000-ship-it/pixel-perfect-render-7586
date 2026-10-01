@@ -464,7 +464,7 @@ function DetalheOS() {
                         ([teste, res]) => (
                           <div
                             key={teste}
-                            className={`p-1.5 rounded border text-[11px] flex justify-between items-center ${
+                            className={`p-1.5 rounded border text-[11px] flex flex-col justify-between ${
                               res.status === "aprovado"
                                 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
                                 : res.status === "reprovado"
@@ -472,10 +472,17 @@ function DetalheOS() {
                                   : "bg-muted text-muted-foreground"
                             }`}
                           >
-                            <span className="capitalize">{teste.replace("_", " ")}</span>
-                            <span className="font-bold">
-                              {res.status === "aprovado" ? "✓" : res.status === "reprovado" ? "✕" : "—"}
-                            </span>
+                            <div className="flex justify-between items-center">
+                              <span className="capitalize">{teste.replace("_", " ")}</span>
+                              <span className="font-bold">
+                                {res.status === "aprovado" ? "✓" : res.status === "reprovado" ? "✕" : "—"}
+                              </span>
+                            </div>
+                            {res.detalhes && (
+                              <span className="text-[9px] text-muted-foreground mt-0.5 line-clamp-1 opacity-90" title={res.detalhes}>
+                                {res.detalhes}
+                              </span>
+                            )}
                           </div>
                         ),
                       )}
