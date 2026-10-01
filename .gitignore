@@ -29,5 +29,7 @@ dist-ssr
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
 *.patch
+.env
+.env.*
+!.env.example
