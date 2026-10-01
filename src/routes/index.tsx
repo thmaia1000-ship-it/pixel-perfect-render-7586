@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
+import { InstallAppModal } from "@/components/InstallAppModal";
 import {
   Dialog,
   DialogContent,
@@ -142,6 +143,7 @@ const RECURSOS = [
 
 function Entrada() {
   const [estaLogado, setEstaLogado] = useState(false);
+  const [modalAppAberto, setModalAppAberto] = useState(false);
   const [videoSelecionado, setVideoSelecionado] = useState<VideoDemonstrativo | null>(null);
 
   useEffect(() => {
@@ -190,6 +192,16 @@ function Entrada() {
               </a>
             </div>
 
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setModalAppAberto(true)}
+              className="gap-1.5 text-xs text-primary border-primary/40 hover:bg-primary/10"
+            >
+              <Smartphone className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">App Android</span>
+            </Button>
+
             <Button asChild size="sm" className="shadow-lg shadow-primary/20 font-semibold">
               <Link to={estaLogado ? "/painel" : "/auth"}>
                 {estaLogado ? "Acessar o Painel" : "Entrar no sistema"}
@@ -213,7 +225,8 @@ function Entrada() {
             </h1>
 
             <p className="mt-4 max-w-xl text-base text-muted-foreground leading-relaxed">
-              Gestão de ponta a ponta: entrada com checklist fotográfico, aprovação com assinatura digital, testes de hardware de saída e controle integrado de peças e garantias.
+              Gestão de ponta a ponta: entrada com checklist fotográfico, aprovação com assinatura
+              digital, testes de hardware de saída e controle integrado de peças e garantias.
             </p>
 
             {/* BOTÕES DE REDES SOCIAIS NA HOME (substituindo o botão duplicado) */}
@@ -266,8 +279,8 @@ function Entrada() {
                 Veja a BR3 Tech em ação no @br3tech
               </h2>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-2xl leading-relaxed">
-                Snapshots e demonstrações reais publicadas em nosso perfil oficial no TikTok. Acompanhe a bancada,
-                microeletrônica de precisão e nossos protocolos de liberação.
+                Snapshots e demonstrações reais publicadas em nosso perfil oficial no TikTok.
+                Acompanhe a bancada, microeletrônica de precisão e nossos protocolos de liberação.
               </p>
             </div>
 
@@ -425,7 +438,10 @@ function Entrada() {
         </div>
 
         {/* MODAL / DIALOG PARA REPRODUÇÃO DO VÍDEO DO TIKTOK */}
-        <Dialog open={!!videoSelecionado} onOpenChange={(open) => !open && setVideoSelecionado(null)}>
+        <Dialog
+          open={!!videoSelecionado}
+          onOpenChange={(open) => !open && setVideoSelecionado(null)}
+        >
           <DialogContent className="max-w-md sm:max-w-lg p-0 overflow-hidden bg-slate-950 border-slate-800 text-foreground shadow-2xl">
             {videoSelecionado && (
               <div className="flex flex-col">
@@ -521,7 +537,8 @@ function Entrada() {
       <footer className="border-t border-border/60 bg-card/40 backdrop-blur-md py-8 text-center text-sm text-muted-foreground">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs">
-            © {new Date().getFullYear()} BR3 Tech — Laboratório de Tecnologia Especializado. Todos os direitos reservados.
+            © {new Date().getFullYear()} BR3 Tech — Laboratório de Tecnologia Especializado. Todos
+            os direitos reservados.
           </p>
 
           <div className="flex items-center gap-4 text-xs font-semibold">
@@ -546,6 +563,8 @@ function Entrada() {
           </div>
         </div>
       </footer>
+
+      <InstallAppModal open={modalAppAberto} onClose={() => setModalAppAberto(false)} />
     </div>
   );
 }

@@ -55,10 +55,15 @@ export function ModalEncerramentoOS({
 
   // IP local detectado da máquina de desenvolvimento
   const ipRedeLocal = "192.168.1.13";
-  const [usarIpRede, setUsarIpRede] = useState(hostnameAtual === "localhost" || hostnameAtual === "127.0.0.1");
+  const [usarIpRede, setUsarIpRede] = useState(
+    hostnameAtual === "localhost" || hostnameAtual === "127.0.0.1",
+  );
 
   // Sessão de autenticação do técnico para transferir login transparente ao smartphone via QR Code
-  const [sessionAuth, setSessionAuth] = useState<{ access_token: string; refresh_token: string } | null>(null);
+  const [sessionAuth, setSessionAuth] = useState<{
+    access_token: string;
+    refresh_token: string;
+  } | null>(null);
   const [incluirLoginAutomatico, setIncluirLoginAutomatico] = useState(true);
 
   useEffect(() => {
@@ -82,7 +87,8 @@ export function ModalEncerramentoOS({
     ? `${urlDiagnosticoLimpa}#token=${encodeURIComponent(sessionAuth.access_token)}&refresh=${encodeURIComponent(sessionAuth.refresh_token)}`
     : urlDiagnosticoLimpa;
 
-  const urlDiagnostico = incluirLoginAutomatico && sessionAuth ? urlDiagnosticoComAuth : urlDiagnosticoLimpa;
+  const urlDiagnostico =
+    incluirLoginAutomatico && sessionAuth ? urlDiagnosticoComAuth : urlDiagnosticoLimpa;
 
   // Checklist de saída manual
   const [checklist, setChecklist] = useState<ConferenciaChecklist>(() => {
@@ -238,7 +244,9 @@ export function ModalEncerramentoOS({
                 {/* Alternância de IP para rede Wi-Fi */}
                 {(hostnameAtual === "localhost" || hostnameAtual === "127.0.0.1") && (
                   <div className="flex items-center gap-2 pt-1">
-                    <span className="text-[11px] text-muted-foreground font-medium">Link do QR:</span>
+                    <span className="text-[11px] text-muted-foreground font-medium">
+                      Link do QR:
+                    </span>
                     <button
                       type="button"
                       onClick={() => setUsarIpRede(true)}
@@ -317,10 +325,12 @@ export function ModalEncerramentoOS({
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3.5 space-y-2 text-xs">
             <div className="flex items-center justify-between font-bold text-emerald-600 dark:text-emerald-400">
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4" /> Laudo de Testes de Hardware Registrado via QR Code
+                <CheckCircle2 className="h-4 w-4" /> Laudo de Testes de Hardware Registrado via QR
+                Code
               </span>
               <span className="font-mono">
-                {diagnosticoHardware.totalAprovados} OK / {diagnosticoHardware.totalReprovados} Falhas
+                {diagnosticoHardware.totalAprovados} OK / {diagnosticoHardware.totalReprovados}{" "}
+                Falhas
               </span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
@@ -337,10 +347,15 @@ export function ModalEncerramentoOS({
                 >
                   <div className="flex items-center justify-between">
                     <span className="capitalize">{testeId.replace("_", " ")}</span>
-                    <span className="font-bold">{res.status === "aprovado" ? "✓" : res.status === "reprovado" ? "✕" : "—"}</span>
+                    <span className="font-bold">
+                      {res.status === "aprovado" ? "✓" : res.status === "reprovado" ? "✕" : "—"}
+                    </span>
                   </div>
                   {res.detalhes && (
-                    <span className="text-[9px] text-muted-foreground mt-0.5 line-clamp-1 opacity-90" title={res.detalhes}>
+                    <span
+                      className="text-[9px] text-muted-foreground mt-0.5 line-clamp-1 opacity-90"
+                      title={res.detalhes}
+                    >
                       {res.detalhes}
                     </span>
                   )}
@@ -358,9 +373,7 @@ export function ModalEncerramentoOS({
                 Itens de Inspeção de Saída ({ITENS_CHECKLIST_SAIDA.length})
               </span>
               <span className="text-xs text-muted-foreground">·</span>
-              <span className="text-xs font-semibold text-emerald-500">
-                {contadores.ok} OK
-              </span>
+              <span className="text-xs font-semibold text-emerald-500">{contadores.ok} OK</span>
               {contadores.defeito > 0 && (
                 <span className="text-xs font-semibold text-rose-500">
                   {contadores.defeito} Defeito
@@ -470,13 +483,7 @@ export function ModalEncerramentoOS({
 
         {/* Rodapé e Ações */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={onFechar}
-            className="text-xs"
-          >
+          <Button type="button" variant="outline" size="sm" onClick={onFechar} className="text-xs">
             Fechar
           </Button>
 

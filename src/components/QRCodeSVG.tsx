@@ -53,7 +53,7 @@ export function QRCodeSVG({ value, size = 180, className = "" }: QRCodeSVGProps)
             width={cellSize + 0.05}
             height={cellSize + 0.05}
             fill="#000000"
-          />
+          />,
         );
       }
     }

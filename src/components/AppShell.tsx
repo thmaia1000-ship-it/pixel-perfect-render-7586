@@ -1,10 +1,19 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { LogOut, LayoutDashboard, Wrench, Users, ShieldCheck, Menu } from "lucide-react";
+import {
+  LogOut,
+  LayoutDashboard,
+  Wrench,
+  Users,
+  ShieldCheck,
+  Menu,
+  Smartphone,
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
+import { InstallAppModal } from "@/components/InstallAppModal";
 import { supabase } from "@/integrations/supabase/client";
 
 const NAV = [
@@ -26,6 +35,7 @@ export function AppShell({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [aberto, setAberto] = useState(false);
+  const [modalAppAberto, setModalAppAberto] = useState(false);
 
   async function sair() {
     await queryClient.cancelQueries();
@@ -41,7 +51,7 @@ export function AppShell({
           <Link to="/painel" className="min-w-0">
             <Logo />
           </Link>
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1.5">
             <nav className="hidden items-center gap-1 md:flex">
               {NAV.map((item) => (
                 <Link
@@ -56,6 +66,18 @@ export function AppShell({
                 </Link>
               ))}
             </nav>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setModalAppAberto(true)}
+              className="gap-1.5 text-xs text-primary border-primary/40 hover:bg-primary/10 shadow-sm"
+              title="Instalar aplicativo Android ou gerar APK"
+            >
+              <Smartphone className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">App Android</span>
+            </Button>
+
             <Button variant="ghost" size="icon" onClick={sair} aria-label="Sair">
               <LogOut className="h-4 w-4" />
             </Button>
@@ -84,6 +106,17 @@ export function AppShell({
                 {item.label}
               </Link>
             ))}
+            <button
+              type="button"
+              onClick={() => {
+                setAberto(false);
+                setModalAppAberto(true);
+              }}
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+            >
+              <Smartphone className="h-4 w-4 shrink-0" />
+              Instalar App Android (APK)
+            </button>
           </nav>
         )}
       </header>
@@ -95,6 +128,8 @@ export function AppShell({
         </div>
         {children}
       </main>
+
+      <InstallAppModal open={modalAppAberto} onClose={() => setModalAppAberto(false)} />
     </div>
   );
 }

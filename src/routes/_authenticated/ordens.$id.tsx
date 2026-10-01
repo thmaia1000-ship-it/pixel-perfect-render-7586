@@ -390,7 +390,8 @@ function DetalheOS() {
                   <span>CHECKLIST DE SAÍDA E TESTES DE HARDWARE (*#0*#)</span>
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Conferência final de bancada e bateria de testes de componentes executada no aparelho.
+                  Conferência final de bancada e bateria de testes de componentes executada no
+                  aparelho.
                 </p>
               </div>
 
@@ -413,9 +414,7 @@ function DetalheOS() {
                 {/* Resumo dos Itens de Saída */}
                 <div className="rounded-xl border border-border/70 bg-background/60 p-3 text-xs space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-foreground">
-                      Inspeção de Saída Concluída
-                    </span>
+                    <span className="font-bold text-foreground">Inspeção de Saída Concluída</span>
                     <span className="text-[11px] text-muted-foreground">
                       {encerramento.encerradoEm ? dataHora(encerramento.encerradoEm) : "Registrado"}
                     </span>
@@ -475,11 +474,18 @@ function DetalheOS() {
                             <div className="flex justify-between items-center">
                               <span className="capitalize">{teste.replace("_", " ")}</span>
                               <span className="font-bold">
-                                {res.status === "aprovado" ? "✓" : res.status === "reprovado" ? "✕" : "—"}
+                                {res.status === "aprovado"
+                                  ? "✓"
+                                  : res.status === "reprovado"
+                                    ? "✕"
+                                    : "—"}
                               </span>
                             </div>
                             {res.detalhes && (
-                              <span className="text-[9px] text-muted-foreground mt-0.5 line-clamp-1 opacity-90" title={res.detalhes}>
+                              <span
+                                className="text-[9px] text-muted-foreground mt-0.5 line-clamp-1 opacity-90"
+                                title={res.detalhes}
+                              >
                                 {res.detalhes}
                               </span>
                             )}
@@ -502,7 +508,8 @@ function DetalheOS() {
                   onClick={() => setModalEncerramentoAberto(true)}
                   className="gap-1.5 text-xs font-bold"
                 >
-                  <ClipboardCheck className="h-3.5 w-3.5 text-primary" /> Abrir Checklist & QR Code de Testes
+                  <ClipboardCheck className="h-3.5 w-3.5 text-primary" /> Abrir Checklist & QR Code
+                  de Testes
                 </Button>
               </div>
             )}

@@ -42,6 +42,7 @@ type Modo = "login" | "recuperar";
 
 function Acesso() {
   const navigate = useNavigate();
+  const search = Route.useSearch();
   const [modo, setModo] = useState<Modo>("login");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -100,8 +101,7 @@ function Acesso() {
         return;
       }
       toast.success("Bem-vindo de volta!");
-      const search = Route.useSearch();
-      const destino = search?.returnTo || "/painel";
+      const destino = (search as { returnTo?: string })?.returnTo || "/painel";
       await navigate({ to: destino as any, replace: true });
     } catch (err) {
       const msg =

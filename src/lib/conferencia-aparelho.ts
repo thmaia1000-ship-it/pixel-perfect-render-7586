@@ -76,21 +76,96 @@ export interface ItemTesteHardware {
 }
 
 export const LISTA_TESTES_HARDWARE: ItemTesteHardware[] = [
-  { id: "red", titulo: "Red (Vermelho)", descricao: "Teste de pixels mortos e fidelidade de cor vermelha", categoria: "display" },
-  { id: "green", titulo: "Green (Verde)", descricao: "Teste de pixels mortos e fidelidade de cor verde", categoria: "display" },
-  { id: "blue", titulo: "Blue (Azul)", descricao: "Teste de pixels mortos e fidelidade de cor azul", categoria: "display" },
-  { id: "white", titulo: "White (Branco)", descricao: "Inspeção de manchas, uniformidade da tela e iluminação", categoria: "display" },
-  { id: "black", titulo: "Black (Preto)", descricao: "Contraste, vazamento de luz e pureza de preto", categoria: "display" },
-  { id: "touch", titulo: "Touch Grid (Grade)", descricao: "Mapeamento e precisão de toque em todas as áreas da tela", categoria: "display" },
-  { id: "receiver", titulo: "Receiver (Auricular)", descricao: "Teste de áudio do alto-falante superior de chamadas", categoria: "audio" },
-  { id: "speaker", titulo: "Speaker (Viva-voz)", descricao: "Teste de alto-falante principal e potência estéreo", categoria: "audio" },
-  { id: "mic", titulo: "Microphone (Microfone)", descricao: "Gravação e eco para teste do microfone principal e cancelamento", categoria: "audio" },
-  { id: "vibration", titulo: "Vibration (Vibração)", descricao: "Ativação do motor de vibração / feedback tátil", categoria: "geral" },
-  { id: "dimming", titulo: "Dimming (Brilho)", descricao: "Teste de controle de intensidade de iluminação do display", categoria: "display" },
-  { id: "camera_back", titulo: "Mega Cam (Traseira)", descricao: "Câmera principal traseira, autofoco e resolução", categoria: "cameras" },
-  { id: "camera_front", titulo: "Front Cam (Frontal)", descricao: "Câmera frontal para selfies e chamadas", categoria: "cameras" },
-  { id: "sensor", titulo: "Sensor (Acelerômetro/Luz)", descricao: "Leitura de sensores de aceleração, giroscópio e proximidade", categoria: "sensores" },
-  { id: "sub_key", titulo: "Sub Key (Teclas Físicas)", descricao: "Teste de acionamento dos botões Power e Volume", categoria: "geral" },
+  {
+    id: "red",
+    titulo: "Red (Vermelho)",
+    descricao: "Teste de pixels mortos e fidelidade de cor vermelha",
+    categoria: "display",
+  },
+  {
+    id: "green",
+    titulo: "Green (Verde)",
+    descricao: "Teste de pixels mortos e fidelidade de cor verde",
+    categoria: "display",
+  },
+  {
+    id: "blue",
+    titulo: "Blue (Azul)",
+    descricao: "Teste de pixels mortos e fidelidade de cor azul",
+    categoria: "display",
+  },
+  {
+    id: "white",
+    titulo: "White (Branco)",
+    descricao: "Inspeção de manchas, uniformidade da tela e iluminação",
+    categoria: "display",
+  },
+  {
+    id: "black",
+    titulo: "Black (Preto)",
+    descricao: "Contraste, vazamento de luz e pureza de preto",
+    categoria: "display",
+  },
+  {
+    id: "touch",
+    titulo: "Touch Grid (Grade)",
+    descricao: "Mapeamento e precisão de toque em todas as áreas da tela",
+    categoria: "display",
+  },
+  {
+    id: "receiver",
+    titulo: "Receiver (Auricular)",
+    descricao: "Teste de áudio do alto-falante superior de chamadas",
+    categoria: "audio",
+  },
+  {
+    id: "speaker",
+    titulo: "Speaker (Viva-voz)",
+    descricao: "Teste de alto-falante principal e potência estéreo",
+    categoria: "audio",
+  },
+  {
+    id: "mic",
+    titulo: "Microphone (Microfone)",
+    descricao: "Gravação e eco para teste do microfone principal e cancelamento",
+    categoria: "audio",
+  },
+  {
+    id: "vibration",
+    titulo: "Vibration (Vibração)",
+    descricao: "Ativação do motor de vibração / feedback tátil",
+    categoria: "geral",
+  },
+  {
+    id: "dimming",
+    titulo: "Dimming (Brilho)",
+    descricao: "Teste de controle de intensidade de iluminação do display",
+    categoria: "display",
+  },
+  {
+    id: "camera_back",
+    titulo: "Mega Cam (Traseira)",
+    descricao: "Câmera principal traseira, autofoco e resolução",
+    categoria: "cameras",
+  },
+  {
+    id: "camera_front",
+    titulo: "Front Cam (Frontal)",
+    descricao: "Câmera frontal para selfies e chamadas",
+    categoria: "cameras",
+  },
+  {
+    id: "sensor",
+    titulo: "Sensor (Acelerômetro/Luz)",
+    descricao: "Leitura de sensores de aceleração, giroscópio e proximidade",
+    categoria: "sensores",
+  },
+  {
+    id: "sub_key",
+    titulo: "Sub Key (Teclas Físicas)",
+    descricao: "Teste de acionamento dos botões Power e Volume",
+    categoria: "geral",
+  },
 ];
 
 export interface ResultadoTesteHardware {
@@ -226,4 +301,3 @@ export function deserializarEstadoEConferencia(valor?: string | null): {
     encerramento: null,
   };
 }
-

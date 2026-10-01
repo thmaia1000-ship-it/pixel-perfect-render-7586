@@ -137,13 +137,10 @@ export function TermoGarantiaModal({
       ? encerramento.checklistSaida
       : conferencia;
 
-  const listaItensAtiva =
-    modo === "finalizada" ? ITENS_CHECKLIST_SAIDA : ITENS_CONFERENCIA_ENTRADA;
+  const listaItensAtiva = modo === "finalizada" ? ITENS_CHECKLIST_SAIDA : ITENS_CONFERENCIA_ENTRADA;
 
   // Itens com alteração na conferência
-  const itensComDefeito = listaItensAtiva.filter(
-    (item) => checklistAtivo[item] === "Defeito",
-  );
+  const itensComDefeito = listaItensAtiva.filter((item) => checklistAtivo[item] === "Defeito");
   const itensOK = listaItensAtiva.filter((item) => checklistAtivo[item] === "OK");
 
   // Divisão do checklist em duas colunas para garantir encaixe perfeito em 1 página impressa
@@ -1082,7 +1079,9 @@ export function TermoGarantiaModal({
                     {encerramento.diagnosticoHardware.totalReprovados > 0 &&
                       `, ${encerramento.diagnosticoHardware.totalReprovados} com falha`}
                   </span>
-                  <span className="font-mono text-[7px] text-emerald-700">Laudo Digital Registrado</span>
+                  <span className="font-mono text-[7px] text-emerald-700">
+                    Laudo Digital Registrado
+                  </span>
                 </div>
               )}
             </section>
