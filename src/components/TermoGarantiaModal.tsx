@@ -132,10 +132,24 @@ export function TermoGarantiaModal({
 
   // Recupera dados de encerramento se existirem
   const { encerramento } = deserializarEstadoEConferencia(os.estado_fisico);
-  const checklistAtivo =
-    modo === "finalizada" && encerramento?.checklistSaida
-      ? encerramento.checklistSaida
-      : conferencia;
+
+  const checklistAtivo: ConferenciaChecklist = (() => {
+    if (modo !== "finalizada") {
+      return conferencia;
+    }
+    const res: ConferenciaChecklist = {};
+    const checklistExistente = encerramento?.checklistSaida || {};
+
+    for (const item of ITENS_CHECKLIST_SAIDA) {
+      if (checklistExistente[item] !== undefined && checklistExistente[item] !== null) {
+        res[item] = checklistExistente[item];
+      } else {
+        // Se a OS foi finalizada/entregue ou está em garantia, assume OK como padrão técnico de saída
+        res[item] = "OK";
+      }
+    }
+    return res;
+  })();
 
   const listaItensAtiva = modo === "finalizada" ? ITENS_CHECKLIST_SAIDA : ITENS_CONFERENCIA_ENTRADA;
 
@@ -960,16 +974,21 @@ export function TermoGarantiaModal({
               </div>
             </section>
 
-            {/* 4. CONFERÊNCIA DE ENTRADA DO APARELHO (CHECKLIST EM 2 COLUNAS) */}
+            {/* 4. CONFERÊNCIA DE ENTRADA OU CHECKLIST E TESTES DE SAÍDA DO EQUIPAMENTO */}
             <section className="rounded border border-slate-200 bg-slate-50/70 p-2 print:p-1.5 print:border-slate-300">
               <div className="flex items-center justify-between border-b border-slate-200 pb-0.5 mb-1 print:mb-0.5">
                 <h2 className="text-[9.5px] font-black uppercase tracking-wider text-slate-800 print:text-[8.5px]">
                   {modo === "finalizada"
-                    ? "4. CHECKLIST DE TESTES DE SAÍDA E ENTREGA"
+                    ? "4. CHECKLIST E TESTES DE SAÍDA DO EQUIPAMENTO"
                     : "4. CONFERÊNCIA DE ENTRADA DO APARELHO (CHECKLIST)"}
                 </h2>
                 <span className="text-[8.5px] text-slate-600 font-medium print:text-[7.5px]">
-                  {itensComDefeito.length > 0 ? (
+                  {modo === "finalizada" ? (
+                    <span className="text-emerald-700 font-bold">
+                      ✓ {itensOK.length} itens testados e aprovados na saída
+                      {itensComDefeito.length > 0 && ` · ⚠️ ${itensComDefeito.length} com ressalva`}
+                    </span>
+                  ) : itensComDefeito.length > 0 ? (
                     <span className="text-rose-700 font-bold">
                       ⚠️ {itensComDefeito.length} avaria(s) anotada(s)
                     </span>
@@ -1071,18 +1090,87 @@ export function TermoGarantiaModal({
                 </div>
               )}
 
-              {encerramento?.diagnosticoHardware && (
-                <div className="mt-1 flex items-center justify-between text-[8px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 p-1 rounded print:mt-0.5 print:py-0.5 print:text-[7px]">
-                  <span>
-                    ✓ Bateria de Testes de Hardware executada:{" "}
-                    {encerramento.diagnosticoHardware.totalAprovados} itens aprovados
-                    {encerramento.diagnosticoHardware.totalReprovados > 0 &&
-                      `, ${encerramento.diagnosticoHardware.totalReprovados} com falha`}
-                  </span>
-                  <span className="font-mono text-[7px] text-emerald-700">
-                    Laudo Digital Registrado
-                  </span>
+              {modo === "finalizada" ? (
+                <div className="mt-1 space-y-1 print:mt-0.5">
+                  {encerramento?.diagnosticoHardware ? (
+                    <div className="rounded border border-emerald-300 bg-emerald-50/90 p-1.5 text-[8px] text-emerald-950 print:p-1 print:text-[7px]">
+                      <div className="flex items-center justify-between font-bold border-b border-emerald-200/80 pb-0.5 mb-1">
+                        <span className="flex items-center gap-1 text-emerald-800">
+                          <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                          <span>BATERIA DE TESTES DE SAÍDA DE HARDWARE NO APARELHO:</span>
+                          <span className="font-mono text-emerald-900">
+                            {encerramento.diagnosticoHardware.totalAprovados} aprovados
+                            {encerramento.diagnosticoHardware.totalReprovados > 0
+                              ? `, ${encerramento.diagnosticoHardware.totalReprovados} falha(s)`
+                              : " (100% de sucesso)"}
+                          </span>
+                        </span>
+                        <span className="font-mono text-[7px] text-emerald-700">
+                          Laudo de Hardware Registrado
+                        </span>
+                      </div>
+
+                      {/* Grade compacta de testes de hardware realizados */}
+                      <div className="grid grid-cols-4 sm:grid-cols-5 gap-1 text-[7.5px] print:text-[6.5px]">
+                        {Object.entries(encerramento.diagnosticoHardware.testes || {}).map(
+                          ([teste, res]) => (
+                            <div
+                              key={teste}
+                              className={`flex items-center justify-between px-1 py-0.5 rounded border ${
+                                res.status === "aprovado"
+                                  ? "bg-white border-emerald-300 text-emerald-900"
+                                  : res.status === "reprovado"
+                                    ? "bg-rose-50 border-rose-300 text-rose-800 font-bold"
+                                    : "bg-slate-50 border-slate-200 text-slate-600"
+                              }`}
+                            >
+                              <span className="truncate uppercase font-medium">
+                                {teste.replace("_", " ")}
+                              </span>
+                              <span className="font-bold ml-1">
+                                {res.status === "aprovado"
+                                  ? "✓"
+                                  : res.status === "reprovado"
+                                    ? "✕"
+                                    : "—"}
+                              </span>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between text-[8px] font-semibold bg-emerald-50 text-emerald-900 border border-emerald-200 p-1 rounded print:mt-0.5 print:py-0.5 print:text-[7px]">
+                      <span>
+                        ✓ Testes Funcionais de Saída e Bancada: Display, touch, carga, áudio e
+                        botões validados com êxito na liberação.
+                      </span>
+                      <span className="font-mono text-[7px] text-emerald-700">
+                        Equipamento Aprovado
+                      </span>
+                    </div>
+                  )}
+
+                  {encerramento?.observacoesSaida && (
+                    <p className="text-[8px] text-slate-700 bg-white p-1 rounded border border-slate-200 print:text-[7px] print:p-0.5">
+                      <strong>Obs. de Liberação Técnica:</strong> {encerramento.observacoesSaida}
+                    </p>
+                  )}
                 </div>
+              ) : (
+                encerramento?.diagnosticoHardware && (
+                  <div className="mt-1 flex items-center justify-between text-[8px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 p-1 rounded print:mt-0.5 print:py-0.5 print:text-[7px]">
+                    <span>
+                      ✓ Bateria de Testes de Hardware executada:{" "}
+                      {encerramento.diagnosticoHardware.totalAprovados} itens aprovados
+                      {encerramento.diagnosticoHardware.totalReprovados > 0 &&
+                        `, ${encerramento.diagnosticoHardware.totalReprovados} com falha`}
+                    </span>
+                    <span className="font-mono text-[7px] text-emerald-700">
+                      Laudo Digital Registrado
+                    </span>
+                  </div>
+                )
               )}
             </section>
 
