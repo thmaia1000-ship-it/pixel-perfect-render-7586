@@ -15,7 +15,9 @@ interface QRCodeSVGProps {
 export function QRCodeSVG({ value, size = 180, className = "" }: QRCodeSVGProps) {
   const qr = React.useMemo(() => {
     try {
-      return qrcodegen.QrCode.encodeText(value, qrcodegen.QrCode.Ecc.MEDIUM);
+      // Para URLs com tokens ou parâmetros longos, utiliza Ecc.LOW para gerar menos módulos e facilitar a leitura da câmera
+      const ecl = value.length > 120 ? qrcodegen.QrCode.Ecc.LOW : qrcodegen.QrCode.Ecc.MEDIUM;
+      return qrcodegen.QrCode.encodeText(value, ecl);
     } catch (e) {
       console.error("Erro ao gerar QR Code oficial:", e);
       return null;

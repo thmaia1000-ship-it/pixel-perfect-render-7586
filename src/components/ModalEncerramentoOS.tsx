@@ -56,12 +56,32 @@ export function ModalEncerramentoOS({
   const ipRedeLocal = "192.168.1.13";
   const [usarIpRede, setUsarIpRede] = useState(hostnameAtual === "localhost" || hostnameAtual === "127.0.0.1");
 
+  // Sessão de autenticação do técnico para transferir login transparente ao smartphone via QR Code
+  const [sessionAuth, setSessionAuth] = useState<{ access_token: string; refresh_token: string } | null>(null);
+  const [incluirLoginAutomatico, setIncluirLoginAutomatico] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        setSessionAuth({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+      }
+    });
+  }, []);
+
   const urlBase =
     usarIpRede && (hostnameAtual === "localhost" || hostnameAtual === "127.0.0.1")
       ? `http://${ipRedeLocal}:${portaAtual}`
       : originAtual;
 
-  const urlDiagnostico = `${urlBase}/diagnostico/${osId}`;
+  const urlDiagnosticoLimpa = `${urlBase}/diagnostico/${osId}`;
+  const urlDiagnosticoComAuth = sessionAuth
+    ? `${urlDiagnosticoLimpa}#token=${encodeURIComponent(sessionAuth.access_token)}&refresh=${encodeURIComponent(sessionAuth.refresh_token)}`
+    : urlDiagnosticoLimpa;
+
+  const urlDiagnostico = incluirLoginAutomatico && sessionAuth ? urlDiagnosticoComAuth : urlDiagnosticoLimpa;
 
   // Checklist de saída manual
   const [checklist, setChecklist] = useState<ConferenciaChecklist>(() => {
@@ -241,6 +261,21 @@ export function ModalEncerramentoOS({
                     >
                       Localhost
                     </button>
+                  </div>
+                )}
+
+                {/* Opção de login automático do técnico */}
+                {sessionAuth && (
+                  <div className="flex items-center gap-2 pt-0.5">
+                    <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-emerald-400 font-semibold select-none">
+                      <input
+                        type="checkbox"
+                        checked={incluirLoginAutomatico}
+                        onChange={(e) => setIncluirLoginAutomatico(e.target.checked)}
+                        className="rounded border-border bg-background text-primary focus:ring-primary h-3.5 w-3.5 accent-primary"
+                      />
+                      <span>Login Automático via QR Code (Sem digitar senha no celular)</span>
+                    </label>
                   </div>
                 )}
 

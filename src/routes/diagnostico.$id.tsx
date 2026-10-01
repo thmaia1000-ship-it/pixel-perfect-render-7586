@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import React, { useState, useEffect, useRef } from "react";
 import {
   CheckCircle2,
@@ -30,6 +30,7 @@ import {
   Unlock,
   RefreshCw,
   Play,
+  LogIn,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -72,6 +73,7 @@ function PaginaDiagnosticoAparelho() {
   const [carregando, setCarregando] = useState(true);
   const [os, setOs] = useState<any>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [precisaLogin, setPrecisaLogin] = useState(false);
 
   // Estado dos testes
   const [testeAtivo, setTesteAtivo] = useState<TesteHardwareId | null>(null);
@@ -138,19 +140,74 @@ function PaginaDiagnosticoAparelho() {
     }
   }, []);
 
-  // Carrega OS
+  // Carrega OS com suporte a auto-login transferido via QR Code do técnico
   useEffect(() => {
     async function carregar() {
       setCarregando(true);
+      setErro(null);
+      setPrecisaLogin(false);
+
       try {
+        // 1. Verifica se a URL contém tokens de autenticação (transferidos via QR Code do técnico)
+        if (typeof window !== "undefined") {
+          const hash = window.location.hash.replace(/^#/, "");
+          const hashParams = new URLSearchParams(hash);
+          const queryParams = new URLSearchParams(window.location.search);
+
+          const token =
+            hashParams.get("token") ||
+            hashParams.get("access_token") ||
+            queryParams.get("token") ||
+            queryParams.get("access_token");
+
+          const refresh =
+            hashParams.get("refresh") ||
+            hashParams.get("refresh_token") ||
+            queryParams.get("refresh") ||
+            queryParams.get("refresh_token");
+
+          if (token && refresh) {
+            try {
+              const { error: sessErr } = await supabase.auth.setSession({
+                access_token: decodeURIComponent(token),
+                refresh_token: decodeURIComponent(refresh),
+              });
+              if (!sessErr) {
+                // Remove o token da URL para não ficar exposto na barra de endereços
+                window.history.replaceState(null, "", window.location.pathname);
+              }
+            } catch (err) {
+              console.warn("Aviso ao definir sessão do QR Code:", err);
+            }
+          }
+        }
+
+        // 2. Checa status da sessão atual
+        const { data: sessData } = await supabase.auth.getSession();
+        const estaAutenticado = !!sessData?.session?.user;
+
+        // 3. Busca os dados da Ordem de Serviço
         const { data, error } = await supabase
           .from("ordens_servico")
           .select("*, clientes(nome, telefone), profiles(nome)")
           .eq("id", id)
           .maybeSingle();
 
-        if (error) throw error;
+        if (error) {
+          if (!estaAutenticado) {
+            setPrecisaLogin(true);
+            setErro("Acesso protegido. Entre com sua conta de técnico da BR3 Tech.");
+            return;
+          }
+          throw error;
+        }
+
         if (!data) {
+          if (!estaAutenticado) {
+            setPrecisaLogin(true);
+            setErro("Acesso restrito. Faça login como técnico para visualizar esta OS.");
+            return;
+          }
           setErro("Ordem de serviço não encontrada.");
           return;
         }
@@ -642,12 +699,65 @@ function PaginaDiagnosticoAparelho() {
   }
 
   if (erro || !os) {
+    if (precisaLogin) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white p-4">
+          <div className="max-w-md w-full rounded-2xl border border-amber-500/40 bg-slate-900/95 p-6 text-center space-y-4 shadow-2xl">
+            <div className="mx-auto w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <Lock className="h-7 w-7" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">Identificação do Técnico Necessária</h2>
+              <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                As ordens de serviço e laudos de hardware da BR3 Tech são restritos. Entre com sua conta no celular para carregar o equipamento e salvar o checklist de saída.
+              </p>
+            </div>
+            <div className="pt-2 space-y-2">
+              <Button asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-11 gap-2 shadow-lg shadow-primary/20">
+                <Link to="/auth" search={{ returnTo: `/diagnostico/${id}` }}>
+                  <LogIn className="h-4 w-4" />
+                  <span>Fazer Login como Técnico no Celular</span>
+                </Link>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => window.location.reload()}
+                className="w-full border-slate-700 text-xs text-slate-300 hover:bg-slate-800"
+              >
+                Tentar Recarregar Página
+              </Button>
+            </div>
+            <p className="text-[11px] text-slate-500 bg-slate-950 p-2.5 rounded-lg border border-slate-850">
+              💡 <strong>Dica:</strong> No computador, no modal de encerramento da OS, marque a opção <em>"Login Automático via QR Code"</em> para entrar no celular sem precisar digitar sua senha!
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white p-4">
         <div className="max-w-md w-full rounded-2xl border border-rose-800/40 bg-rose-950/20 p-6 text-center space-y-3">
           <XCircle className="mx-auto h-12 w-12 text-rose-500" />
           <h2 className="text-lg font-bold">Diagnóstico Indisponível</h2>
           <p className="text-xs text-muted-foreground">{erro}</p>
+          <div className="pt-3 flex gap-2">
+            <Button asChild variant="outline" size="sm" className="flex-1 border-slate-700 text-xs">
+              <Link to="/auth" search={{ returnTo: `/diagnostico/${id}` }}>
+                Entrar com Conta
+              </Link>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.reload()}
+              className="flex-1 border-slate-700 text-xs"
+            >
+              Recarregar
+            </Button>
+          </div>
         </div>
       </div>
     );

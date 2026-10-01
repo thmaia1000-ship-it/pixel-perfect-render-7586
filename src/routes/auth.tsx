@@ -12,10 +12,16 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
-  beforeLoad: async () => {
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      returnTo: typeof search["returnTo"] === "string" ? (search["returnTo"] as string) : undefined,
+    };
+  },
+  beforeLoad: async ({ search }) => {
     const { data, error } = await supabase.auth.getUser();
     if (!error && data.user) {
-      throw redirect({ to: "/painel" });
+      const destino = (search as any)?.returnTo || "/painel";
+      throw redirect({ to: destino });
     }
   },
   head: () => ({
@@ -94,7 +100,9 @@ function Acesso() {
         return;
       }
       toast.success("Bem-vindo de volta!");
-      await navigate({ to: "/painel", replace: true });
+      const search = Route.useSearch();
+      const destino = search?.returnTo || "/painel";
+      await navigate({ to: destino as any, replace: true });
     } catch (err) {
       const msg =
         err instanceof Error ? err.message : "Não foi possível concluir. Tente novamente.";
