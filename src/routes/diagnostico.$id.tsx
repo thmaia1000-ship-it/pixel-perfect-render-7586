@@ -1078,7 +1078,7 @@ function PaginaDiagnosticoAparelho() {
       {/* TELA CHEIA / EXECUÇÃO DO TESTE ATIVO (*#0*# EXPERIENCE)                   */}
       {/* ========================================================================= */}
       {testeAtivo && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-black text-white">
+        <div className="fixed inset-0 z-50 flex flex-col bg-black text-white h-[100dvh] max-h-[100dvh] overflow-hidden">
           {/* BARRA SUPERIOR DE CONTROLE E PROGRESSO SEQUENCIAL */}
           <div className="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-3.5 py-2 flex items-center justify-between text-xs z-50 shrink-0">
             <div className="flex items-center gap-2 truncate">
@@ -1150,7 +1150,7 @@ function PaginaDiagnosticoAparelho() {
                 </p>
               </div>
 
-              <div className="flex gap-4 pb-6 w-full max-w-sm">
+              <div className="flex gap-4 pb-6 w-full max-w-sm shrink-0 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
                 <Button
                   onClick={() => gravarResultado(testeAtivo, "aprovado")}
                   className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12 shadow-lg"
@@ -1272,7 +1272,7 @@ function PaginaDiagnosticoAparelho() {
                 </div>
               </div>
 
-              <div className="flex gap-4 pb-6 w-full max-w-sm">
+              <div className="flex gap-4 pb-6 w-full max-w-sm shrink-0 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
                 <Button
                   onClick={() => gravarResultado(testeAtivo, "aprovado")}
                   className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12"
@@ -1353,7 +1353,7 @@ function PaginaDiagnosticoAparelho() {
                 </div>
               </div>
 
-              <div className="flex gap-4 pb-6 w-full max-w-sm">
+              <div className="flex gap-4 pb-6 w-full max-w-sm shrink-0 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
                 <Button
                   onClick={() => gravarResultado("mic", "aprovado")}
                   className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12 shadow-lg"
@@ -1373,26 +1373,30 @@ function PaginaDiagnosticoAparelho() {
 
           {/* 5. TESTE DE CÂMERAS (FRONTAL / TRASEIRA) */}
           {(testeAtivo === "camera_front" || testeAtivo === "camera_back") && (
-            <div className="flex-1 flex flex-col bg-black">
-              <div className="p-3 text-center bg-slate-950 border-b border-slate-800 flex items-center justify-between px-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                  {testeAtivo === "camera_front" ? "Front Cam (Câmera Frontal)" : "Mega Cam (Câmera Traseira)"}
-                </h3>
+            <div className="flex-1 flex flex-col bg-black min-h-0 relative overflow-hidden">
+              <div className="p-2.5 sm:p-3 text-center bg-slate-950/90 backdrop-blur border-b border-slate-800 flex items-center justify-between px-4 shrink-0 z-20">
+                <div className="flex items-center gap-2">
+                  <Camera className="h-4 w-4 text-primary" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                    {testeAtivo === "camera_front" ? "Front Cam (Câmera Frontal)" : "Mega Cam (Câmera Traseira)"}
+                  </h3>
+                </div>
 
                 <Button
                   size="sm"
                   variant="outline"
+                  type="button"
                   onClick={() =>
                     iniciarCamera(testeAtivo === "camera_front" ? "user" : "environment")
                   }
-                  className="h-7 text-[11px] border-slate-700 text-slate-300 gap-1"
+                  className="h-7 text-[11px] border-slate-700 bg-slate-900 text-slate-300 gap-1 hover:bg-slate-800"
                 >
                   <RefreshCw className="h-3 w-3" />
                   <span>Reconectar</span>
                 </Button>
               </div>
 
-              <div className="flex-1 relative flex items-center justify-center overflow-hidden bg-black">
+              <div className="flex-1 min-h-0 relative flex items-center justify-center overflow-hidden bg-black p-2">
                 {permissoes.camera === "denied" ? (
                   <div className="max-w-xs text-center p-6 bg-slate-900/90 rounded-2xl border border-rose-500/40 text-rose-300 space-y-2">
                     <AlertTriangle className="h-8 w-8 mx-auto text-rose-400" />
@@ -1411,29 +1415,38 @@ function PaginaDiagnosticoAparelho() {
                     </Button>
                   </div>
                 ) : (
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover"
-                  />
+                  <div className="w-full h-full relative rounded-2xl overflow-hidden flex items-center justify-center bg-slate-950 border border-slate-800 shadow-inner">
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-contain"
+                    />
+                    {/* Alvo guia de foco central no visor */}
+                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-30">
+                      <div className="w-20 h-20 border-2 border-dashed border-white rounded-xl" />
+                    </div>
+                  </div>
                 )}
               </div>
 
-              <div className="p-4 bg-slate-950 border-t border-slate-800 flex gap-3">
+              {/* BARRA DE APROVAÇÃO SEMPRE VISÍVEL E FIXADA NA BASE COM SAFE AREA */}
+              <div className="p-3 sm:p-4 bg-slate-950/95 backdrop-blur border-t border-slate-800 flex gap-3 shrink-0 z-30 shadow-2xl pb-[max(1.25rem,env(safe-area-inset-bottom))]">
                 <Button
+                  type="button"
                   onClick={() => gravarResultado(testeAtivo, "aprovado")}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12 shadow-lg"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12 text-sm shadow-lg shadow-emerald-950/60"
                 >
-                  <Check className="h-4 w-4 mr-1" /> Imagem e Foco OK
+                  <Check className="h-5 w-5 mr-1.5" /> Imagem e Foco OK
                 </Button>
                 <Button
+                  type="button"
                   onClick={() => gravarResultado(testeAtivo, "reprovado")}
                   variant="destructive"
-                  className="flex-1 font-bold h-12 shadow-lg"
+                  className="flex-1 font-bold h-12 text-sm shadow-lg shadow-rose-950/60"
                 >
-                  <X className="h-4 w-4 mr-1" /> Falha na Câmera
+                  <X className="h-5 w-5 mr-1.5" /> Falha na Câmera
                 </Button>
               </div>
             </div>
@@ -1484,7 +1497,7 @@ function PaginaDiagnosticoAparelho() {
                 )}
               </div>
 
-              <div className="flex gap-4 pb-6 w-full max-w-sm">
+              <div className="flex gap-4 pb-6 w-full max-w-sm shrink-0 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
                 <Button
                   onClick={() => gravarResultado("vibration", "aprovado")}
                   className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12 shadow-lg"
@@ -1512,7 +1525,7 @@ function PaginaDiagnosticoAparelho() {
                 </p>
               </div>
 
-              <div className="flex gap-4 pb-6 w-full max-w-sm">
+              <div className="flex gap-4 pb-6 w-full max-w-sm shrink-0 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
                 <Button
                   onClick={() => gravarResultado("dimming", "aprovado")}
                   className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12"
@@ -1558,7 +1571,7 @@ function PaginaDiagnosticoAparelho() {
                 </div>
               </div>
 
-              <div className="flex gap-4 pb-6 w-full max-w-sm">
+              <div className="flex gap-4 pb-6 w-full max-w-sm shrink-0 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
                 <Button
                   onClick={() => gravarResultado("sensor", "aprovado")}
                   className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12"
