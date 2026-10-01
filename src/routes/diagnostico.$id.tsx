@@ -60,7 +60,7 @@ export const Route = createFileRoute("/diagnostico/$id")({
   component: PaginaDiagnosticoAparelho,
 });
 
-export interface PermissoesHardwareState {
+interface PermissoesHardwareState {
   camera: "granted" | "denied" | "prompt" | "unsupported";
   microfone: "granted" | "denied" | "prompt" | "unsupported";
   audio: "ready" | "pending";
@@ -69,7 +69,7 @@ export interface PermissoesHardwareState {
   solicitando: boolean;
 }
 
-export interface BotaoSubKeyConfig {
+interface BotaoSubKeyConfig {
   id: "vol_up" | "vol_down" | "power" | "assist";
   nome: string;
   teclaFisicaLabel: string;
@@ -85,7 +85,7 @@ export interface BotaoSubKeyConfig {
   descricaoDica: string;
 }
 
-export const BOTOES_SUB_KEY: BotaoSubKeyConfig[] = [
+const BOTOES_SUB_KEY: BotaoSubKeyConfig[] = [
   {
     id: "vol_up",
     nome: "Volume (+)",
