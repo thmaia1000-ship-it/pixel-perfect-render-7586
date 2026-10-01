@@ -230,6 +230,8 @@ function PaginaDiagnosticoAparelho() {
   const intervaloMicRef = useRef<any>(null);
   const touchContainerRef = useRef<HTMLDivElement | null>(null);
   const [emTelaCheiaTouch, setEmTelaCheiaTouch] = useState<boolean>(false);
+  const telaApagouTimestampRef = useRef<number>(0);
+  const teclasFocusTrapRef = useRef<HTMLInputElement | null>(null);
 
   // Checagem inicial de compatibilidade e permissões
   useEffect(() => {
@@ -675,6 +677,15 @@ function PaginaDiagnosticoAparelho() {
   useEffect(() => {
     if (testeAtivo !== "sub_key") return;
 
+    // Foco forçado no elemento invisível de captura para Android despachar eventos de teclas de hardware
+    const manterFocoTrap = () => {
+      try {
+        teclasFocusTrapRef.current?.focus({ preventScroll: true });
+      } catch {}
+    };
+    manterFocoTrap();
+    const intervalFoco = setInterval(manterFocoTrap, 1200);
+
     const testarCorrespondenciaTecla = (e: KeyboardEvent) => {
       const key = (e.key || "").toLowerCase();
       const code = (e.code || "").toLowerCase();
@@ -688,11 +699,15 @@ function PaginaDiagnosticoAparelho() {
         keyCode === 87 || // KeyW
         keyCode === 107 ||
         keyCode === 187 ||
+        keyCode === 61 ||
         key === "audiovolumeup" ||
         key === "volumeup" ||
         key === "+" ||
+        key === "=" ||
         code === "audiovolumeup" ||
-        code === "arrowup"
+        code === "arrowup" ||
+        code === "numpadadd" ||
+        code === "equal"
       ) {
         e.preventDefault();
         acionarBotaoSubKey("vol_up", "aprovado", "hardware");
@@ -707,11 +722,15 @@ function PaginaDiagnosticoAparelho() {
         keyCode === 83 || // KeyS
         keyCode === 109 ||
         keyCode === 189 ||
+        keyCode === 173 ||
         key === "audiovolumedown" ||
         key === "volumedown" ||
         key === "-" ||
+        key === "_" ||
         code === "audiovolumedown" ||
-        code === "arrowdown"
+        code === "arrowdown" ||
+        code === "numpadsubtract" ||
+        code === "minus"
       ) {
         e.preventDefault();
         acionarBotaoSubKey("vol_down", "aprovado", "hardware");
@@ -727,7 +746,8 @@ function PaginaDiagnosticoAparelho() {
         key === "power" ||
         key === "sleep" ||
         key === "wakeup" ||
-        code === "power"
+        code === "power" ||
+        code === "sleep"
       ) {
         e.preventDefault();
         acionarBotaoSubKey("power", "aprovado", "hardware");
@@ -777,29 +797,58 @@ function PaginaDiagnosticoAparelho() {
       passive: false,
     });
 
-    // Detecção física do botão Power através do ciclo de tela desligada / ligada
-    let telaApagouNoPower = false;
-    const handleVisibilidadePower = () => {
-      if (document.visibilityState === "hidden") {
-        telaApagouNoPower = true;
-      } else if (document.visibilityState === "visible" && telaApagouNoPower) {
-        telaApagouNoPower = false;
-        acionarBotaoSubKey("power", "aprovado", "hardware");
-        toast.success("Botão físico Power / Liga detectado com sucesso pelo ciclo de tela!", {
-          duration: 2500,
-        });
+    // Detecção física do botão Power através do ciclo de tela desligada / ligada (resistente a re-renderizações)
+    const marcarTelaApagou = () => {
+      telaApagouTimestampRef.current = Date.now();
+    };
+
+    const marcarTelaAcendeu = () => {
+      if (telaApagouTimestampRef.current > 0) {
+        const deltaMs = Date.now() - telaApagouTimestampRef.current;
+        telaApagouTimestampRef.current = 0;
+        // Se a tela ficou desligada ou em repouso por pelo menos 200ms (ciclo físico do botão Power)
+        if (deltaMs >= 200) {
+          acionarBotaoSubKey("power", "aprovado", "hardware");
+          toast.success(
+            "✨ Botão físico Power / Liga detectado com sucesso pelo ciclo de bloqueio da tela!",
+            {
+              duration: 3500,
+            },
+          );
+        }
       }
     };
+
+    const handleVisibilidadePower = () => {
+      if (document.visibilityState === "hidden") {
+        marcarTelaApagou();
+      } else if (document.visibilityState === "visible") {
+        marcarTelaAcendeu();
+      }
+    };
+
+    const handleBlurPower = () => marcarTelaApagou();
+    const handleFocusPower = () => marcarTelaAcendeu();
+
     document.addEventListener("visibilitychange", handleVisibilidadePower);
+    window.addEventListener("pagehide", handleBlurPower);
+    window.addEventListener("pageshow", handleFocusPower);
+    window.addEventListener("blur", handleBlurPower);
+    window.addEventListener("focus", handleFocusPower);
 
     return () => {
+      clearInterval(intervalFoco);
       window.removeEventListener("keydown", testarCorrespondenciaTecla, { capture: true } as any);
       window.removeEventListener("keyup", testarCorrespondenciaTecla, { capture: true } as any);
       document.removeEventListener("keydown", testarCorrespondenciaTecla, { capture: true } as any);
       document.removeEventListener("keyup", testarCorrespondenciaTecla, { capture: true } as any);
       document.removeEventListener("visibilitychange", handleVisibilidadePower);
+      window.removeEventListener("pagehide", handleBlurPower);
+      window.removeEventListener("pageshow", handleFocusPower);
+      window.removeEventListener("blur", handleBlurPower);
+      window.removeEventListener("focus", handleFocusPower);
     };
-  }, [testeAtivo, subKeyEtapaIndex]);
+  }, [testeAtivo]);
 
   // Função para tocar tom de áudio (Receiver 1000Hz ou Speaker 440Hz)
   const tocarTom = async (freq: number) => {
@@ -2138,15 +2187,66 @@ function PaginaDiagnosticoAparelho() {
                       </Button>
                     </div>
 
-                    {/* BOTÃO MESTRE DE APROVAÇÃO EXPRESSA (1 CLIQUE) */}
-                    <Button
-                      type="button"
-                      onClick={aprovarTodosBotoesSubKey}
-                      className="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white font-black h-12 rounded-xl shadow-lg shadow-emerald-950/70 border border-emerald-400/40 text-xs sm:text-sm tracking-wide uppercase flex items-center justify-center gap-2 transition-transform cursor-pointer"
-                    >
-                      <CheckCircle2 className="h-5 w-5 text-emerald-200" />
-                      <span>Validar Todas as Teclas (100% OK)</span>
-                    </Button>
+                    {/* INPUT INVISÍVEL DE CAPTURA DE EVENTOS DE TECLADO / HARDWARE NO ANDROID */}
+                    <input
+                      ref={teclasFocusTrapRef}
+                      type="text"
+                      inputMode="none"
+                      tabIndex={-1}
+                      readOnly
+                      aria-hidden="true"
+                      className="fixed -top-[9999px] left-0 opacity-0 pointer-events-none w-1 h-1"
+                    />
+
+                    {/* GUIA DE DETECÇÃO DAS TECLAS FÍSICAS */}
+                    <div className="rounded-xl border border-blue-500/40 bg-blue-950/40 p-3 space-y-2 text-left">
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-xs font-bold text-blue-300">
+                          <span className="h-2 w-2 rounded-full bg-blue-400 animate-ping" />
+                          Detecção Física de Botões Ativa
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          Hardware Listener
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-300 space-y-1.5 leading-relaxed">
+                        <p>
+                          ⚡ <strong>Botão Power físico:</strong> Pressione para bloquear/apagar a
+                          tela e acenda novamente. O sistema captura o ciclo de repouso
+                          automaticamente!
+                        </p>
+                        <p>
+                          🔊 <strong>Botões Volume (+ / -):</strong> Pressione as teclas na lateral.
+                          Caso o Android restrinja a leitura ao slider de volume do sistema, valide
+                          instantaneamente tocando no card abaixo.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* BOTÕES RÁPIDOS DE VALIDAÇÃO EXPRESSA */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          acionarBotaoSubKey("vol_up", "aprovado", "toque");
+                          acionarBotaoSubKey("vol_down", "aprovado", "toque");
+                          toast.success("✓ Volume (+) e (-) validados com sucesso!");
+                        }}
+                        className="bg-blue-600 hover:bg-blue-500 text-white font-bold h-11 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                      >
+                        <Volume2 className="h-4 w-4" />
+                        <span>Validar Volumes (+ / -)</span>
+                      </Button>
+
+                      <Button
+                        type="button"
+                        onClick={aprovarTodosBotoesSubKey}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-11 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                      >
+                        <CheckCircle2 className="h-4 w-4 text-emerald-200" />
+                        <span>Validar Todas (100% OK)</span>
+                      </Button>
+                    </div>
 
                     {/* Contador de Progresso */}
                     <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
