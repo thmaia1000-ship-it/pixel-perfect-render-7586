@@ -1,6 +1,17 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { Printer, X, Share2, CheckCircle2, FileText, Copy, Receipt, Scissors } from "lucide-react";
+import {
+  Printer,
+  X,
+  Share2,
+  CheckCircle2,
+  FileText,
+  Copy,
+  Receipt,
+  Scissors,
+  Download,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -11,6 +22,11 @@ import {
   gerarTextoWhatsAppRecibo,
 } from "@/lib/recibos";
 import { obterMinhaAssinatura } from "@/lib/assinatura-usuario";
+import {
+  enviarWhatsAppComCopiaPdf,
+  gerarPdfDeElemento,
+  baixarBlobComoArquivo,
+} from "@/lib/pdf-generator";
 
 interface ReciboImpressoModalProps {
   aberto: boolean;
@@ -22,6 +38,7 @@ export function ReciboImpressoModal({ aberto, onFechar, recibo }: ReciboImpresso
   const [formato, setFormato] = useState<"duas_vias" | "pagina_unica" | "termica_80mm">(
     recibo.modeloImpressao || "duas_vias",
   );
+  const [gerandoPdf, setGerandoPdf] = useState(false);
 
   const assinaturaEmitente = obterMinhaAssinatura();
 
@@ -72,13 +89,37 @@ export function ReciboImpressoModal({ aberto, onFechar, recibo }: ReciboImpresso
     toast.success("Texto formatado do recibo copiado para a área de transferência!");
   };
 
-  const enviarWhatsAppDireto = () => {
-    const texto = encodeURIComponent(gerarTextoWhatsAppRecibo(recibo));
-    const fone = (recibo.clienteTelefone || "").replace(/\D/g, "");
-    const url = fone
-      ? `https://wa.me/55${fone}?text=${texto}`
-      : `https://api.whatsapp.com/send?text=${texto}`;
-    window.open(url, "_blank");
+  const enviarWhatsAppDireto = async () => {
+    setGerandoPdf(true);
+    const texto = gerarTextoWhatsAppRecibo(recibo);
+    const fone = recibo.clienteTelefone || "";
+    const nomeArquivo = `Recibo-${recibo.numero.replace(/\//g, "-")}.pdf`;
+
+    await enviarWhatsAppComCopiaPdf({
+      telefone: fone,
+      mensagem: texto,
+      elementoId: "documento-impresso-ativo",
+      nomeArquivo,
+      tituloDocumento: `Recibo ${recibo.numero} - BR3 Tech`,
+    });
+    setGerandoPdf(false);
+  };
+
+  const baixarPdfDireto = async () => {
+    setGerandoPdf(true);
+    try {
+      const nomeArquivo = `Recibo-${recibo.numero.replace(/\//g, "-")}.pdf`;
+      const res = await gerarPdfDeElemento("documento-impresso-ativo", nomeArquivo);
+      if (res) {
+        baixarBlobComoArquivo(res.blob, nomeArquivo);
+        toast.success("Download do PDF do recibo iniciado com sucesso!");
+      }
+    } catch (err) {
+      console.error("Erro ao gerar PDF:", err);
+      toast.error("Não foi possível gerar o arquivo PDF.");
+    } finally {
+      setGerandoPdf(false);
+    }
   };
 
   // Renderiza o corpo do recibo comercial padrão
@@ -263,10 +304,28 @@ export function ReciboImpressoModal({ aberto, onFechar, recibo }: ReciboImpresso
               variant="outline"
               size="sm"
               onClick={enviarWhatsAppDireto}
-              className="gap-1.5 text-xs text-emerald-500 border-emerald-500/40 hover:bg-emerald-500/10"
-              title="Abrir no WhatsApp do Cliente"
+              disabled={gerandoPdf}
+              className="gap-1.5 text-xs text-emerald-500 border-emerald-500/40 hover:bg-emerald-500/10 font-bold"
+              title="Enviar para o WhatsApp com cópia em PDF"
             >
-              <Share2 className="h-3.5 w-3.5" /> WhatsApp
+              {gerandoPdf ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Share2 className="h-3.5 w-3.5" />
+              )}
+              WhatsApp + PDF
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={baixarPdfDireto}
+              disabled={gerandoPdf}
+              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+              title="Baixar cópia do recibo em PDF"
+            >
+              <Download className="h-3.5 w-3.5 text-primary" /> Baixar PDF
             </Button>
 
             <Button

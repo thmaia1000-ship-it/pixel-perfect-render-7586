@@ -519,18 +519,13 @@ function Financeiro() {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              const texto = encodeURIComponent(gerarTextoWhatsAppRecibo(recibo));
-                              const fone = (recibo.clienteTelefone || "").replace(/\D/g, "");
-                              const url = fone
-                                ? `https://wa.me/55${fone}?text=${texto}`
-                                : `https://api.whatsapp.com/send?text=${texto}`;
-                              window.open(url, "_blank");
+                              setReciboParaVisualizar(recibo);
                             }}
                             className="h-8 gap-1.5 text-xs text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10"
-                            title="Enviar recibo para o WhatsApp do cliente"
+                            title="Visualizar e enviar recibo em PDF via WhatsApp"
                           >
                             <Share2 className="h-3.5 w-3.5" />
-                            <span className="hidden sm:inline">WhatsApp</span>
+                            <span className="hidden sm:inline">WhatsApp + PDF</span>
                           </Button>
 
                           <Button

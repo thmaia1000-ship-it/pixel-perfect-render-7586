@@ -10,6 +10,8 @@ import {
   ExternalLink,
   PlusCircle,
   Copy,
+  Download,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,11 @@ import {
 } from "@/lib/conferencia-aparelho";
 import { moeda, dataCurta, dataHora, linkWhatsApp } from "@/lib/br3";
 import { obterAssinaturaTecnicoOuLoja, obterMinhaAssinatura } from "@/lib/assinatura-usuario";
+import {
+  enviarWhatsAppComCopiaPdf,
+  gerarPdfDeElemento,
+  baixarBlobComoArquivo,
+} from "@/lib/pdf-generator";
 
 export type ModoDocumentoOS = "duas_vias" | "entrada" | "termica_80mm" | "finalizada";
 
@@ -83,6 +90,7 @@ export function TermoGarantiaModal({
   const [modo, setModo] = useState<ModoDocumentoOS>(
     modoInicial ?? (ehEntregue ? "finalizada" : "duas_vias"),
   );
+  const [gerandoPdf, setGerandoPdf] = useState(false);
 
   useEffect(() => {
     if (modoInicial) {
@@ -147,7 +155,59 @@ export function TermoGarantiaModal({
   const modeloAparelho = [os.marca, os.modelo].filter(Boolean).join(" ") || os.aparelho;
   const telefoneCliente = os.clientes?.telefone ?? "";
 
-  const mensagemWhatsApp = `Olá, ${os.clientes?.nome || "cliente"}! Seu aparelho (${modeloAparelho}) deu entrada na BR3 Tech sob a Ordem de Serviço nº ${os.numero}. Defeito relatado: "${os.defeito_relatado}". Estamos iniciando a análise. Guarde o nº da sua OS para acompanhar. WhatsApp de contato: (92) 99236-5757. Agradecemos a confiança!`;
+  const mensagemWhatsApp =
+    modo === "finalizada"
+      ? `Olá, ${os.clientes?.nome || "cliente"}! Seu aparelho (${modeloAparelho}) referente à Ordem de Serviço nº ${os.numero} foi FINALIZADO e entregue pela equipe da BR3 Tech.\n\n` +
+        `💰 Valor Total: ${moeda(total)}\n` +
+        `🛡️ Garantia: 90 dias conforme Termo de Garantia\n` +
+        `📅 Data: ${dataEntregaFormatada || dataCurta(new Date().toISOString())}\n\n` +
+        `📄 Segue em anexo a cópia em PDF do seu Recibo e Termo de Garantia.\n` +
+        `Agradecemos a confiança e preferência! BR3 Tech · Suporte: (92) 99236-5757`
+      : `Olá, ${os.clientes?.nome || "cliente"}! Seu aparelho (${modeloAparelho}) deu entrada na BR3 Tech sob a Ordem de Serviço nº ${os.numero}.\n\n` +
+        `Defeito relatado: "${os.defeito_relatado}"\n` +
+        `📅 Entrada: ${dataCriacaoFormatada}\n\n` +
+        `📄 Segue em anexo a cópia em PDF do seu Comprovante de Entrada.\n` +
+        `Acompanhe seu serviço pelo WhatsApp: (92) 99236-5757. Agradecemos a confiança!`;
+
+  const nomeArquivoPdf =
+    modo === "finalizada"
+      ? `Recibo-Termo-Garantia-OS-${os.numero}.pdf`
+      : `Comprovante-Entrada-OS-${os.numero}.pdf`;
+
+  const enviarWhatsAppComPdf = async () => {
+    if (!telefoneCliente) {
+      toast.error("Cliente não possui telefone cadastrado para WhatsApp.");
+      return;
+    }
+    setGerandoPdf(true);
+    await enviarWhatsAppComCopiaPdf({
+      telefone: telefoneCliente,
+      mensagem: mensagemWhatsApp,
+      elementoId: "documento-impresso-ativo",
+      nomeArquivo: nomeArquivoPdf,
+      tituloDocumento:
+        modo === "finalizada"
+          ? `Recibo e Termo de Garantia OS #${os.numero} - BR3 Tech`
+          : `Comprovante de Entrada OS #${os.numero} - BR3 Tech`,
+    });
+    setGerandoPdf(false);
+  };
+
+  const baixarPdfDireto = async () => {
+    setGerandoPdf(true);
+    try {
+      const res = await gerarPdfDeElemento("documento-impresso-ativo", nomeArquivoPdf);
+      if (res) {
+        baixarBlobComoArquivo(res.blob, nomeArquivoPdf);
+        toast.success("Download do PDF iniciado com sucesso!");
+      }
+    } catch (err) {
+      console.error("Erro ao gerar PDF:", err);
+      toast.error("Não foi possível gerar o arquivo PDF.");
+    } finally {
+      setGerandoPdf(false);
+    }
+  };
 
   const copiarNumeroOS = () => {
     navigator.clipboard.writeText(os.numero);
@@ -217,15 +277,33 @@ export function TermoGarantiaModal({
 
               <div className="flex flex-wrap items-center gap-2">
                 {telefoneCliente && (
-                  <a
-                    href={linkWhatsApp(telefoneCliente, mensagemWhatsApp)}
-                    target="_blank"
-                    rel="noreferrer"
+                  <Button
+                    type="button"
+                    onClick={enviarWhatsAppComPdf}
+                    disabled={gerandoPdf}
+                    size="sm"
                     className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 transition-colors"
+                    title="Enviar para o WhatsApp com cópia em PDF do comprovante"
                   >
-                    <Share2 className="h-3.5 w-3.5" /> Enviar WhatsApp
-                  </a>
+                    {gerandoPdf ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Share2 className="h-3.5 w-3.5" />
+                    )}
+                    Enviar WhatsApp + PDF
+                  </Button>
                 )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={baixarPdfDireto}
+                  disabled={gerandoPdf}
+                  className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  title="Baixar arquivo PDF do comprovante"
+                >
+                  <Download className="h-3.5 w-3.5 text-primary" /> Baixar PDF
+                </Button>
                 {onIrParaOS && (
                   <Button
                     onClick={onIrParaOS}
