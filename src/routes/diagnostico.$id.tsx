@@ -32,6 +32,7 @@ import {
   Play,
   LogIn,
   Power,
+  Maximize2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -221,6 +222,8 @@ function PaginaDiagnosticoAparelho() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
   const intervaloMicRef = useRef<any>(null);
+  const touchContainerRef = useRef<HTMLDivElement | null>(null);
+  const [emTelaCheiaTouch, setEmTelaCheiaTouch] = useState<boolean>(false);
 
   // Checagem inicial de compatibilidade e permissões
   useEffect(() => {
@@ -446,8 +449,73 @@ function PaginaDiagnosticoAparelho() {
     }
   };
 
+  // Controle de Tela Cheia Imersiva (Oculta barras de navegação e endereço do navegador)
+  const solicitarTelaCheia = async (elemento?: HTMLElement | null) => {
+    if (typeof document === "undefined") return;
+    const el = (elemento || touchContainerRef.current || document.documentElement) as any;
+    try {
+      if (el.requestFullscreen) {
+        await el.requestFullscreen({ navigationUI: "hide" });
+      } else if (el.webkitRequestFullscreen) {
+        await el.webkitRequestFullscreen();
+      } else if (el.mozRequestFullScreen) {
+        await el.mozRequestFullScreen();
+      } else if (el.msRequestFullscreen) {
+        await el.msRequestFullscreen();
+      }
+      setEmTelaCheiaTouch(true);
+    } catch {}
+  };
+
+  const sairTelaCheia = () => {
+    if (typeof document === "undefined") return;
+    const doc = document as any;
+    try {
+      if (
+        doc.fullscreenElement ||
+        doc.webkitFullscreenElement ||
+        doc.mozFullScreenElement ||
+        doc.msFullscreenElement
+      ) {
+        if (doc.exitFullscreen) {
+          doc.exitFullscreen().catch(() => {});
+        } else if (doc.webkitExitFullscreen) {
+          doc.webkitExitFullscreen();
+        } else if (doc.mozCancelFullScreen) {
+          doc.mozCancelFullScreen();
+        } else if (doc.msExitFullscreen) {
+          doc.msExitFullscreen();
+        }
+      }
+    } catch {}
+    setEmTelaCheiaTouch(false);
+  };
+
+  // Monitora alterações de tela cheia do navegador
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const handleFullscreenChange = () => {
+      const doc = document as any;
+      const isFs = !!(
+        doc.fullscreenElement ||
+        doc.webkitFullscreenElement ||
+        doc.mozFullScreenElement ||
+        doc.msFullscreenElement
+      );
+      setEmTelaCheiaTouch(isFs);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
   // Limpeza de recursos ao sair de teste
   const pararRecursosAtuais = () => {
+    sairTelaCheia();
     if (cameraStream) {
       cameraStream.getTracks().forEach((t) => t.stop());
       setCameraStream(null);
@@ -858,12 +926,53 @@ function PaginaDiagnosticoAparelho() {
   };
 
   const processarCoordenadaTouch = (clientX: number, clientY: number) => {
+    // 1. Tenta acionar modo tela cheia caso o navegador tenha exigido gesto de toque direto
+    if (typeof document !== "undefined") {
+      const doc = document as any;
+      if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
+        solicitarTelaCheia(touchContainerRef.current);
+      }
+    }
+
+    // 2. Cálculo geométrico exato relativo à tela inteira (alcança 100% dos 4 cantos e bordas)
+    if (touchContainerRef.current) {
+      const rect = touchContainerRef.current.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        const relX = clientX - rect.left;
+        const relY = clientY - rect.top;
+        // Clampa entre 0 e rect.width / rect.height para cobrir bordas e cantos extremos
+        const col = Math.min(7, Math.max(0, Math.floor((relX / rect.width) * 8)));
+        const row = Math.min(14, Math.max(0, Math.floor((relY / rect.height) * 15)));
+        const index = row * 8 + col;
+        marcarCelulaTouch(index);
+        return;
+      }
+    }
+
+    // 3. Fallback de elemento sob o ponteiro
     const el = document.elementFromPoint(clientX, clientY);
     const idxAttr = el?.getAttribute("data-cell-touch");
     if (idxAttr !== null && idxAttr !== undefined) {
       marcarCelulaTouch(Number(idxAttr));
     }
   };
+
+  // Efeito dedicado ao teste de touch: solicita tela cheia e bloqueia rolagem e overscroll da página
+  useEffect(() => {
+    if (testeAtivo === "touch") {
+      solicitarTelaCheia(touchContainerRef.current);
+      const originalOverflow = document.body.style.overflow;
+      const originalOverscroll = document.body.style.overscrollBehavior;
+      document.body.style.overflow = "hidden";
+      document.body.style.overscrollBehavior = "none";
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.body.style.overscrollBehavior = originalOverscroll;
+        sairTelaCheia();
+      };
+    }
+  }, [testeAtivo]);
 
   // Iniciar Câmera (Frontal ou Traseira) com suporte a múltiplos dispositivos
   const iniciarCamera = async (facingMode: "user" | "environment") => {
@@ -1434,7 +1543,20 @@ function PaginaDiagnosticoAparelho() {
           {/* 2. TESTE DE TOUCH GRID EM TELA INTEIRA (EDGE-TO-EDGE COM AUTO-CONCLUSÃO) */}
           {testeAtivo === "touch" && (
             <div
-              className="fixed inset-0 z-[60] bg-black touch-none select-none flex flex-col overflow-hidden"
+              ref={touchContainerRef}
+              className="fixed inset-0 z-[99999] bg-black touch-none select-none flex flex-col overflow-hidden w-screen h-screen h-[100dvh] w-[100dvw] m-0 p-0"
+              style={{
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                width: "100vw",
+                height: "100vh",
+                minHeight: "100dvh",
+                maxHeight: "100dvh",
+                overscrollBehavior: "none",
+                touchAction: "none",
+              }}
               onPointerDown={(e) => {
                 processarCoordenadaTouch(e.clientX, e.clientY);
               }}
@@ -1454,8 +1576,8 @@ function PaginaDiagnosticoAparelho() {
                 }
               }}
             >
-              {/* GRADE DE 120 QUADRADOS (8 COLUNAS X 15 LINHAS) PREENCHENDO 100% DA TELA */}
-              <div className="w-full h-full grid grid-cols-8 grid-rows-[repeat(15,minmax(0,1fr))] gap-[2px] p-[2px] bg-black">
+              {/* GRADE DE 120 QUADRADOS (8 COLUNAS X 15 LINHAS) PREENCHENDO 100% DA TELA ATÉ OS CANTOS */}
+              <div className="w-full h-full grid grid-cols-8 grid-rows-[repeat(15,minmax(0,1fr))] gap-[1px] p-0 m-0 bg-black">
                 {touchGrid.map((preenchido, idx) => (
                   <div
                     key={idx}
@@ -1463,26 +1585,37 @@ function PaginaDiagnosticoAparelho() {
                     onPointerEnter={(e) => {
                       if (e.buttons > 0) marcarCelulaTouch(idx);
                     }}
-                    className={`w-full h-full rounded-[2px] transition-colors duration-75 border ${
+                    className={`w-full h-full transition-colors duration-75 border ${
                       preenchido
-                        ? "bg-emerald-500 border-emerald-400 shadow-[inset_0_0_10px_rgba(16,185,129,0.7)]"
-                        : "bg-slate-900/90 border-slate-800/80 active:bg-emerald-500/50"
+                        ? "bg-emerald-500 border-emerald-400 shadow-[inset_0_0_12px_rgba(16,185,129,0.8)]"
+                        : "bg-slate-950 border-slate-800/60 active:bg-emerald-500/50"
                     }`}
                   />
                 ))}
               </div>
 
-              {/* HUD FLUTUANTE SEMI-TRANSPARENTE NO TOPO (NÃO BLOQUEIA TOQUES NA GRADE) */}
-              <div className="absolute top-2 left-2 right-2 flex items-center justify-between pointer-events-none z-20">
-                <div className="pointer-events-auto bg-black/85 backdrop-blur-md border border-slate-700/80 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-xl">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[11px] font-bold text-white tracking-wide">
+              {/* HUD CENTRAL FLUTUANTE (NÃO COBRE NENHUM CANTO NEM BORDA DA TELA) */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2 pointer-events-none z-20">
+                <div className="bg-black/90 backdrop-blur-md border border-slate-700/80 px-4 py-2 rounded-2xl flex items-center gap-2.5 shadow-2xl shadow-black/95">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-xs font-bold text-white tracking-wide">
                     TOUCH: {touchGrid.filter(Boolean).length}/{TOTAL_CELULAS_TOUCH} (
                     {Math.round((touchGrid.filter(Boolean).length / TOTAL_CELULAS_TOUCH) * 100)}%)
                   </span>
                 </div>
 
-                <div className="pointer-events-auto flex items-center gap-1.5">
+                <div className="pointer-events-auto flex items-center gap-2">
+                  {!emTelaCheiaTouch && (
+                    <Button
+                      size="sm"
+                      type="button"
+                      onClick={() => solicitarTelaCheia(touchContainerRef.current)}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/40 text-[11px] font-bold h-7 px-3 rounded-full shadow-lg"
+                    >
+                      <Maximize2 className="h-3 w-3 mr-1" /> Tela Cheia
+                    </Button>
+                  )}
+
                   <Button
                     size="sm"
                     type="button"
@@ -1493,9 +1626,9 @@ function PaginaDiagnosticoAparelho() {
                         "Zona morta / falha no digitalizador de toque",
                       )
                     }
-                    className="bg-rose-900/85 hover:bg-rose-800 text-rose-200 border border-rose-700/60 text-[11px] font-bold h-7 px-2.5 rounded-full shadow-lg"
+                    className="bg-rose-900/85 hover:bg-rose-800 text-rose-200 border border-rose-700/60 text-[11px] font-bold h-7 px-3 rounded-full shadow-lg"
                   >
-                    <X className="h-3 w-3 mr-1" /> Falha Touch
+                    <X className="h-3 w-3 mr-1" /> Reprovar
                   </Button>
 
                   <Button
@@ -1507,17 +1640,10 @@ function PaginaDiagnosticoAparelho() {
                       pararRecursosAtuais();
                       setTesteAtivo(null);
                     }}
-                    className="bg-slate-900/85 hover:bg-slate-800 text-slate-300 border border-slate-700/60 text-[11px] h-7 px-2.5 rounded-full shadow-lg"
+                    className="bg-slate-900/85 hover:bg-slate-800 text-slate-300 border border-slate-700/60 text-[11px] h-7 px-3 rounded-full shadow-lg"
                   >
                     Sair
                   </Button>
-                </div>
-              </div>
-
-              {/* DICA FLUTUANTE NO RODAPÉ */}
-              <div className="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none z-20 pb-[env(safe-area-inset-bottom)]">
-                <div className="bg-black/80 backdrop-blur-md px-3.5 py-1 rounded-full border border-slate-800 text-[10px] text-slate-300 shadow-md">
-                  Arraste o dedo cobrindo todos os quadrados para finalizar
                 </div>
               </div>
             </div>
