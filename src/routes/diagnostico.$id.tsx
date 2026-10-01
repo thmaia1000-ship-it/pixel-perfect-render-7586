@@ -1373,13 +1373,21 @@ function PaginaDiagnosticoAparelho() {
 
           {/* 5. TESTE DE CÂMERAS (FRONTAL / TRASEIRA) */}
           {(testeAtivo === "camera_front" || testeAtivo === "camera_back") && (
-            <div className="flex-1 flex flex-col bg-black min-h-0 relative overflow-hidden">
-              <div className="p-2.5 sm:p-3 text-center bg-slate-950/90 backdrop-blur border-b border-slate-800 flex items-center justify-between px-4 shrink-0 z-20">
+            <div className="flex-1 flex flex-col bg-black min-h-0 relative overflow-hidden justify-between">
+              {/* Barra superior de status da Câmera */}
+              <div className="p-2 sm:p-2.5 text-center bg-slate-950/90 backdrop-blur border-b border-slate-800 flex items-center justify-between px-4 shrink-0 z-20">
                 <div className="flex items-center gap-2">
-                  <Camera className="h-4 w-4 text-primary" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                    {testeAtivo === "camera_front" ? "Front Cam (Câmera Frontal)" : "Mega Cam (Câmera Traseira)"}
-                  </h3>
+                  <div className="p-1.5 rounded-lg bg-primary/20 text-primary border border-primary/30">
+                    <Camera className="h-4 w-4" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-white">
+                      {testeAtivo === "camera_front" ? "Front Cam (Câmera Frontal)" : "Mega Cam (Câmera Traseira)"}
+                    </h3>
+                    <p className="text-[10px] text-slate-400">
+                      {testeAtivo === "camera_front" ? "Sensor frontal de selfie" : "Sensor principal traseiro com foco"}
+                    </p>
+                  </div>
                 </div>
 
                 <Button
@@ -1389,14 +1397,15 @@ function PaginaDiagnosticoAparelho() {
                   onClick={() =>
                     iniciarCamera(testeAtivo === "camera_front" ? "user" : "environment")
                   }
-                  className="h-7 text-[11px] border-slate-700 bg-slate-900 text-slate-300 gap-1 hover:bg-slate-800"
+                  className="h-8 text-[11px] border-slate-700 bg-slate-900 text-slate-200 gap-1.5 hover:bg-slate-850 hover:text-white px-2.5"
                 >
-                  <RefreshCw className="h-3 w-3" />
+                  <RefreshCw className="h-3.5 w-3.5" />
                   <span>Reconectar</span>
                 </Button>
               </div>
 
-              <div className="flex-1 min-h-0 relative flex items-center justify-center overflow-hidden bg-black p-2">
+              {/* Visor da Câmera com altura controlada para não empurrar os botões */}
+              <div className="flex-1 min-h-0 max-h-[56vh] relative flex items-center justify-center overflow-hidden bg-black p-2.5">
                 {permissoes.camera === "denied" ? (
                   <div className="max-w-xs text-center p-6 bg-slate-900/90 rounded-2xl border border-rose-500/40 text-rose-300 space-y-2">
                     <AlertTriangle className="h-8 w-8 mx-auto text-rose-400" />
@@ -1415,7 +1424,11 @@ function PaginaDiagnosticoAparelho() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="w-full h-full relative rounded-2xl overflow-hidden flex items-center justify-center bg-slate-950 border border-slate-800 shadow-inner">
+                  <div
+                    onClick={() => gravarResultado(testeAtivo, "aprovado")}
+                    className="w-full h-full relative rounded-2xl overflow-hidden flex items-center justify-center bg-slate-950 border-2 border-slate-800 shadow-2xl cursor-pointer group"
+                    title="Toque na imagem para confirmar OK"
+                  >
                     <video
                       ref={videoRef}
                       autoPlay
@@ -1423,31 +1436,56 @@ function PaginaDiagnosticoAparelho() {
                       muted
                       className="w-full h-full object-contain"
                     />
+
                     {/* Alvo guia de foco central no visor */}
-                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-30">
-                      <div className="w-20 h-20 border-2 border-dashed border-white rounded-xl" />
+                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-30 group-hover:opacity-60 transition-opacity">
+                      <div className="w-24 h-24 border-2 border-dashed border-white rounded-2xl" />
+                    </div>
+
+                    {/* Pill informativo de toque rápido no visor */}
+                    <div className="absolute bottom-2.5 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 text-[10px] text-slate-300 pointer-events-none shadow-md">
+                      Toque no visor ou no botão abaixo
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* BARRA DE APROVAÇÃO SEMPRE VISÍVEL E FIXADA NA BASE COM SAFE AREA */}
-              <div className="p-3 sm:p-4 bg-slate-950/95 backdrop-blur border-t border-slate-800 flex gap-3 shrink-0 z-30 shadow-2xl pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+              {/* PAINEL DE CONTROLE E APROVAÇÃO COM ALTURA E ESPAÇAMENTO GENEROSOS */}
+              <div className="p-4 bg-slate-950/98 backdrop-blur-lg border-t border-slate-800 shrink-0 z-30 shadow-2xl space-y-2.5 pb-[max(2.75rem,env(safe-area-inset-bottom)+1.5rem))]">
+                {/* Botão Principal de Aprovação (Grande, Amplo e Impossível de Errar) */}
                 <Button
                   type="button"
                   onClick={() => gravarResultado(testeAtivo, "aprovado")}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12 text-sm shadow-lg shadow-emerald-950/60"
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white font-black h-14 text-sm sm:text-base tracking-wide uppercase shadow-xl shadow-emerald-950/80 rounded-2xl flex items-center justify-center gap-2"
                 >
-                  <Check className="h-5 w-5 mr-1.5" /> Imagem e Foco OK
+                  <Check className="h-6 w-6" />
+                  <span>Imagem Nítida e Foco OK</span>
                 </Button>
-                <Button
-                  type="button"
-                  onClick={() => gravarResultado(testeAtivo, "reprovado")}
-                  variant="destructive"
-                  className="flex-1 font-bold h-12 text-sm shadow-lg shadow-rose-950/60"
-                >
-                  <X className="h-5 w-5 mr-1.5" /> Falha na Câmera
-                </Button>
+
+                {/* Linha Secundária: Falha ou Alternar/Reconectar */}
+                <div className="flex gap-2.5">
+                  <Button
+                    type="button"
+                    onClick={() => gravarResultado(testeAtivo, "reprovado")}
+                    variant="destructive"
+                    className="flex-1 font-bold h-11 text-xs shadow-md shadow-rose-950/50 rounded-xl flex items-center justify-center gap-1.5"
+                  >
+                    <X className="h-4 w-4" />
+                    <span>Falha na Câmera</span>
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      iniciarCamera(testeAtivo === "camera_front" ? "user" : "environment")
+                    }
+                    className="border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800 text-xs font-semibold h-11 px-3.5 rounded-xl gap-1.5"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    <span>Reconectar</span>
+                  </Button>
+                </div>
               </div>
             </div>
           )}
