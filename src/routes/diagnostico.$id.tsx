@@ -71,7 +71,7 @@ interface PermissoesHardwareState {
 }
 
 interface BotaoSubKeyConfig {
-  id: "vol_up" | "vol_down" | "power" | "assist";
+  id: "vol_up" | "vol_down" | "power";
   nome: string;
   teclaFisicaLabel: string;
   teclasEvent: string[];
@@ -92,8 +92,8 @@ const BOTOES_SUB_KEY: BotaoSubKeyConfig[] = [
     id: "vol_up",
     nome: "Volume (+)",
     teclaFisicaLabel: "Botão Aumentar Volume",
-    teclasEvent: ["AudioVolumeUp", "VolumeUp", "+", "ArrowUp", "KeyW"],
-    keyCodes: [24, 175, 38, 87, 107, 187], // 24: Android KEYCODE_VOLUME_UP, 175: Web VK_VOLUME_UP
+    teclasEvent: ["AudioVolumeUp", "VolumeUp", "+", "=", "ArrowUp", "KeyW", "w"],
+    keyCodes: [24, 175, 38, 87, 107, 187, 61], // 24: Android KEYCODE_VOLUME_UP, 175: Web VK_VOLUME_UP
     freqAudio: 880,
     corBg: "bg-blue-600 hover:bg-blue-500",
     corBorder: "border-blue-500",
@@ -109,8 +109,8 @@ const BOTOES_SUB_KEY: BotaoSubKeyConfig[] = [
     id: "vol_down",
     nome: "Volume (-)",
     teclaFisicaLabel: "Botão Diminuir Volume",
-    teclasEvent: ["AudioVolumeDown", "VolumeDown", "-", "ArrowDown", "KeyS"],
-    keyCodes: [25, 174, 40, 83, 109, 189], // 25: Android KEYCODE_VOLUME_DOWN, 174: Web VK_VOLUME_DOWN
+    teclasEvent: ["AudioVolumeDown", "VolumeDown", "-", "_", "ArrowDown", "KeyS", "s"],
+    keyCodes: [25, 174, 40, 83, 109, 189, 173], // 25: Android KEYCODE_VOLUME_DOWN, 174: Web VK_VOLUME_DOWN
     freqAudio: 660,
     corBg: "bg-amber-600 hover:bg-amber-500",
     corBorder: "border-amber-500",
@@ -126,7 +126,7 @@ const BOTOES_SUB_KEY: BotaoSubKeyConfig[] = [
     id: "power",
     nome: "Power / Liga",
     teclaFisicaLabel: "Botão Power / Desbloqueio",
-    teclasEvent: ["Power", "Sleep", "WakeUp", "KeyP"],
+    teclasEvent: ["Power", "Sleep", "WakeUp", "KeyP", "p"],
     keyCodes: [26, 182, 183, 80], // 26: Android KEYCODE_POWER, 182/183: Sleep
     freqAudio: 520,
     corBg: "bg-rose-600 hover:bg-rose-500",
@@ -138,23 +138,6 @@ const BOTOES_SUB_KEY: BotaoSubKeyConfig[] = [
     obrigatorio: true,
     instrucao: "Pressione o botão POWER / LIGA do aparelho",
     descricaoDica: "Validação do clique físico e mecanismo do botão Power",
-  },
-  {
-    id: "assist",
-    nome: "Ação / Bixby",
-    teclaFisicaLabel: "Botão Lateral de Ação ou Assistente",
-    teclasEvent: ["LaunchAssistant", "F1", "F2", "Camera", "KeyA"],
-    keyCodes: [27, 231, 112, 113, 65], // 27: Camera, 231: Assist, 112/113: F1/F2
-    freqAudio: 1040,
-    corBg: "bg-purple-600 hover:bg-purple-500",
-    corBorder: "border-purple-500",
-    corText: "text-purple-400",
-    corAtiva:
-      "border-purple-500 bg-purple-500/20 text-purple-300 ring-2 ring-purple-500 shadow-lg shadow-purple-500/25",
-    corBadge: "bg-purple-500/20 text-purple-300 border-purple-500/40",
-    obrigatorio: false,
-    instrucao: "Pressione o botão extra (se disponível) ou avance se não possuir",
-    descricaoDica: "Botão de Ação (iPhones recentes) ou tecla Bixby (Samsung)",
   },
 ];
 
@@ -206,13 +189,11 @@ function PaginaDiagnosticoAparelho() {
     vol_up: "pendente",
     vol_down: "pendente",
     power: "pendente",
-    assist: "pendente",
   });
   const subKeyStatusRef = useRef<Record<string, "pendente" | "aprovado" | "falha" | "ignorado">>({
     vol_up: "pendente",
     vol_down: "pendente",
     power: "pendente",
-    assist: "pendente",
   });
   const [subKeyUltimaAcao, setSubKeyUltimaAcao] = useState<{
     botaoId: string;
@@ -673,7 +654,11 @@ function PaginaDiagnosticoAparelho() {
     }
   };
 
+  const acionarBotaoSubKeyRef = useRef(acionarBotaoSubKey);
+  acionarBotaoSubKeyRef.current = acionarBotaoSubKey;
+
   // Listener de teclas físicas (Sub Key) com suporte a Android (KeyCodes 24/25/26), iOS e Web
+  // Inclui canal de áudio ativo para capturar variações do controle de volume do hardware
   useEffect(() => {
     if (testeAtivo !== "sub_key") return;
 
@@ -686,6 +671,100 @@ function PaginaDiagnosticoAparelho() {
     manterFocoTrap();
     const intervalFoco = setInterval(manterFocoTrap, 1200);
 
+    // 1. Canal de áudio ativo para capturar alterações no rocker de volume do Android / Navegador
+    let audioMedia: HTMLAudioElement | null = null;
+    let audioCtxInterno: AudioContext | null = null;
+    let oscSilencioso: OscillatorNode | null = null;
+    let lastVolumeLevel = 0.5;
+    let isInternalVolumeAdjustment = false;
+    let wasAudioMuted = false;
+
+    try {
+      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtxClass) {
+        audioCtxInterno = new AudioCtxClass();
+        if (audioCtxInterno.state === "suspended") {
+          audioCtxInterno.resume().catch(() => {});
+        }
+        oscSilencioso = audioCtxInterno.createOscillator();
+        const gainSilencioso = audioCtxInterno.createGain();
+        // Nível imperceptível de áudio para manter o stream de mídia aberto no Android
+        gainSilencioso.gain.value = 0.0001;
+        const dest = audioCtxInterno.createMediaStreamDestination();
+        oscSilencioso.connect(gainSilencioso);
+        gainSilencioso.connect(dest);
+        oscSilencioso.start();
+
+        audioMedia = new Audio();
+        audioMedia.srcObject = dest.stream;
+        audioMedia.loop = true;
+        audioMedia.volume = 0.5;
+        audioMedia.play().catch(() => {});
+      }
+    } catch {
+      try {
+        audioMedia = new Audio(
+          "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA",
+        );
+        audioMedia.loop = true;
+        audioMedia.volume = 0.5;
+        audioMedia.play().catch(() => {});
+      } catch {}
+    }
+
+    if (audioMedia) {
+      const handleVolumeChange = () => {
+        if (!audioMedia || isInternalVolumeAdjustment) return;
+        const currentVolume = audioMedia.volume;
+        const diff = currentVolume - lastVolumeLevel;
+
+        if (diff > 0.005) {
+          acionarBotaoSubKeyRef.current("vol_up", "aprovado", "hardware");
+          toast.success("🔊 Tecla física Volume (+) detectada com sucesso!", {
+            duration: 2500,
+          });
+        } else if (diff < -0.005 || (audioMedia.muted && !wasAudioMuted)) {
+          acionarBotaoSubKeyRef.current("vol_down", "aprovado", "hardware");
+          toast.success("🔉 Tecla física Volume (-) detectada com sucesso!", {
+            duration: 2500,
+          });
+        }
+
+        wasAudioMuted = audioMedia.muted;
+        lastVolumeLevel = currentVolume;
+
+        // Se o volume estiver muito próximo dos extremos (0 ou 1), recentraliza para 0.5 suavemente
+        if (currentVolume >= 0.85 || currentVolume <= 0.15) {
+          isInternalVolumeAdjustment = true;
+          setTimeout(() => {
+            if (audioMedia) {
+              audioMedia.volume = 0.5;
+              lastVolumeLevel = 0.5;
+            }
+            setTimeout(() => {
+              isInternalVolumeAdjustment = false;
+            }, 120);
+          }, 250);
+        }
+      };
+
+      audioMedia.addEventListener("volumechange", handleVolumeChange);
+    }
+
+    // Desbloqueia o stream de áudio no primeiro toque na tela caso o navegador exija gesto prévio
+    const desbloquearStreamAudio = () => {
+      if (audioCtxInterno && audioCtxInterno.state === "suspended") {
+        audioCtxInterno.resume().catch(() => {});
+      }
+      if (audioMedia && audioMedia.paused) {
+        audioMedia.play().catch(() => {});
+      }
+      manterFocoTrap();
+    };
+    window.addEventListener("pointerdown", desbloquearStreamAudio, { passive: true });
+    window.addEventListener("touchstart", desbloquearStreamAudio, { passive: true });
+
+    // 2. Listener de Teclado e Eventos Físicos de Hardware
     const testarCorrespondenciaTecla = (e: KeyboardEvent) => {
       const key = (e.key || "").toLowerCase();
       const code = (e.code || "").toLowerCase();
@@ -697,9 +776,9 @@ function PaginaDiagnosticoAparelho() {
         keyCode === 175 || // VK_VOLUME_UP
         keyCode === 38 || // ArrowUp
         keyCode === 87 || // KeyW
-        keyCode === 107 ||
-        keyCode === 187 ||
-        keyCode === 61 ||
+        keyCode === 107 || // NumpadAdd
+        keyCode === 187 || // Equal / Plus
+        keyCode === 61 || // Equal
         key === "audiovolumeup" ||
         key === "volumeup" ||
         key === "+" ||
@@ -710,7 +789,7 @@ function PaginaDiagnosticoAparelho() {
         code === "equal"
       ) {
         e.preventDefault();
-        acionarBotaoSubKey("vol_up", "aprovado", "hardware");
+        acionarBotaoSubKeyRef.current("vol_up", "aprovado", "hardware");
         return;
       }
 
@@ -720,9 +799,9 @@ function PaginaDiagnosticoAparelho() {
         keyCode === 174 || // VK_VOLUME_DOWN
         keyCode === 40 || // ArrowDown
         keyCode === 83 || // KeyS
-        keyCode === 109 ||
-        keyCode === 189 ||
-        keyCode === 173 ||
+        keyCode === 109 || // NumpadSubtract
+        keyCode === 189 || // Minus
+        keyCode === 173 || // Minus
         key === "audiovolumedown" ||
         key === "volumedown" ||
         key === "-" ||
@@ -733,7 +812,7 @@ function PaginaDiagnosticoAparelho() {
         code === "minus"
       ) {
         e.preventDefault();
-        acionarBotaoSubKey("vol_down", "aprovado", "hardware");
+        acionarBotaoSubKeyRef.current("vol_down", "aprovado", "hardware");
         return;
       }
 
@@ -750,27 +829,11 @@ function PaginaDiagnosticoAparelho() {
         code === "sleep"
       ) {
         e.preventDefault();
-        acionarBotaoSubKey("power", "aprovado", "hardware");
+        acionarBotaoSubKeyRef.current("power", "aprovado", "hardware");
         return;
       }
 
-      // 4. Assist / Bixby / Camera
-      if (
-        keyCode === 27 || // KEYCODE_CAMERA
-        keyCode === 231 || // KEYCODE_ASSIST
-        keyCode === 112 || // F1
-        keyCode === 113 || // F2
-        keyCode === 65 || // KeyA
-        key === "launchassistant" ||
-        key === "camera" ||
-        code === "launchassistant"
-      ) {
-        e.preventDefault();
-        acionarBotaoSubKey("assist", "aprovado", "hardware");
-        return;
-      }
-
-      // 5. Se bater com a lista configurada de qualquer botão
+      // 4. Se bater com a lista configurada de qualquer botão
       const botaoEncontrado = BOTOES_SUB_KEY.find(
         (b) =>
           b.keyCodes.includes(keyCode) ||
@@ -779,7 +842,7 @@ function PaginaDiagnosticoAparelho() {
 
       if (botaoEncontrado) {
         e.preventDefault();
-        acionarBotaoSubKey(botaoEncontrado.id, "aprovado", "hardware");
+        acionarBotaoSubKeyRef.current(botaoEncontrado.id, "aprovado", "hardware");
       }
     };
 
@@ -808,7 +871,7 @@ function PaginaDiagnosticoAparelho() {
         telaApagouTimestampRef.current = 0;
         // Se a tela ficou desligada ou em repouso por pelo menos 200ms (ciclo físico do botão Power)
         if (deltaMs >= 200) {
-          acionarBotaoSubKey("power", "aprovado", "hardware");
+          acionarBotaoSubKeyRef.current("power", "aprovado", "hardware");
           toast.success(
             "✨ Botão físico Power / Liga detectado com sucesso pelo ciclo de bloqueio da tela!",
             {
@@ -838,6 +901,20 @@ function PaginaDiagnosticoAparelho() {
 
     return () => {
       clearInterval(intervalFoco);
+      if (audioMedia) {
+        audioMedia.pause();
+        audioMedia.srcObject = null;
+      }
+      if (oscSilencioso) {
+        try {
+          oscSilencioso.stop();
+        } catch {}
+      }
+      if (audioCtxInterno) {
+        audioCtxInterno.close().catch(() => {});
+      }
+      window.removeEventListener("pointerdown", desbloquearStreamAudio);
+      window.removeEventListener("touchstart", desbloquearStreamAudio);
       window.removeEventListener("keydown", testarCorrespondenciaTecla, { capture: true } as any);
       window.removeEventListener("keyup", testarCorrespondenciaTecla, { capture: true } as any);
       document.removeEventListener("keydown", testarCorrespondenciaTecla, { capture: true } as any);
@@ -1302,11 +1379,10 @@ function PaginaDiagnosticoAparelho() {
       vol_up: "aprovado",
       vol_down: "aprovado",
       power: "aprovado",
-      assist: "aprovado",
     };
     subKeyStatusRef.current = statusAprovado;
     setSubKeyStatus(statusAprovado);
-    setTeclasDetectadas(["Volume (+)", "Volume (-)", "Power / Liga", "Ação / Bixby"]);
+    setTeclasDetectadas(["Volume (+)", "Volume (-)", "Power / Liga"]);
     toast.success("✨ Todas as teclas físicas foram aprovadas com sucesso!", { duration: 2000 });
 
     setTimeout(() => {
@@ -1337,7 +1413,6 @@ function PaginaDiagnosticoAparelho() {
         vol_up: "pendente",
         vol_down: "pendente",
         power: "pendente",
-        assist: "pendente",
       });
       setSubKeyUltimaAcao(null);
       setTeclasDetectadas([]);
@@ -2192,10 +2267,9 @@ function PaginaDiagnosticoAparelho() {
                       ref={teclasFocusTrapRef}
                       type="text"
                       inputMode="none"
-                      tabIndex={-1}
-                      readOnly
+                      tabIndex={0}
                       aria-hidden="true"
-                      className="fixed -top-[9999px] left-0 opacity-0 pointer-events-none w-1 h-1"
+                      className="fixed top-0 left-0 w-1 h-1 opacity-0 pointer-events-none"
                     />
 
                     {/* GUIA DE DETECÇÃO DAS TECLAS FÍSICAS */}
@@ -2216,9 +2290,9 @@ function PaginaDiagnosticoAparelho() {
                           automaticamente!
                         </p>
                         <p>
-                          🔊 <strong>Botões Volume (+ / -):</strong> Pressione as teclas na lateral.
-                          Caso o Android restrinja a leitura ao slider de volume do sistema, valide
-                          instantaneamente tocando no card abaixo.
+                          🔊 <strong>Botões Volume (+ / -):</strong> Pressione as teclas físicas na
+                          lateral do aparelho. O sistema reconhece tanto pela variação do fluxo de
+                          áudio quanto pelo listener de teclas de hardware.
                         </p>
                       </div>
                     </div>
@@ -2293,7 +2367,6 @@ function PaginaDiagnosticoAparelho() {
                                   {b.id === "vol_up" && <Volume2 className="h-5 w-5" />}
                                   {b.id === "vol_down" && <Volume1 className="h-5 w-5" />}
                                   {b.id === "power" && <Power className="h-5 w-5" />}
-                                  {b.id === "assist" && <Sparkles className="h-5 w-5" />}
                                 </div>
 
                                 <div className="text-left">
@@ -2426,7 +2499,6 @@ function PaginaDiagnosticoAparelho() {
                             vol_up: "pendente",
                             vol_down: "pendente",
                             power: "pendente",
-                            assist: "pendente",
                           };
                           subKeyStatusRef.current = resetStatus;
                           setSubKeyStatus(resetStatus);
