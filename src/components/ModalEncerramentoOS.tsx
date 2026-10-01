@@ -12,6 +12,9 @@ import {
   ShieldCheck,
   Save,
   RotateCcw,
+  Zap,
+  BatteryCharging,
+  Battery,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QRCodeSVG } from "@/components/QRCodeSVG";
@@ -144,6 +147,63 @@ export function ModalEncerramentoOS({
       atualizado[item] = status;
     }
     setChecklist(atualizado);
+  };
+
+  const [mostrarTesteCarga, setMostrarTesteCarga] = useState(false);
+  const [statusBateria, setStatusBateria] = useState<{
+    nivel: number | null;
+    carregando: boolean | null;
+    suportado: boolean;
+    testado: boolean;
+  }>({ nivel: null, carregando: null, suportado: false, testado: false });
+
+  const executarTesteCarregamento = async () => {
+    setMostrarTesteCarga(true);
+    if (typeof navigator !== "undefined" && "getBattery" in navigator) {
+      try {
+        const battery: any = await (navigator as any).getBattery();
+        const nivel = Math.round(battery.level * 100);
+        const carregando = battery.charging;
+        setStatusBateria({
+          nivel,
+          carregando,
+          suportado: true,
+          testado: true,
+        });
+
+        if (carregando) {
+          setChecklist((prev) => ({
+            ...prev,
+            "Carregamento testado e subindo carga": "OK",
+          }));
+          toast.success("⚡ Carregamento ativo detectado! Item marcado como OK.");
+        } else {
+          toast.info("Aparelho na bateria. Conecte o cabo para detectar subida de carga.");
+        }
+
+        const onChargeChange = () => {
+          setStatusBateria((prev) => ({
+            ...prev,
+            carregando: battery.charging,
+            nivel: Math.round(battery.level * 100),
+            testado: true,
+          }));
+          if (battery.charging) {
+            setChecklist((prev) => ({
+              ...prev,
+              "Carregamento testado e subindo carga": "OK",
+            }));
+            toast.success("⚡ Carregador conectado! Carga subindo.");
+          }
+        };
+
+        battery.addEventListener("chargingchange", onChargeChange);
+      } catch {
+        setStatusBateria({ nivel: null, carregando: null, suportado: false, testado: true });
+      }
+    } else {
+      setStatusBateria({ nivel: null, carregando: null, suportado: false, testado: true });
+    }
   };
 
   const contadores = React.useMemo(() => {
@@ -398,6 +458,134 @@ export function ModalEncerramentoOS({
           </div>
         )}
 
+        {/* Painel de Teste de Carregamento & Conector de Energia */}
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3.5 space-y-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-500 font-bold shrink-0">
+                <Zap className="h-4.5 w-4.5 fill-amber-500" />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 flex-wrap">
+                  <span>Teste de Carregamento & Conector USB</span>
+                  {checklist["Carregamento testado e subindo carga"] === "OK" && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">
+                      <Check className="h-3 w-3" /> Carga Aprovada (OK)
+                    </span>
+                  )}
+                  {checklist["Carregamento testado e subindo carga"] === "Defeito" && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-500 border border-rose-500/30">
+                      <X className="h-3 w-3" /> Falha no Carregador
+                    </span>
+                  )}
+                </h3>
+                <p className="text-[11px] text-muted-foreground">
+                  Valide a integridade do conector de carga, alimentação elétrica e subida da
+                  porcentagem de bateria.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={executarTesteCarregamento}
+                className="text-xs font-bold gap-1.5 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer h-8"
+              >
+                <Zap className="h-3.5 w-3.5 fill-current" />
+                <span>Testar Carregamento</span>
+              </Button>
+
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => {
+                  toggleItem("Carregamento testado e subindo carga", "OK");
+                  toast.success("✓ Carregamento aprovado!");
+                }}
+                className={`text-xs font-bold gap-1 h-8 cursor-pointer ${
+                  checklist["Carregamento testado e subindo carga"] === "OK"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-secondary text-foreground hover:bg-emerald-600 hover:text-white"
+                }`}
+              >
+                <Check className="h-3.5 w-3.5" />
+                <span>Aprovar Carga</span>
+              </Button>
+            </div>
+          </div>
+
+          {mostrarTesteCarga && (
+            <div className="rounded-lg bg-background/90 border border-border p-3 space-y-2 text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2">
+                <div className="flex items-center gap-2">
+                  <BatteryCharging className="h-4 w-4 text-primary" />
+                  <span className="font-semibold text-foreground">
+                    {statusBateria.suportado
+                      ? "Detecção Automática do Aparelho:"
+                      : "Validação em Bancada:"}
+                  </span>
+                  {statusBateria.nivel !== null && (
+                    <span className="font-mono font-bold text-foreground bg-muted px-1.5 py-0.5 rounded">
+                      {statusBateria.nivel}% Bateria
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`font-bold flex items-center gap-1 ${
+                      statusBateria.carregando ? "text-emerald-500" : "text-muted-foreground"
+                    }`}
+                  >
+                    {statusBateria.carregando ? (
+                      <>
+                        <Zap className="h-3.5 w-3.5 fill-emerald-500" /> Cabo Conectado & Carregando
+                      </>
+                    ) : (
+                      "Aparelho na Bateria (Aguardando Cabo)"
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                <p className="text-[11px] text-muted-foreground">
+                  Conecte o cabo USB no conector do aparelho. Se a corrente for detectada e a carga
+                  subir, aprove o teste.
+                </p>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => {
+                      toggleItem("Carregamento testado e subindo carga", "OK");
+                      toast.success("✓ Teste de carregamento registrado como Aprovado (OK)");
+                    }}
+                    className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer"
+                  >
+                    <Check className="h-3 w-3 mr-1" /> Carga OK
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => {
+                      toggleItem("Carregamento testado e subindo carga", "Defeito");
+                      toast.error("✕ Teste de carregamento registrado com Falha/Defeito");
+                    }}
+                    className="h-7 text-xs font-bold cursor-pointer"
+                  >
+                    <X className="h-3 w-3 mr-1" /> Falha no Conector
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Checklist de Saída da Oficina */}
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -457,6 +645,17 @@ export function ModalEncerramentoOS({
                   </span>
 
                   <div className="flex items-center gap-1 shrink-0">
+                    {item === "Carregamento testado e subindo carga" && (
+                      <button
+                        type="button"
+                        onClick={executarTesteCarregamento}
+                        className="h-7 px-1.5 rounded flex items-center gap-1 text-[11px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 border border-amber-500/30 transition-colors cursor-pointer mr-0.5"
+                        title="Acionar detector de carregamento"
+                      >
+                        <Zap className="h-3 w-3 fill-current" />
+                        <span className="hidden sm:inline">Testar</span>
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => toggleItem(item, "OK")}

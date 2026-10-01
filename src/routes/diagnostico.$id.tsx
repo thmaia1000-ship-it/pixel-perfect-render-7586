@@ -33,6 +33,9 @@ import {
   LogIn,
   Power,
   Maximize2,
+  Zap,
+  BatteryCharging,
+  Battery,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -203,6 +206,11 @@ function PaginaDiagnosticoAparelho() {
     timestamp: number;
   } | null>(null);
   const [subKeyAnimando, setSubKeyAnimando] = useState<boolean>(false);
+  // Estados do teste de carregamento / bateria
+  const [bateriaNivel, setBateriaNivel] = useState<number | null>(null);
+  const [bateriaCarregando, setBateriaCarregando] = useState<boolean | null>(null);
+  const [bateriaSuportada, setBateriaSuportada] = useState<boolean>(true);
+  const [carregamentoSubindoDetectado, setCarregamentoSubindoDetectado] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -1418,6 +1426,40 @@ function PaginaDiagnosticoAparelho() {
       setTeclasDetectadas([]);
     } else if (item === "mic") {
       setAudioUrl(null);
+    } else if (item === "charging") {
+      setBateriaNivel(null);
+      setBateriaCarregando(null);
+      setCarregamentoSubindoDetectado(false);
+
+      if (typeof navigator !== "undefined" && "getBattery" in navigator) {
+        setBateriaSuportada(true);
+        (navigator as any)
+          .getBattery()
+          .then((battery: any) => {
+            setBateriaCarregando(battery.charging);
+            setBateriaNivel(Math.round(battery.level * 100));
+
+            const onChargeChange = () => {
+              setBateriaCarregando(battery.charging);
+              if (battery.charging) {
+                setCarregamentoSubindoDetectado(true);
+                tocarSucessoSubKey();
+                toast.success("⚡ Carregamento detectado com sucesso!");
+              }
+            };
+            const onLvlChange = () => {
+              setBateriaNivel(Math.round(battery.level * 100));
+            };
+
+            battery.addEventListener("chargingchange", onChargeChange);
+            battery.addEventListener("levelchange", onLvlChange);
+          })
+          .catch(() => {
+            setBateriaSuportada(false);
+          });
+      } else {
+        setBateriaSuportada(false);
+      }
     }
   };
 
@@ -1440,8 +1482,17 @@ function PaginaDiagnosticoAparelho() {
       };
 
       const dadosAtuais = deserializarEstadoEConferencia(os.estado_fisico);
+      const checklistSaidaAtual = { ...(dadosAtuais.encerramento?.checklistSaida || {}) };
+
+      // Se o teste de carregamento foi aprovado, já sincroniza no checklist de saída
+      if (resultados.charging?.status === "aprovado") {
+        checklistSaidaAtual["Carregamento testado e subindo carga"] = "OK";
+      } else if (resultados.charging?.status === "reprovado") {
+        checklistSaidaAtual["Carregamento testado e subindo carga"] = "Defeito";
+      }
+
       const novoEncerramento = {
-        checklistSaida: dadosAtuais.encerramento?.checklistSaida || {},
+        checklistSaida: checklistSaidaAtual,
         diagnosticoHardware: diagnostico,
         observacoesSaida: dadosAtuais.encerramento?.observacoesSaida || observacoesTech.trim(),
         encerradoEm: dadosAtuais.encerramento?.encerradoEm || new Date().toISOString(),
@@ -2513,6 +2564,124 @@ function PaginaDiagnosticoAparelho() {
                 </div>
               );
             })()}
+
+          {/* 10. CHARGING (TESTE DE CARREGAMENTO & ENTRADA DE ENERGIA) */}
+          {testeAtivo === "charging" && (
+            <div className="flex-1 flex flex-col items-center justify-between p-6 bg-slate-950 text-center">
+              <div className="pt-8 space-y-4 max-w-sm w-full">
+                <div
+                  className={`mx-auto w-24 h-24 rounded-full border-2 flex items-center justify-center transition-all ${
+                    bateriaCarregando
+                      ? "bg-emerald-500/20 border-emerald-400 shadow-xl shadow-emerald-500/30 animate-pulse"
+                      : "bg-amber-500/10 border-amber-500/40"
+                  }`}
+                >
+                  {bateriaCarregando ? (
+                    <Zap className="h-12 w-12 text-emerald-400 fill-emerald-400" />
+                  ) : (
+                    <BatteryCharging className="h-12 w-12 text-amber-400" />
+                  )}
+                </div>
+
+                <div>
+                  <h2 className="text-xl font-black uppercase text-white tracking-wide flex items-center justify-center gap-2">
+                    <span>Charging / Carregamento</span>
+                    {bateriaCarregando && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-mono">
+                        ATIVO
+                      </span>
+                    )}
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Conecte o carregador para verificar se o conector USB e o circuito de carga
+                    estão recebendo energia.
+                  </p>
+                </div>
+
+                {/* Painel de Status em tempo real */}
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-400">Nível da Bateria</span>
+                    <span className="text-sm font-black font-mono text-white">
+                      {bateriaNivel !== null ? `${bateriaNivel}%` : "Conectado"}
+                    </span>
+                  </div>
+
+                  {bateriaNivel !== null && (
+                    <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden p-0.5 border border-slate-700">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          bateriaCarregando ? "bg-emerald-500" : "bg-amber-500"
+                        }`}
+                        style={{ width: `${Math.min(100, Math.max(5, bateriaNivel))}%` }}
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-800/80 text-xs">
+                    <span className="text-slate-400">Status do Carregador:</span>
+                    <span
+                      className={`font-bold flex items-center gap-1 ${
+                        bateriaCarregando ? "text-emerald-400" : "text-amber-400"
+                      }`}
+                    >
+                      {bateriaCarregando ? (
+                        <>
+                          <Zap className="h-3.5 w-3.5 fill-emerald-400" /> Carregando
+                        </>
+                      ) : (
+                        "Desconectado (Bateria)"
+                      )}
+                    </span>
+                  </div>
+
+                  {carregamentoSubindoDetectado && (
+                    <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-2 text-[11px] text-emerald-300 font-medium">
+                      ✓ Cabo conectado detectado! Conector de carga alimentando a bateria com
+                      sucesso.
+                    </div>
+                  )}
+
+                  {!bateriaSuportada && (
+                    <p className="text-[11px] text-slate-400 leading-tight">
+                      Aparelho pronto para validação: conecte o cabo USB no conector e confira se a
+                      animação ou LED de carga é disparado.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pb-6 w-full max-w-sm shrink-0 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+                <Button
+                  onClick={() =>
+                    gravarResultado(
+                      "charging",
+                      "aprovado",
+                      bateriaNivel !== null
+                        ? `Conector OK · Bateria ${bateriaNivel}% · Carregamento OK`
+                        : "Conector OK · Subindo Carga",
+                    )
+                  }
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12 rounded-xl cursor-pointer"
+                >
+                  <Check className="h-5 w-5 mr-1" /> Carga OK
+                </Button>
+                <Button
+                  onClick={() =>
+                    gravarResultado(
+                      "charging",
+                      "reprovado",
+                      "Falha na entrada de energia / conector não carrega",
+                    )
+                  }
+                  variant="destructive"
+                  className="flex-1 font-bold h-12 rounded-xl cursor-pointer"
+                >
+                  <X className="h-5 w-5 mr-1" /> Falha no Conector
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

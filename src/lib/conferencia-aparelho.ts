@@ -66,7 +66,8 @@ export type TesteHardwareId =
   | "camera_front"
   | "camera_back"
   | "sensor"
-  | "sub_key";
+  | "sub_key"
+  | "charging";
 
 export interface ItemTesteHardware {
   id: TesteHardwareId;
@@ -164,6 +165,12 @@ export const LISTA_TESTES_HARDWARE: ItemTesteHardware[] = [
     id: "sub_key",
     titulo: "Sub Key (Teclas Físicas)",
     descricao: "Teste de acionamento dos botões Power e Volume",
+    categoria: "geral",
+  },
+  {
+    id: "charging",
+    titulo: "Charging (Carregamento)",
+    descricao: "Teste de conector de carga, detecção de carregador e subida de bateria",
     categoria: "geral",
   },
 ];
