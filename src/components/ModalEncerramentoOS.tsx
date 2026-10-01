@@ -23,6 +23,7 @@ import {
   type DiagnosticoExecutado,
 } from "@/lib/conferencia-aparelho";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ModalEncerramentoOSProps {
   aberto: boolean;
