@@ -49,7 +49,7 @@ export type StatusConferencia = "OK" | "Defeito" | "N/V" | null;
 export type ConferenciaChecklist = Record<string, StatusConferencia | undefined>;
 
 /**
- * Testes de diagnóstico de hardware inspirados no menu de serviço (*#0*#)
+ * Testes de diagnóstico de hardware do aparelho
  */
 export type TesteHardwareId =
   | "red"

@@ -1074,7 +1074,7 @@ export function TermoGarantiaModal({
               {encerramento?.diagnosticoHardware && (
                 <div className="mt-1 flex items-center justify-between text-[8px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 p-1 rounded print:mt-0.5 print:py-0.5 print:text-[7px]">
                   <span>
-                    ✓ Bateria de Testes de Hardware (*#0*#) executada:{" "}
+                    ✓ Bateria de Testes de Hardware executada:{" "}
                     {encerramento.diagnosticoHardware.totalAprovados} itens aprovados
                     {encerramento.diagnosticoHardware.totalReprovados > 0 &&
                       `, ${encerramento.diagnosticoHardware.totalReprovados} com falha`}

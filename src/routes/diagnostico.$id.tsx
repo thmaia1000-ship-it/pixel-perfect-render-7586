@@ -1466,7 +1466,7 @@ function PaginaDiagnosticoAparelho() {
       await supabase.from("os_historico").insert({
         os_id: os.id,
         status: os.status,
-        observacao: `Bateria de Testes de Hardware (*#0*#) executada no equipamento: ${aprovados} aprovados, ${reprovados} reprovados.`,
+        observacao: `Bateria de Testes de Hardware executada no equipamento: ${aprovados} aprovados, ${reprovados} reprovados.`,
         usuario_id: null,
         usuario_nome: "Diagnóstico Hardware QR Code",
       });
@@ -1578,7 +1578,7 @@ function PaginaDiagnosticoAparelho() {
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col selection:bg-primary/30">
       {/* ========================================================================= */}
-      {/* TELA CHEIA / EXECUÇÃO DO TESTE ATIVO (*#0*# EXPERIENCE)                   */}
+      {/* TELA CHEIA / EXECUÇÃO DO TESTE ATIVO                                      */}
       {/* ========================================================================= */}
       {testeAtivo && (
         <div className="fixed inset-0 z-50 flex flex-col bg-black text-white h-[100dvh] max-h-[100dvh] overflow-hidden">
@@ -2218,7 +2218,7 @@ function PaginaDiagnosticoAparelho() {
             </div>
           )}
 
-          {/* 9. SUB KEY (ROTINA INTERATIVA DE TESTE DE BOTÕES FÍSICOS *#0*#) */}
+          {/* 9. SUB KEY (ROTINA INTERATIVA DE TESTE DE BOTÕES FÍSICOS) */}
           {testeAtivo === "sub_key" &&
             (() => {
               const todosObrigatoriosTestados =
@@ -2239,11 +2239,8 @@ function PaginaDiagnosticoAparelho() {
                           <KeyRound className="h-5 w-5" />
                         </div>
                         <div className="text-left">
-                          <h2 className="text-sm font-black uppercase tracking-wider text-white flex items-center gap-2">
-                            <span>Sub Key (Teclas Físicas)</span>
-                            <span className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded font-mono">
-                              *#0*#
-                            </span>
+                          <h2 className="text-sm font-black uppercase tracking-wider text-white">
+                            Sub Key (Teclas Físicas)
                           </h2>
                           <p className="text-[11px] text-slate-400">
                             Pressione as teclas físicas ou toque nos botões na tela
@@ -2527,12 +2524,7 @@ function PaginaDiagnosticoAparelho() {
           <div className="flex items-center gap-2">
             <Logo size="sm" />
             <div>
-              <h1 className="text-sm font-black tracking-tight text-white flex items-center gap-1.5">
-                <span>TESTE DE HARDWARE</span>
-                <span className="text-[10px] bg-primary/20 text-primary border border-primary/40 px-1.5 py-0.2 rounded font-mono">
-                  *#0*#
-                </span>
-              </h1>
+              <h1 className="text-sm font-black tracking-tight text-white">TESTE DE HARDWARE</h1>
               <p className="text-[11px] text-slate-400">
                 OS #{os.numero} · {modeloAparelho}
               </p>
@@ -2699,11 +2691,8 @@ function PaginaDiagnosticoAparelho() {
                 <Play className="h-5 w-5 fill-current ml-0.5" />
               </div>
               <div>
-                <h2 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-                  <span>Bateria de Testes</span>
-                  <span className="text-[10px] bg-primary/20 text-primary border border-primary/40 px-1.5 py-0.2 rounded font-mono font-bold">
-                    *#0*#
-                  </span>
+                <h2 className="text-sm font-black text-white uppercase tracking-wider">
+                  Bateria de Testes
                 </h2>
                 <p className="text-[11px] text-slate-300">
                   {totalExecutados === 0
@@ -2758,7 +2747,7 @@ function PaginaDiagnosticoAparelho() {
           </div>
         </div>
 
-        {/* Grade de botões inspirada no menu de serviço Samsung *#0*# */}
+        {/* Grade de botões do diagnóstico de hardware */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs px-0.5">
             <span className="font-bold uppercase tracking-wider text-slate-400 text-[11px]">

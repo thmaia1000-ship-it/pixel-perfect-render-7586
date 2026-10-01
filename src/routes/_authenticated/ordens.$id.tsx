@@ -381,13 +381,13 @@ function DetalheOS() {
             <UploadMidiaConferencia midias={midias} somenteLeitura />
           </section>
 
-          {/* CHECKLIST DE SAÍDA E TESTES DE HARDWARE (*#0*#) */}
+          {/* CHECKLIST DE SAÍDA E TESTES DE HARDWARE */}
           <section className="rounded-2xl border-2 border-primary/30 bg-card p-5 space-y-4 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-base font-bold uppercase tracking-tight text-foreground flex items-center gap-2">
                   <ClipboardCheck className="h-5 w-5 text-emerald-500" />
-                  <span>CHECKLIST DE SAÍDA E TESTES DE HARDWARE (*#0*#)</span>
+                  <span>CHECKLIST DE SAÍDA E TESTES DE HARDWARE</span>
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Conferência final de bancada e bateria de testes de componentes executada no
@@ -445,12 +445,12 @@ function DetalheOS() {
                   )}
                 </div>
 
-                {/* Resumo do Laudo de Hardware (*#0*#) */}
+                {/* Resumo do Laudo de Hardware */}
                 {encerramento.diagnosticoHardware && (
                   <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3.5 text-xs space-y-2">
                     <div className="flex items-center justify-between font-bold text-emerald-600 dark:text-emerald-400">
                       <span className="flex items-center gap-1.5">
-                        <CheckCircle2 className="h-4 w-4" /> Laudo de Hardware (*#0*#) via QR Code
+                        <CheckCircle2 className="h-4 w-4" /> Laudo de Hardware via QR Code
                       </span>
                       <span className="font-mono text-[11px]">
                         {encerramento.diagnosticoHardware.totalAprovados} Aprovados ·{" "}

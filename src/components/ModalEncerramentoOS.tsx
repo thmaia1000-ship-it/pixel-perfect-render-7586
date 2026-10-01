@@ -202,7 +202,7 @@ export function ModalEncerramentoOS({
               className="gap-1.5 text-xs font-bold border-primary/40 text-primary hover:bg-primary/10"
             >
               <QrCode className="h-4 w-4" />
-              <span>{mostrarQrCodeModal ? "Ocultar QR Code" : "QR Code Teste *#0*#"}</span>
+              <span>{mostrarQrCodeModal ? "Ocultar QR Code" : "QR Code Teste de Hardware"}</span>
             </Button>
 
             <Button
@@ -217,7 +217,7 @@ export function ModalEncerramentoOS({
           </div>
         </div>
 
-        {/* Painel do QR Code para Teste Interativo de Hardware no celular (*#0*#) */}
+        {/* Painel do QR Code para Teste Interativo de Hardware no celular */}
         {mostrarQrCodeModal && (
           <div className="rounded-xl border border-primary/40 bg-primary/5 p-4 space-y-3">
             <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -236,9 +236,8 @@ export function ModalEncerramentoOS({
                   Aponte a câmera do aparelho para este QR Code
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Ele abre no celular a suíte de testes com os mesmos comandos do menu secreto{" "}
-                  <code className="text-primary font-mono">*#0*#</code>: Red, Green, Blue, Touch
-                  Grid, Speaker, Receiver, Câmeras, Microfone e Sensores.
+                  Ele abre no celular a suíte completa de testes de hardware: Red, Green, Blue,
+                  Touch Grid, Speaker, Receiver, Câmeras, Microfone e Sensores.
                 </p>
 
                 {/* Alternância de IP para rede Wi-Fi */}
@@ -320,7 +319,7 @@ export function ModalEncerramentoOS({
           </div>
         )}
 
-        {/* Resumo do Laudo de Hardware (*#0*#) já registrado */}
+        {/* Resumo do Laudo de Hardware já registrado */}
         {diagnosticoHardware && (
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3.5 space-y-2 text-xs">
             <div className="flex items-center justify-between font-bold text-emerald-600 dark:text-emerald-400">
