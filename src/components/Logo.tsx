@@ -53,19 +53,25 @@ export function Logo({
             style={ehImpresso ? { color: "#000000" } : undefined}
           >
             <span
-              className={ehImpresso ? "text-black font-black" : "text-foreground"}
+              className={`logo-texto-letra-br ${
+                ehImpresso ? "text-black font-black" : "text-foreground"
+              }`}
               style={ehImpresso ? { color: "#000000" } : undefined}
             >
               Br
             </span>
             <span
-              className={ehImpresso ? "text-black font-black" : "text-primary"}
-              style={ehImpresso ? { color: "#000000" } : undefined}
+              className="logo-numero-3 text-primary font-black"
+              style={{
+                color: "var(--primary, #10b981)",
+              }}
             >
               3
             </span>{" "}
             <span
-              className={ehImpresso ? "text-black font-black" : "text-foreground/95"}
+              className={`logo-texto-letra-tech ${
+                ehImpresso ? "text-black font-black" : "text-foreground/95"
+              }`}
               style={ehImpresso ? { color: "#000000" } : undefined}
             >
               Tech

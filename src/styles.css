@@ -329,24 +329,36 @@
   }
 }
 
-/* Força a cor das letras da logo Br3Tech para PRETO nos impressos e relatórios */
-.logo-texto-print,
-.logo-texto-print span,
-.relatorio-impresso-selecionado .logo-texto-print,
-.relatorio-impresso-selecionado .logo-texto-print span,
-.relatorio-termico-80mm .logo-texto-print,
-.relatorio-termico-80mm .logo-texto-print span,
-#modal-termo-garantia .bg-white .logo-texto-print,
-#modal-termo-garantia .bg-white .logo-texto-print span {
+/* Força as letras Br e Tech para PRETO e o número 3 para VERDE nos impressos */
+.logo-texto-letra-br,
+.logo-texto-letra-tech,
+.relatorio-impresso-selecionado .logo-texto-letra-br,
+.relatorio-impresso-selecionado .logo-texto-letra-tech,
+.relatorio-termico-80mm .logo-texto-letra-br,
+.relatorio-termico-80mm .logo-texto-letra-tech {
   color: #000000 !important;
   -webkit-text-fill-color: #000000 !important;
 }
 
+.logo-numero-3,
+.logo-texto-print .logo-numero-3,
+.relatorio-impresso-selecionado .logo-numero-3,
+.relatorio-termico-80mm .logo-numero-3,
+#modal-termo-garantia .logo-numero-3 {
+  color: var(--primary, #10b981) !important;
+  -webkit-text-fill-color: var(--primary, #10b981) !important;
+}
+
 @media print {
-  .logo-texto-print,
-  .logo-texto-print span,
-  .logo-texto-print * {
+  .logo-texto-letra-br,
+  .logo-texto-letra-tech {
     color: #000000 !important;
     -webkit-text-fill-color: #000000 !important;
+  }
+  .logo-numero-3,
+  .logo-texto-print .logo-numero-3,
+  .relatorio-impresso-selecionado .logo-numero-3 {
+    color: var(--primary, #10b981) !important;
+    -webkit-text-fill-color: var(--primary, #10b981) !important;
   }
 }
