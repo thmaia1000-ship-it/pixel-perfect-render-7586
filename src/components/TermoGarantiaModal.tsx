@@ -22,6 +22,7 @@ import {
   type MidiaConferencia,
 } from "@/lib/conferencia-aparelho";
 import { moeda, dataCurta, dataHora, linkWhatsApp } from "@/lib/br3";
+import { obterAssinaturaTecnicoOuLoja, obterMinhaAssinatura } from "@/lib/assinatura-usuario";
 
 export type ModoDocumentoOS = "duas_vias" | "entrada" | "termica_80mm" | "finalizada";
 
@@ -39,6 +40,7 @@ interface TermoGarantiaModalProps {
     marca: string | null;
     modelo: string | null;
     imei: string | null;
+    tecnico_id?: string | null;
     defeito_relatado: string;
     diagnostico: string | null;
     valor_pecas: number;
@@ -152,8 +154,12 @@ export function TermoGarantiaModal({
     toast.success(`Nº da OS (${os.numero}) copiado para a área de transferência!`);
   };
 
-  // Recupera dados de encerramento se existirem
-  const { encerramento } = deserializarEstadoEConferencia(os.estado_fisico);
+  // Recupera dados de encerramento e autorização se existirem
+  const { encerramento, assinaturaAutorizacao } = deserializarEstadoEConferencia(os.estado_fisico);
+
+  // Obtém as assinaturas digitais cadastradas para impressos
+  const assinaturaTecnico = obterAssinaturaTecnicoOuLoja(os.tecnico_id) || obterMinhaAssinatura();
+  const assinaturaCliente = assinaturaAutorizacao?.dataUrl || null;
 
   const checklistAtivo: ConferenciaChecklist = (() => {
     if (modo !== "finalizada") {
@@ -559,6 +565,15 @@ export function TermoGarantiaModal({
                   as condições de entrada.
                 </div>
                 <div className="text-center w-52 print:w-44">
+                  {assinaturaCliente && (
+                    <div className="h-8 flex items-end justify-center mb-0.5">
+                      <img
+                        src={assinaturaCliente}
+                        alt="Assinatura do Cliente"
+                        className="max-h-8 max-w-full object-contain"
+                      />
+                    </div>
+                  )}
                   <div className="border-t border-slate-400 pt-0.5 font-bold text-slate-900">
                     Assinatura do Cliente
                   </div>
@@ -668,10 +683,23 @@ export function TermoGarantiaModal({
                   BR3 Tech · Assistência Especializada · E-mail: br3tech.am@gmail.com
                 </div>
                 <div className="text-center w-52 print:w-44">
+                  {assinaturaTecnico && (
+                    <div className="h-8 flex items-end justify-center mb-0.5">
+                      <img
+                        src={assinaturaTecnico}
+                        alt="Assinatura Digital Técnica"
+                        className="max-h-8 max-w-full object-contain"
+                      />
+                    </div>
+                  )}
                   <div className="border-t border-slate-400 pt-0.5 font-bold text-slate-900">
                     {os.profiles?.nome || "BR3 Tech (Recepção)"}
                   </div>
-                  <p className="text-[8px] text-slate-500">Equipamento recebido na assistência</p>
+                  <p className="text-[8px] text-slate-500">
+                    {assinaturaTecnico
+                      ? "Assinatura Digital do Responsável"
+                      : "Equipamento recebido na assistência"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -784,7 +812,16 @@ export function TermoGarantiaModal({
                 <p className="text-[8px] italic">
                   Autorizo a abertura do equipamento e a elaboração do diagnóstico técnico.
                 </p>
-                <div className="pt-5 border-b border-black w-4/5 mx-auto"></div>
+                {assinaturaCliente && (
+                  <div className="h-7 flex items-end justify-center">
+                    <img
+                      src={assinaturaCliente}
+                      alt="Assinatura do Cliente"
+                      className="max-h-7 max-w-full object-contain"
+                    />
+                  </div>
+                )}
+                <div className="pt-2 border-b border-black w-4/5 mx-auto"></div>
                 <div className="font-bold">Assinatura do Cliente</div>
               </div>
             </div>
@@ -870,9 +907,22 @@ export function TermoGarantiaModal({
 
               {/* Assinatura Assistência */}
               <div className="pt-2 text-center text-[9px] space-y-1">
-                <div className="pt-5 border-b border-black w-4/5 mx-auto"></div>
+                {assinaturaTecnico && (
+                  <div className="h-7 flex items-end justify-center">
+                    <img
+                      src={assinaturaTecnico}
+                      alt="Assinatura Digital Técnica"
+                      className="max-h-7 max-w-full object-contain"
+                    />
+                  </div>
+                )}
+                <div className="pt-2 border-b border-black w-4/5 mx-auto"></div>
                 <div className="font-bold">{os.profiles?.nome || "BR3 Tech (Recepção)"}</div>
-                <p className="text-[8px]">Equipamento recebido na assistência</p>
+                <p className="text-[8px]">
+                  {assinaturaTecnico
+                    ? "Assinatura Digital Verificada"
+                    : "Equipamento recebido na assistência"}
+                </p>
                 <p className="text-[9px] font-bold text-emerald-800 print:text-black pt-1">
                   Acompanhe sua OS pelo WhatsApp: (92) 99236-5757
                 </p>
@@ -1312,6 +1362,15 @@ export function TermoGarantiaModal({
             {/* ASSINATURAS */}
             <div className="pt-2 grid grid-cols-2 gap-8 text-center text-[9.5px] print:pt-1.5 print:gap-6 print:text-[8px]">
               <div>
+                {assinaturaCliente && (
+                  <div className="h-9 flex items-end justify-center mb-0.5">
+                    <img
+                      src={assinaturaCliente}
+                      alt="Assinatura do Cliente"
+                      className="max-h-9 max-w-full object-contain"
+                    />
+                  </div>
+                )}
                 <div className="border-t border-slate-400 pt-0.5 font-bold text-slate-900">
                   {os.clientes?.nome || "Assinatura do Cliente"}
                 </div>
@@ -1322,13 +1381,24 @@ export function TermoGarantiaModal({
                 </p>
               </div>
               <div>
+                {assinaturaTecnico && (
+                  <div className="h-9 flex items-end justify-center mb-0.5">
+                    <img
+                      src={assinaturaTecnico}
+                      alt="Assinatura Digital do Responsável Técnico"
+                      className="max-h-9 max-w-full object-contain"
+                    />
+                  </div>
+                )}
                 <div className="border-t border-slate-400 pt-0.5 font-bold text-slate-900">
                   {os.profiles?.nome || "BR3 Tech (Recepção)"}
                 </div>
                 <p className="text-[8px] text-slate-500 print:text-[7px]">
-                  {modo === "finalizada"
-                    ? "Técnico Responsável (Entrega efetuada)"
-                    : "Técnico Responsável (Recepção)"}
+                  {assinaturaTecnico
+                    ? "Assinatura Digital do Responsável Técnico"
+                    : modo === "finalizada"
+                      ? "Técnico Responsável (Entrega efetuada)"
+                      : "Técnico Responsável (Recepção)"}
                 </p>
               </div>
             </div>

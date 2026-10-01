@@ -10,6 +10,7 @@ import {
   FORMAS_PAGAMENTO_LABELS,
   gerarTextoWhatsAppRecibo,
 } from "@/lib/recibos";
+import { obterMinhaAssinatura } from "@/lib/assinatura-usuario";
 
 interface ReciboImpressoModalProps {
   aberto: boolean;
@@ -21,6 +22,8 @@ export function ReciboImpressoModal({ aberto, onFechar, recibo }: ReciboImpresso
   const [formato, setFormato] = useState<"duas_vias" | "pagina_unica" | "termica_80mm">(
     recibo.modeloImpressao || "duas_vias",
   );
+
+  const assinaturaEmitente = obterMinhaAssinatura();
 
   if (!aberto) return null;
 
@@ -170,11 +173,22 @@ export function ReciboImpressoModal({ aberto, onFechar, recibo }: ReciboImpresso
           </span>
         </div>
         <div className="text-center w-56 print:w-48">
+          {assinaturaEmitente && (
+            <div className="h-8 flex items-end justify-center mb-0.5">
+              <img
+                src={assinaturaEmitente}
+                alt="Assinatura Digital"
+                className="max-h-8 max-w-full object-contain"
+              />
+            </div>
+          )}
           <div className="border-t border-slate-400 pt-0.5 font-bold text-slate-900 text-[10px] print:text-[9px]">
             {recibo.emitenteNome || "BR3 Tech — Laboratório de Tecnologia"}
           </div>
           <span className="text-[8px] text-slate-500 block">
-            {recibo.emitenteCargo || "Assinatura do Recebedor / Responsável"}
+            {assinaturaEmitente
+              ? "Assinatura Digital Registrada"
+              : recibo.emitenteCargo || "Assinatura do Recebedor / Responsável"}
           </span>
         </div>
       </div>
@@ -500,7 +514,16 @@ export function ReciboImpressoModal({ aberto, onFechar, recibo }: ReciboImpresso
               <div>
                 {recibo.cidade || "Manaus/AM"}, {dataFormatada}
               </div>
-              <div className="pt-5 border-b border-black w-4/5 mx-auto"></div>
+              {assinaturaEmitente && (
+                <div className="h-7 flex items-end justify-center">
+                  <img
+                    src={assinaturaEmitente}
+                    alt="Assinatura Digital"
+                    className="max-h-7 max-w-full object-contain"
+                  />
+                </div>
+              )}
+              <div className="pt-2 border-b border-black w-4/5 mx-auto"></div>
               <div className="font-bold">{recibo.emitenteNome || "BR3 Tech"}</div>
               <div className="text-[8px]">Assinatura do Recebedor</div>
             </div>

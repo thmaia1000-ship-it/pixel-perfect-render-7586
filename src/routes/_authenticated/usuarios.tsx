@@ -17,8 +17,11 @@ import {
   Wrench,
   Headphones,
   ShieldAlert,
+  FileSignature,
+  PenTool,
+  CheckCircle2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
@@ -28,8 +31,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { ModalConfigurarAssinatura } from "@/components/ModalConfigurarAssinatura";
 import { supabase } from "@/integrations/supabase/client";
 import { dataCurta, linkWhatsApp } from "@/lib/br3";
+import { listarTodasAssinaturas } from "@/lib/assinatura-usuario";
 import type { Database } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/usuarios")({
@@ -97,6 +102,24 @@ function AdministracaoUsuarios() {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [telefone, setTelefone] = useState("");
   const [papel, setPapel] = useState<AppRole>("tecnico");
+  const [usuarioAssinatura, setUsuarioAssinatura] = useState<{
+    id: string;
+    nome: string;
+    cargo?: string;
+  } | null>(null);
+  const [mapaAssinaturas, setMapaAssinaturas] = useState<Record<string, any>>(() =>
+    listarTodasAssinaturas(),
+  );
+
+  useEffect(() => {
+    const handleAtualizacao = () => {
+      setMapaAssinaturas(listarTodasAssinaturas());
+    };
+    window.addEventListener("br3_assinatura_usuario_atualizada", handleAtualizacao);
+    return () => {
+      window.removeEventListener("br3_assinatura_usuario_atualizada", handleAtualizacao);
+    };
+  }, []);
 
   // Credenciais recém-criadas para exibição/cópia
   const [credenciaisCriadas, setCredenciaisCriadas] = useState<{
@@ -326,6 +349,76 @@ function AdministracaoUsuarios() {
           </div>
         </div>
 
+        {/* Card de Propriedades de Acesso & Assinatura Digital */}
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-bold shrink-0">
+                <FileSignature className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <span>Assinatura Digital de Documentos & Relatórios</span>
+                  {usuarioAtual && mapaAssinaturas[usuarioAtual.id] ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" /> Assinatura Ativa
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/30">
+                      Pendente de Configuração
+                    </span>
+                  )}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  A assinatura digital cadastrada é aplicada automaticamente nos impressos de Ordens
+                  de Serviço, Termos de Entrada e Garantia, Laudos Técnicos e Recibos Avulsos.
+                </p>
+              </div>
+            </div>
+
+            {usuarioAtual && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() =>
+                  setUsuarioAssinatura({
+                    id: usuarioAtual.id,
+                    nome:
+                      usuarioAtual.user_metadata?.nome ||
+                      usuarioAtual.email?.split("@")[0] ||
+                      "Meu Perfil",
+                    cargo: "Administrador / Técnico",
+                  })
+                }
+                className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground shadow-sm"
+              >
+                <PenTool className="h-3.5 w-3.5" />
+                <span>
+                  {mapaAssinaturas[usuarioAtual.id]
+                    ? "Editar Minha Assinatura"
+                    : "Cadastrar Minha Assinatura"}
+                </span>
+              </Button>
+            )}
+          </div>
+
+          {usuarioAtual && mapaAssinaturas[usuarioAtual.id] && (
+            <div className="rounded-xl border border-slate-200 bg-white p-3 max-w-sm flex items-center gap-4">
+              <div className="h-12 w-36 border border-slate-200 rounded bg-white p-1 flex items-center justify-center">
+                <img
+                  src={mapaAssinaturas[usuarioAtual.id].dataUrl}
+                  alt="Assinatura Digital Ativa"
+                  className="max-h-10 max-w-full object-contain"
+                />
+              </div>
+              <div className="text-[11px] text-slate-800">
+                <p className="font-bold">Rubrica / Assinatura Padrão</p>
+                <p className="text-[10px] text-slate-500">Pronta para relatórios e recibos</p>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Lista de Usuários */}
         <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
           {isLoading ? (
@@ -431,6 +524,34 @@ function AdministracaoUsuarios() {
 
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-1">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setUsuarioAssinatura({
+                                  id: u.id,
+                                  nome: u.nome,
+                                  cargo: ROLE_LABELS[u.role]?.label,
+                                })
+                              }
+                              className={`h-7 px-2 text-xs gap-1 ${
+                                mapaAssinaturas[u.id]
+                                  ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10"
+                                  : "text-muted-foreground hover:text-foreground border-border"
+                              }`}
+                              title={
+                                mapaAssinaturas[u.id]
+                                  ? "Assinatura digital cadastrada. Clique para editar ou visualizar."
+                                  : "Cadastrar assinatura digital para este usuário"
+                              }
+                            >
+                              <FileSignature className="h-3.5 w-3.5" />
+                              <span className="hidden sm:inline">
+                                {mapaAssinaturas[u.id] ? "Assinatura OK" : "Assinatura"}
+                              </span>
+                            </Button>
+
                             <Button
                               type="button"
                               variant="ghost"
@@ -702,6 +823,20 @@ function AdministracaoUsuarios() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Modal de Configuração de Assinatura Digital */}
+      {usuarioAssinatura && (
+        <ModalConfigurarAssinatura
+          aberto={Boolean(usuarioAssinatura)}
+          onFechar={() => setUsuarioAssinatura(null)}
+          userId={usuarioAssinatura.id}
+          userNome={usuarioAssinatura.nome}
+          userCargo={usuarioAssinatura.cargo}
+          onSalvo={() => {
+            setMapaAssinaturas(listarTodasAssinaturas());
+          }}
+        />
       )}
     </AppShell>
   );
