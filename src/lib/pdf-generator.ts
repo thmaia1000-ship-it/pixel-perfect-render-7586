@@ -13,6 +13,14 @@ export interface OpcoesEnvioWhatsAppPdf {
 }
 
 /**
+ * Sanitiza o nome do arquivo para garantir compatibilidade com sistemas operacionais
+ */
+export function sanitizarNomeArquivo(nome: string): string {
+  const limpo = nome.replace(/[\\/:*?"<>|]/g, "-").trim();
+  return limpo.endsWith(".pdf") ? limpo : `${limpo}.pdf`;
+}
+
+/**
  * Renderiza um elemento HTML para um documento PDF com escala 2x para nitidez
  */
 export async function gerarPdfDeElemento(
@@ -84,22 +92,23 @@ export async function gerarPdfDeElemento(
   }
 
   const blob = doc.output("blob");
-  const nomeSanitizado = nomeArquivo.endsWith(".pdf") ? nomeArquivo : `${nomeArquivo}.pdf`;
-  const file = new File([blob], nomeSanitizado, { type: "application/pdf" });
+  const nomeFinal = sanitizarNomeArquivo(nomeArquivo);
+  const file = new File([blob], nomeFinal, { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
 
   return { blob, file, url, doc };
 }
 
 /**
- * Dispara o download de um Blob no navegador
+ * Dispara o download de um Blob no navegador com o nome sanitizado
  */
 export function baixarBlobComoArquivo(blob: Blob, nomeArquivo: string) {
+  const nomeFinal = sanitizarNomeArquivo(nomeArquivo);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.style.display = "none";
   a.href = url;
-  a.download = nomeArquivo.endsWith(".pdf") ? nomeArquivo : `${nomeArquivo}.pdf`;
+  a.download = nomeFinal;
   document.body.appendChild(a);
   a.click();
   setTimeout(() => {
@@ -122,14 +131,15 @@ export async function enviarWhatsAppComCopiaPdf({
   tituloDocumento = "Comprovante BR3 Tech",
 }: OpcoesEnvioWhatsAppPdf): Promise<void> {
   const target = elemento || (elementoId ? document.getElementById(elementoId) : null);
+  const nomeFinal = sanitizarNomeArquivo(nomeArquivo);
 
-  const toastId = toast.loading("Gerando cópia em PDF do documento...");
+  const toastId = toast.loading(`Gerando cópia em PDF (${nomeFinal})...`);
 
   try {
     let pdfResultado: { blob: Blob; file: File; url: string; doc: jsPDF } | null = null;
 
     if (target) {
-      pdfResultado = await gerarPdfDeElemento(target, nomeArquivo);
+      pdfResultado = await gerarPdfDeElemento(target, nomeFinal);
     }
 
     toast.dismiss(toastId);
@@ -147,7 +157,7 @@ export async function enviarWhatsAppComCopiaPdf({
           text: mensagem,
           files: [pdfResultado.file],
         });
-        toast.success("Comprovante enviado com cópia em PDF anexada!");
+        toast.success(`Cópia em PDF enviada: ${nomeFinal}!`);
         return;
       } catch (err: any) {
         if (err?.name !== "AbortError") {
@@ -157,9 +167,9 @@ export async function enviarWhatsAppComCopiaPdf({
     }
 
     // 2. Fluxo Universal (Desktop / WhatsApp Web):
-    // Baixa o arquivo PDF localmente
+    // Baixa o arquivo PDF localmente com o nome exato da ação
     if (pdfResultado) {
-      baixarBlobComoArquivo(pdfResultado.blob, nomeArquivo);
+      baixarBlobComoArquivo(pdfResultado.blob, nomeFinal);
     }
 
     // Copia o texto para a área de transferência
@@ -174,7 +184,7 @@ export async function enviarWhatsAppComCopiaPdf({
     window.open(link, "_blank");
 
     toast.success(
-      "📄 Cópia em PDF baixada com sucesso! O WhatsApp foi aberto para você colar a mensagem e anexar o PDF.",
+      `📄 Cópia em PDF baixada (${nomeFinal})! O WhatsApp foi aberto para colar a mensagem e anexar o PDF.`,
       { duration: 7000 },
     );
   } catch (error) {

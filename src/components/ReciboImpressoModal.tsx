@@ -93,7 +93,8 @@ export function ReciboImpressoModal({ aberto, onFechar, recibo }: ReciboImpresso
     setGerandoPdf(true);
     const texto = gerarTextoWhatsAppRecibo(recibo);
     const fone = recibo.clienteTelefone || "";
-    const nomeArquivo = `Recibo-${recibo.numero.replace(/\//g, "-")}.pdf`;
+    // O nome do PDF é o número do recibo completo (ex: REC-2026-0001.pdf)
+    const nomeArquivo = `${recibo.numero}.pdf`;
 
     await enviarWhatsAppComCopiaPdf({
       telefone: fone,
@@ -108,11 +109,11 @@ export function ReciboImpressoModal({ aberto, onFechar, recibo }: ReciboImpresso
   const baixarPdfDireto = async () => {
     setGerandoPdf(true);
     try {
-      const nomeArquivo = `Recibo-${recibo.numero.replace(/\//g, "-")}.pdf`;
+      const nomeArquivo = `${recibo.numero}.pdf`;
       const res = await gerarPdfDeElemento("documento-impresso-ativo", nomeArquivo);
       if (res) {
         baixarBlobComoArquivo(res.blob, nomeArquivo);
-        toast.success("Download do PDF do recibo iniciado com sucesso!");
+        toast.success(`Download de ${nomeArquivo} iniciado!`);
       }
     } catch (err) {
       console.error("Erro ao gerar PDF:", err);

@@ -170,9 +170,7 @@ export function TermoGarantiaModal({
         `Acompanhe seu serviço pelo WhatsApp: (92) 99236-5757. Agradecemos a confiança!`;
 
   const nomeArquivoPdf =
-    modo === "finalizada"
-      ? `Recibo-Termo-Garantia-OS-${os.numero}.pdf`
-      : `Comprovante-Entrada-OS-${os.numero}.pdf`;
+    modo === "finalizada" ? `Fechamento de OS ${os.numero}.pdf` : `Entrada de OS ${os.numero}.pdf`;
 
   const enviarWhatsAppComPdf = async () => {
     if (!telefoneCliente) {
@@ -187,8 +185,8 @@ export function TermoGarantiaModal({
       nomeArquivo: nomeArquivoPdf,
       tituloDocumento:
         modo === "finalizada"
-          ? `Recibo e Termo de Garantia OS #${os.numero} - BR3 Tech`
-          : `Comprovante de Entrada OS #${os.numero} - BR3 Tech`,
+          ? `Fechamento de OS ${os.numero} - BR3 Tech`
+          : `Entrada de OS ${os.numero} - BR3 Tech`,
     });
     setGerandoPdf(false);
   };
@@ -199,7 +197,7 @@ export function TermoGarantiaModal({
       const res = await gerarPdfDeElemento("documento-impresso-ativo", nomeArquivoPdf);
       if (res) {
         baixarBlobComoArquivo(res.blob, nomeArquivoPdf);
-        toast.success("Download do PDF iniciado com sucesso!");
+        toast.success(`Download de ${nomeArquivoPdf} iniciado com sucesso!`);
       }
     } catch (err) {
       console.error("Erro ao gerar PDF:", err);
