@@ -148,6 +148,9 @@ const BOTOES_SUB_KEY: BotaoSubKeyConfig[] = [
   },
 ];
 
+// Total de células para cobrir 100% da tela edge-to-edge no teste de Touch (8 colunas x 15 linhas)
+const TOTAL_CELULAS_TOUCH = 120;
+
 function PaginaDiagnosticoAparelho() {
   const { id } = Route.useParams();
   const [carregando, setCarregando] = useState(true);
@@ -175,7 +178,8 @@ function PaginaDiagnosticoAparelho() {
   const [isSecureOrigin, setIsSecureOrigin] = useState(true);
 
   // Estados interativos específicos para cada teste
-  const [touchGrid, setTouchGrid] = useState<boolean[]>(Array(60).fill(false));
+  const [touchGrid, setTouchGrid] = useState<boolean[]>(Array(TOTAL_CELULAS_TOUCH).fill(false));
+  const [vibrandoAgora, setVibrandoAgora] = useState(false);
   const [somTocando, setSomTocando] = useState(false);
   const [sensorValues, setSensorValues] = useState<{ x: number; y: number; z: number } | null>(null);
   const [gravandoAudio, setGravandoAudio] = useState(false);
@@ -629,23 +633,103 @@ function PaginaDiagnosticoAparelho() {
     }
   };
 
-  // Vibração com padrões variados
-  const acionarVibracao = (padrao: number[] = [400, 200, 400, 200, 600]) => {
-    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-      try {
-        const ok = navigator.vibrate(padrao);
-        if (ok) {
-          toast.success("Comando de vibração disparado no hardware!");
-        } else {
-          toast.info("Disparo de vibração enviado ao sistema.");
-        }
-      } catch {
-        toast.error("Erro ao acionar vibração.");
+  // Dispara oscilação acústico-háptica em sub-grave (55Hz)
+  // Faz o chassis e membranas dos transdutores vibrarem mecanicamente (funciona em iOS Safari e Android)
+  const dispararRumbleAcustico = (duracaoMs: number = 350) => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      if (ctx.state === "suspended") {
+        ctx.resume();
       }
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      // 55Hz (nota Lá1) ressoa fortemente no hardware de autofalantes de smartphones
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(55, ctx.currentTime);
+      gain.gain.setValueAtTime(0.85, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + Math.min(duracaoMs, 1200) / 1000);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + Math.min(duracaoMs, 1200) / 1000);
+    } catch {}
+  };
+
+  // Vibração com padrões variados (suporte aprimorado para Android, iOS e Web)
+  const acionarVibracao = (padrao: number | number[] = [400, 200, 400, 200, 600]) => {
+    const duracaoTotal = Array.isArray(padrao)
+      ? padrao.reduce((acc, v) => acc + v, 0)
+      : padrao;
+
+    setVibrandoAgora(true);
+    setTimeout(() => {
+      setVibrandoAgora(false);
+    }, Math.max(duracaoTotal, 350));
+
+    let vibrouHardware = false;
+
+    // 1. Tenta acionamento nativo via navigator.vibrate (Android Chrome / Webview)
+    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+      try {
+        navigator.vibrate(0); // Reseta qualquer ciclo anterior em execução
+        if (Array.isArray(padrao)) {
+          vibrouHardware = navigator.vibrate(padrao);
+          if (!vibrouHardware && padrao.length === 1) {
+            vibrouHardware = navigator.vibrate(padrao[0]);
+          }
+        } else {
+          vibrouHardware = navigator.vibrate(padrao);
+        }
+      } catch (e) {
+        console.warn("Erro ao invocar navigator.vibrate:", e);
+      }
+    }
+
+    // 2. Dispara ressonância acústico-háptica de 55Hz (faz o celular e a mão vibrarem em iOS/Android)
+    dispararRumbleAcustico(duracaoTotal);
+
+    if (vibrouHardware) {
+      toast.success("Vibração do motor acionada com sucesso!", { duration: 1800 });
     } else {
-      toast.info(
-        "A API de vibração não é suportada por navegadores iOS (Apple Safari). Teste fisicamente o hardware."
-      );
+      toast.info("Pulso de vibração e ressonância disparado no aparelho!", { duration: 1800 });
+    }
+  };
+
+  // Lógica de rastreamento do Touch Screen em tela cheia com auto-conclusão
+  const marcarCelulaTouch = (index: number) => {
+    if (index < 0 || index >= TOTAL_CELULAS_TOUCH) return;
+    setTouchGrid((prev) => {
+      if (prev[index]) return prev;
+      const next = [...prev];
+      next[index] = true;
+
+      // Micro-beep leve ao preencher a célula para feedback tátil/sonoro contínuo
+      tocarBeepCurto(480 + (index % 16) * 45, 30);
+
+      // Checa se todas as células do display foram preenchidas (100% da tela)
+      if (next.every(Boolean)) {
+        tocarSucessoSubKey();
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          try {
+            navigator.vibrate([150, 80, 250]);
+          } catch {}
+        }
+        toast.success("✨ Touch 100% calibrado e aprovado com sucesso!");
+        setTimeout(() => {
+          gravarResultado("touch", "aprovado");
+        }, 280);
+      }
+      return next;
+    });
+  };
+
+  const processarCoordenadaTouch = (clientX: number, clientY: number) => {
+    const el = document.elementFromPoint(clientX, clientY);
+    const idxAttr = el?.getAttribute("data-cell-touch");
+    if (idxAttr !== null && idxAttr !== undefined) {
+      marcarCelulaTouch(Number(idxAttr));
     }
   };
 
@@ -902,7 +986,7 @@ function PaginaDiagnosticoAparelho() {
     setTesteAtivo(item);
 
     if (item === "touch") {
-      setTouchGrid(Array(60).fill(false));
+      setTouchGrid(Array(TOTAL_CELULAS_TOUCH).fill(false));
     } else if (item === "receiver") {
       tocarTom(1000); // 1 kHz agudo
     } else if (item === "speaker") {
@@ -1080,50 +1164,52 @@ function PaginaDiagnosticoAparelho() {
       {testeAtivo && (
         <div className="fixed inset-0 z-50 flex flex-col bg-black text-white h-[100dvh] max-h-[100dvh] overflow-hidden">
           {/* BARRA SUPERIOR DE CONTROLE E PROGRESSO SEQUENCIAL */}
-          <div className="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-3.5 py-2 flex items-center justify-between text-xs z-50 shrink-0">
-            <div className="flex items-center gap-2 truncate">
-              <span className="font-mono text-[10px] bg-primary/20 text-primary border border-primary/40 px-1.5 py-0.5 rounded font-black">
-                {activeTestIndex + 1}/{totalTestes}
-              </span>
-              <span className="font-bold text-white truncate text-xs">
-                {activeTestConfig?.titulo}
-              </span>
-              {modoSequencial && (
-                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Sequencial
+          {testeAtivo !== "touch" && (
+            <div className="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-3.5 py-2 flex items-center justify-between text-xs z-50 shrink-0">
+              <div className="flex items-center gap-2 truncate">
+                <span className="font-mono text-[10px] bg-primary/20 text-primary border border-primary/40 px-1.5 py-0.5 rounded font-black">
+                  {activeTestIndex + 1}/{totalTestes}
                 </span>
-              )}
-            </div>
+                <span className="font-bold text-white truncate text-xs">
+                  {activeTestConfig?.titulo}
+                </span>
+                {modoSequencial && (
+                  <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Sequencial
+                  </span>
+                )}
+              </div>
 
-            <div className="flex items-center gap-1.5 shrink-0">
-              {modoSequencial && activeTestIndex < totalTestes - 1 && (
+              <div className="flex items-center gap-1.5 shrink-0">
+                {modoSequencial && activeTestIndex < totalTestes - 1 && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    type="button"
+                    onClick={pularParaProximo}
+                    className="text-slate-300 hover:text-white h-7 px-2 text-[11px] font-medium"
+                  >
+                    Pular <ArrowRight className="h-3 w-3 ml-1" />
+                  </Button>
+                )}
+
                 <Button
                   size="sm"
                   variant="ghost"
                   type="button"
-                  onClick={pularParaProximo}
-                  className="text-slate-300 hover:text-white h-7 px-2 text-[11px] font-medium"
+                  onClick={() => {
+                    setModoSequencial(false);
+                    pararRecursosAtuais();
+                    setTesteAtivo(null);
+                  }}
+                  className="text-slate-400 hover:text-white h-7 px-2 text-[11px]"
                 >
-                  Pular <ArrowRight className="h-3 w-3 ml-1" />
+                  <X className="h-3.5 w-3.5 mr-1" /> Sair
                 </Button>
-              )}
-
-              <Button
-                size="sm"
-                variant="ghost"
-                type="button"
-                onClick={() => {
-                  setModoSequencial(false);
-                  pararRecursosAtuais();
-                  setTesteAtivo(null);
-                }}
-                className="text-slate-400 hover:text-white h-7 px-2 text-[11px]"
-              >
-                <X className="h-3.5 w-3.5 mr-1" /> Sair
-              </Button>
+              </div>
             </div>
-          </div>
+          )}
           {/* 1. TESTES DE CORES PURAS (RED, GREEN, BLUE, WHITE, BLACK) */}
           {(testeAtivo === "red" ||
             testeAtivo === "green" ||
@@ -1168,78 +1254,90 @@ function PaginaDiagnosticoAparelho() {
             </div>
           )}
 
-          {/* 2. TESTE DE TOUCH GRID (GRADE DE TOQUE) */}
+          {/* 2. TESTE DE TOUCH GRID EM TELA INTEIRA (EDGE-TO-EDGE COM AUTO-CONCLUSÃO) */}
           {testeAtivo === "touch" && (
-            <div className="flex-1 flex flex-col bg-slate-900 select-none">
-              <div className="p-3 text-center bg-slate-950 border-b border-slate-800 flex justify-between items-center">
-                <span className="text-xs font-bold text-emerald-400">
-                  Touch Grid: Toque e arraste o dedo por todos os quadrados
-                </span>
-                <span className="text-xs font-mono">
-                  {touchGrid.filter(Boolean).length}/{touchGrid.length}
-                </span>
-              </div>
-
-              <div
-                className="flex-1 grid grid-cols-6 grid-rows-10 gap-1 p-2 touch-none"
-                onPointerMove={(e) => {
-                  const target = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement;
-                  const idxStr = target?.getAttribute("data-cell-index");
-                  if (idxStr !== null && idxStr !== undefined) {
-                    const idx = Number(idxStr);
-                    setTouchGrid((prev) => {
-                      if (prev[idx]) return prev;
-                      const next = [...prev];
-                      next[idx] = true;
-                      if (next.every(Boolean)) {
-                        setTimeout(() => {
-                          gravarResultado("touch", "aprovado");
-                        }, 250);
-                      }
-                      return next;
-                    });
-                  }
-                }}
-              >
+            <div
+              className="fixed inset-0 z-[60] bg-black touch-none select-none flex flex-col overflow-hidden"
+              onPointerDown={(e) => {
+                processarCoordenadaTouch(e.clientX, e.clientY);
+              }}
+              onPointerMove={(e) => {
+                if (e.buttons > 0 || e.pointerType === "touch") {
+                  processarCoordenadaTouch(e.clientX, e.clientY);
+                }
+              }}
+              onTouchStart={(e) => {
+                for (let i = 0; i < e.touches.length; i++) {
+                  processarCoordenadaTouch(e.touches[i].clientX, e.touches[i].clientY);
+                }
+              }}
+              onTouchMove={(e) => {
+                for (let i = 0; i < e.touches.length; i++) {
+                  processarCoordenadaTouch(e.touches[i].clientX, e.touches[i].clientY);
+                }
+              }}
+            >
+              {/* GRADE DE 120 QUADRADOS (8 COLUNAS X 15 LINHAS) PREENCHENDO 100% DA TELA */}
+              <div className="w-full h-full grid grid-cols-8 grid-rows-[repeat(15,minmax(0,1fr))] gap-[2px] p-[2px] bg-black">
                 {touchGrid.map((preenchido, idx) => (
                   <div
                     key={idx}
-                    data-cell-index={idx}
-                    onPointerDown={() => {
-                      setTouchGrid((prev) => {
-                        const next = [...prev];
-                        next[idx] = true;
-                        if (next.every(Boolean)) {
-                          setTimeout(() => {
-                            gravarResultado("touch", "aprovado");
-                          }, 250);
-                        }
-                        return next;
-                      });
+                    data-cell-touch={idx}
+                    onPointerEnter={(e) => {
+                      if (e.buttons > 0) marcarCelulaTouch(idx);
                     }}
-                    className={`rounded transition-colors border ${
+                    className={`w-full h-full rounded-[2px] transition-colors duration-75 border ${
                       preenchido
-                        ? "bg-emerald-500 border-emerald-400 shadow-sm"
-                        : "bg-slate-800 border-slate-700/60"
+                        ? "bg-emerald-500 border-emerald-400 shadow-[inset_0_0_10px_rgba(16,185,129,0.7)]"
+                        : "bg-slate-900/90 border-slate-800/80 active:bg-emerald-500/50"
                     }`}
                   />
                 ))}
               </div>
 
-              <div className="p-3 bg-slate-950 border-t border-slate-800 flex gap-3">
-                <Button
-                  onClick={() => gravarResultado("touch", "aprovado")}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-11"
-                >
-                  <Check className="h-4 w-4 mr-1" /> Touch 100% OK
-                </Button>
-                <Button
-                  onClick={() => gravarResultado("touch", "reprovado")}
-                  variant="destructive"
-                  className="flex-1 font-bold h-11"
-                >
-                  <X className="h-4 w-4 mr-1" /> Zona Morta / Falha
-                </Button>
+              {/* HUD FLUTUANTE SEMI-TRANSPARENTE NO TOPO (NÃO BLOQUEIA TOQUES NA GRADE) */}
+              <div className="absolute top-2 left-2 right-2 flex items-center justify-between pointer-events-none z-20">
+                <div className="pointer-events-auto bg-black/85 backdrop-blur-md border border-slate-700/80 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-xl">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[11px] font-bold text-white tracking-wide">
+                    TOUCH: {touchGrid.filter(Boolean).length}/{TOTAL_CELULAS_TOUCH} (
+                    {Math.round((touchGrid.filter(Boolean).length / TOTAL_CELULAS_TOUCH) * 100)}%)
+                  </span>
+                </div>
+
+                <div className="pointer-events-auto flex items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    type="button"
+                    onClick={() =>
+                      gravarResultado("touch", "reprovado", "Zona morta / falha no digitalizador de toque")
+                    }
+                    className="bg-rose-900/85 hover:bg-rose-800 text-rose-200 border border-rose-700/60 text-[11px] font-bold h-7 px-2.5 rounded-full shadow-lg"
+                  >
+                    <X className="h-3 w-3 mr-1" /> Falha Touch
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    type="button"
+                    onClick={() => {
+                      setModoSequencial(false);
+                      pararRecursosAtuais();
+                      setTesteAtivo(null);
+                    }}
+                    className="bg-slate-900/85 hover:bg-slate-800 text-slate-300 border border-slate-700/60 text-[11px] h-7 px-2.5 rounded-full shadow-lg"
+                  >
+                    Sair
+                  </Button>
+                </div>
+              </div>
+
+              {/* DICA FLUTUANTE NO RODAPÉ */}
+              <div className="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none z-20 pb-[env(safe-area-inset-bottom)]">
+                <div className="bg-black/80 backdrop-blur-md px-3.5 py-1 rounded-full border border-slate-800 text-[10px] text-slate-300 shadow-md">
+                  Arraste o dedo cobrindo todos os quadrados para finalizar
+                </div>
               </div>
             </div>
           )}
@@ -1490,62 +1588,93 @@ function PaginaDiagnosticoAparelho() {
             </div>
           )}
 
-          {/* 6. VIBRAÇÃO & SENSORES */}
+          {/* 6. VIBRAÇÃO & HÁPTICO */}
           {testeAtivo === "vibration" && (
             <div className="flex-1 flex flex-col items-center justify-between p-6 bg-slate-950 text-center">
-              <div className="pt-8 space-y-4 max-w-sm w-full">
-                <div className="mx-auto w-20 h-20 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center animate-bounce">
-                  <Vibrate className="h-10 w-10 text-amber-500" />
+              <div className="pt-6 space-y-4 max-w-sm w-full">
+                <div
+                  className={`mx-auto w-24 h-24 rounded-full flex items-center justify-center transition-all duration-200 ${
+                    vibrandoAgora
+                      ? "bg-amber-500/40 border-4 border-amber-400 ring-8 ring-amber-500/30 scale-110 shadow-2xl shadow-amber-500/50 animate-bounce"
+                      : "bg-amber-500/20 border-2 border-amber-500"
+                  }`}
+                >
+                  <Vibrate className={`h-12 w-12 text-amber-400 ${vibrandoAgora ? "animate-pulse" : ""}`} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black uppercase">Vibration (Motor de Vibração)</h2>
+                  <h2 className="text-xl font-black uppercase text-white">Vibration (Motor de Vibração)</h2>
                   <p className="text-xs text-slate-400 mt-1">
-                    Sinta a resposta tátil do motor háptico do aparelho ao acionar os pulsos abaixo:
+                    Sinta a resposta mecânica e tátil do aparelho clicando nos padrões de teste abaixo:
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-2">
-                  <Button
-                    onClick={() => acionarVibracao([300])}
-                    variant="outline"
-                    className="border-amber-500/60 text-amber-300 hover:bg-amber-500/20 text-xs font-bold h-11"
-                  >
-                    Pulso Curto
-                  </Button>
-                  <Button
-                    onClick={() => acionarVibracao([600])}
-                    variant="outline"
-                    className="border-amber-500/60 text-amber-300 hover:bg-amber-500/20 text-xs font-bold h-11"
-                  >
-                    Pulso Longo
-                  </Button>
-                  <Button
-                    onClick={() => acionarVibracao([200, 100, 200, 100, 400])}
-                    variant="outline"
-                    className="col-span-2 border-amber-500/60 text-amber-300 hover:bg-amber-500/20 text-xs font-bold h-11"
-                  >
-                    Padrão Triplo (Háptico)
-                  </Button>
-                </div>
-
-                {permissoes.vibracao === "unsupported" && (
-                  <p className="text-[11px] text-slate-400 bg-slate-900 p-2.5 rounded-lg border border-slate-800">
-                    ℹ️ Aparelhos iOS (iPhone) desabilitam vibração via web por diretriz da Apple. Teste a vibração física de chamadas/notificações e selecione abaixo.
-                  </p>
+                {vibrandoAgora && (
+                  <div className="bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold py-1.5 px-3 rounded-lg animate-pulse flex items-center justify-center gap-1.5 shadow-md">
+                    <span className="h-2 w-2 rounded-full bg-amber-400 animate-ping" />
+                    MOTOR ACIONADO — VIBRANDO AGORA...
+                  </div>
                 )}
+
+                <div className="grid grid-cols-2 gap-2.5 pt-1">
+                  <Button
+                    type="button"
+                    onClick={() => acionarVibracao([350])}
+                    variant="outline"
+                    className="border-amber-500/60 bg-amber-950/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold h-12 flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-transform"
+                  >
+                    <span>Pulso Curto</span>
+                    <span className="text-[10px] text-amber-400/80 font-normal">350 ms</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => acionarVibracao([700])}
+                    variant="outline"
+                    className="border-amber-500/60 bg-amber-950/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold h-12 flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-transform"
+                  >
+                    <span>Pulso Longo</span>
+                    <span className="text-[10px] text-amber-400/80 font-normal">700 ms</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => acionarVibracao([200, 100, 200, 100, 450])}
+                    variant="outline"
+                    className="border-amber-500/60 bg-amber-950/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold h-12 flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-transform"
+                  >
+                    <span>Padrão Triplo</span>
+                    <span className="text-[10px] text-amber-400/80 font-normal">Ritmo Háptico</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => acionarVibracao([1000])}
+                    variant="outline"
+                    className="border-amber-500/60 bg-amber-950/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold h-12 flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-transform"
+                  >
+                    <span>Contínuo</span>
+                    <span className="text-[10px] text-amber-400/80 font-normal">1 segundo</span>
+                  </Button>
+                </div>
+
+                <div className="text-[11px] text-slate-400 bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-left space-y-1">
+                  <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
+                    <span>💡 Resposta Háptica & Mecânica Integrada</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-relaxed">
+                    Dispara o motor de vibração físico e, simultaneamente, oscilação de ressonância mecânica de 55Hz (sub-grave) nos transdutores de áudio, permitindo sentir a vibração física até mesmo em navegadores iOS (Apple Safari).
+                  </p>
+                </div>
               </div>
 
               <div className="flex gap-4 pb-6 w-full max-w-sm shrink-0 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
                 <Button
                   onClick={() => gravarResultado("vibration", "aprovado")}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12 shadow-lg"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold h-12 shadow-lg shadow-emerald-950/60"
                 >
                   <Check className="h-5 w-5 mr-1" /> Vibrou Firme
                 </Button>
                 <Button
                   onClick={() => gravarResultado("vibration", "reprovado")}
                   variant="destructive"
-                  className="flex-1 font-bold h-12 shadow-lg"
+                  className="flex-1 font-bold h-12 shadow-lg shadow-rose-950/60 active:scale-95"
                 >
                   <X className="h-5 w-5 mr-1" /> Sem Resposta
                 </Button>
