@@ -328,3 +328,25 @@
     box-sizing: border-box !important;
   }
 }
+
+/* Força a cor das letras da logo Br3Tech para PRETO nos impressos e relatórios */
+.logo-texto-print,
+.logo-texto-print span,
+.relatorio-impresso-selecionado .logo-texto-print,
+.relatorio-impresso-selecionado .logo-texto-print span,
+.relatorio-termico-80mm .logo-texto-print,
+.relatorio-termico-80mm .logo-texto-print span,
+#modal-termo-garantia .bg-white .logo-texto-print,
+#modal-termo-garantia .bg-white .logo-texto-print span {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+@media print {
+  .logo-texto-print,
+  .logo-texto-print span,
+  .logo-texto-print * {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+  }
+}

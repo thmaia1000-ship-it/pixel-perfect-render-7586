@@ -47,42 +47,35 @@ export function Logo({
       {showText && (
         <span className="flex flex-col leading-none">
           <span
-            className={`font-display font-extrabold tracking-tight ${
-              ehImpresso
-                ? "!text-slate-950 print:!text-black"
-                : "text-foreground print:!text-slate-950"
-            } ${textMap[size]}`}
+            className={`font-display font-black tracking-tight ${textMap[size]} ${
+              ehImpresso ? "text-black logo-texto-print" : "text-foreground"
+            }`}
+            style={ehImpresso ? { color: "#000000" } : undefined}
           >
             <span
-              className={
-                ehImpresso
-                  ? "!text-slate-950 print:!text-black"
-                  : "text-foreground print:!text-slate-950"
-              }
+              className={ehImpresso ? "text-black font-black" : "text-foreground"}
+              style={ehImpresso ? { color: "#000000" } : undefined}
             >
               Br
             </span>
             <span
-              className={ehImpresso ? "text-cyan-600 font-black print:text-black" : "text-primary"}
+              className={ehImpresso ? "text-black font-black" : "text-primary"}
+              style={ehImpresso ? { color: "#000000" } : undefined}
             >
               3
             </span>{" "}
             <span
-              className={
-                ehImpresso
-                  ? "!text-slate-950 print:!text-black"
-                  : "text-foreground/95 print:!text-slate-950"
-              }
+              className={ehImpresso ? "text-black font-black" : "text-foreground/95"}
+              style={ehImpresso ? { color: "#000000" } : undefined}
             >
               Tech
             </span>
           </span>
           <span
-            className={`text-[10px] uppercase font-semibold tracking-widest mt-0.5 ${
-              ehImpresso
-                ? "!text-slate-600 print:!text-slate-700"
-                : "text-muted-foreground print:!text-slate-600"
+            className={`text-[10px] uppercase font-bold tracking-widest mt-0.5 ${
+              ehImpresso ? "text-slate-700" : "text-muted-foreground"
             }`}
+            style={ehImpresso ? { color: "#334155" } : undefined}
           >
             Laboratório de Tecnologia
           </span>
