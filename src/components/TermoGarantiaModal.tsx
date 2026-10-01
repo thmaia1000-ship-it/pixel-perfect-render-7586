@@ -352,9 +352,9 @@ export function TermoGarantiaModal({
             className="relatorio-impresso-selecionado print-page-exact space-y-3 bg-white text-slate-900 p-4 md:p-6 rounded-xl border border-slate-200 text-[11px] font-sans print:border-none print:p-0 print:text-black print:space-y-1.5 print:text-[9.5px]"
           >
             {/* ======================== 1ª VIA: LOJA ======================== */}
-            <div className="rounded-lg border-2 border-slate-800 p-3 bg-white print:p-2 print:border-slate-800">
+            <div className="rounded-lg border border-slate-200 p-3 bg-white print:p-1.5 print:border-none">
               {/* Topo da Via Loja */}
-              <div className="flex items-center justify-between border-b-2 border-slate-800 pb-2 mb-2 print:pb-1 print:mb-1">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-2 print:pb-1 print:mb-1 print:border-slate-200">
                 <div className="flex items-center gap-2">
                   <Logo size="sm" />
                 </div>
@@ -453,7 +453,7 @@ export function TermoGarantiaModal({
                   as condições de entrada.
                 </div>
                 <div className="text-center w-52 print:w-44">
-                  <div className="border-t border-slate-800 pt-0.5 font-bold text-slate-900">
+                  <div className="border-t border-slate-400 pt-0.5 font-bold text-slate-900">
                     Assinatura do Cliente
                   </div>
                 </div>
@@ -469,9 +469,9 @@ export function TermoGarantiaModal({
             </div>
 
             {/* ======================== 2ª VIA: CLIENTE ======================== */}
-            <div className="rounded-lg border-2 border-slate-800 p-3 bg-white print:p-2 print:border-slate-800">
+            <div className="rounded-lg border border-slate-200 p-3 bg-white print:p-1.5 print:border-none">
               {/* Topo da Via Cliente */}
-              <div className="flex items-center justify-between border-b-2 border-slate-800 pb-2 mb-2 print:pb-1 print:mb-1">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-2 print:pb-1 print:mb-1 print:border-slate-200">
                 <div className="flex items-center gap-2">
                   <Logo size="sm" />
                 </div>
@@ -562,7 +562,7 @@ export function TermoGarantiaModal({
                   BR3 Tech · Assistência Especializada · E-mail: br3tech.am@gmail.com
                 </div>
                 <div className="text-center w-52 print:w-44">
-                  <div className="border-t border-slate-800 pt-0.5 font-bold text-slate-900">
+                  <div className="border-t border-slate-400 pt-0.5 font-bold text-slate-900">
                     {os.profiles?.nome || "BR3 Tech (Recepção)"}
                   </div>
                   <p className="text-[8px] text-slate-500">Equipamento recebido na assistência</p>
@@ -581,9 +581,9 @@ export function TermoGarantiaModal({
             className="relatorio-impresso-selecionado relatorio-termico-80mm mx-auto max-w-[340px] bg-white text-black p-4 rounded-lg border border-slate-300 font-mono text-[11px] leading-tight shadow-md print:shadow-none print:border-none print:p-0 print:max-w-none print:w-[76mm] space-y-3"
           >
             {/* ==================== 1ª VIA: LOJA / TÉCNICO ==================== */}
-            <div className="space-y-1.5 border border-dashed border-black p-2.5 rounded bg-white">
+            <div className="space-y-1.5 border border-slate-200 print:border-none p-2 rounded bg-white">
               {/* Topo Loja */}
-              <div className="text-center space-y-0.5 pb-1.5 border-b-2 border-black">
+              <div className="text-center space-y-0.5 pb-1.5 border-b border-black">
                 <div className="flex justify-center pb-0.5">
                   <Logo size="sm" />
                 </div>
@@ -689,9 +689,9 @@ export function TermoGarantiaModal({
             </div>
 
             {/* ==================== 2ª VIA: COMPROVANTE DO CLIENTE ==================== */}
-            <div className="space-y-1.5 border border-dashed border-black p-2.5 rounded bg-white">
+            <div className="space-y-1.5 border border-slate-200 print:border-none p-2 rounded bg-white">
               {/* Topo Cliente */}
-              <div className="text-center space-y-0.5 pb-1.5 border-b-2 border-black">
+              <div className="text-center space-y-0.5 pb-1.5 border-b border-black">
                 <div className="flex justify-center pb-0.5">
                   <Logo size="sm" />
                 </div>
@@ -784,7 +784,7 @@ export function TermoGarantiaModal({
             className="relatorio-impresso-selecionado print-page-exact space-y-2 bg-white text-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 text-[10.5px] font-sans print:border-none print:p-0 print:text-black print:space-y-1 print:text-[9px] leading-snug"
           >
             {/* Cabeçalho Oficial */}
-            <div className="flex items-center justify-between border-b-2 border-slate-900 pb-2 print:pb-1">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2 print:pb-1 print:border-slate-200">
               <div className="flex items-center gap-2">
                 <Logo size="sm" />
               </div>
