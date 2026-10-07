@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   MessageCircle,
@@ -74,6 +74,7 @@ function Linha({ rotulo, valor }: { rotulo: string; valor: React.ReactNode }) {
 
 function DetalheOS() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [observacao, setObservacao] = useState("");
   const [salvando, setSalvando] = useState(false);
@@ -294,8 +295,21 @@ function DetalheOS() {
                 variant="outline"
                 size="sm"
                 className="gap-1.5 font-medium border-border"
+                title="Imprimir comprovante de entrada em 2 vias (Loja + Cliente)"
               >
                 <Printer className="h-4 w-4 text-primary" /> Entrada (A4 2 Vias)
+              </Button>
+              <Button
+                onClick={() => {
+                  setModoDocumento("entrada");
+                  setTermoAberto(true);
+                }}
+                variant="outline"
+                size="sm"
+                className="gap-1.5 font-medium border-border"
+                title="Imprimir Relatório Completo de Entrada com Evidências Fotográficas"
+              >
+                <FileText className="h-4 w-4 text-primary" /> Relatório Completo (A4)
               </Button>
               <Button
                 onClick={() => {
@@ -965,7 +979,10 @@ function DetalheOS() {
 
       <ModalEncerramentoOS
         aberto={modalEncerramentoAberto}
-        onFechar={() => setModalEncerramentoAberto(false)}
+        onFechar={() => {
+          setModalEncerramentoAberto(false);
+          navigate({ to: "/ordens" });
+        }}
         osId={os.id}
         osNumero={os.numero}
         aparelhoModelo={modeloAparelho}
@@ -974,6 +991,7 @@ function DetalheOS() {
         podeConcluirOS={status !== "entregue"}
         onConcluirOS={async () => {
           await mudarStatus("entregue");
+          navigate({ to: "/ordens" });
         }}
       />
 

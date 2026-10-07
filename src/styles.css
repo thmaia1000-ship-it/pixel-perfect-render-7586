@@ -293,10 +293,13 @@
     background: #ffffff !important;
     background-color: #ffffff !important;
     color: #000000 !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-    page-break-after: avoid !important;
-    page-break-before: avoid !important;
+  }
+
+  .relatorio-impresso-selecionado img {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    image-rendering: auto;
+    max-width: 100% !important;
   }
 
   /* Remove grandes bordas pretas nos impressos e garante visual limpo */
@@ -308,10 +311,7 @@
   }
 
   .print-page-exact {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-    page-break-after: avoid !important;
-    page-break-before: avoid !important;
+    box-sizing: border-box !important;
   }
 
   /* Otimização específica para cupom térmico 80mm */
