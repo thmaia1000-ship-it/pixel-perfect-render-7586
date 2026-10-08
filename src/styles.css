@@ -310,6 +310,14 @@
     outline: none !important;
   }
 
+  /* Remove grandes bordas pretas nos impressos e garante visual limpo */
+  .relatorio-impresso-selecionado > div,
+  .print-page-exact > div {
+    border-color: #e2e8f0 !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
   .print-page-exact {
     box-sizing: border-box !important;
   }
