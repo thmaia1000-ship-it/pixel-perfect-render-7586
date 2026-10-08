@@ -57,13 +57,13 @@ O projeto possui um [`Dockerfile`](file:///Users/thiagomaia/.gemini/antigravity/
 gcloud config set project SEU_PROJETO_ID
 
 # 2. Build e Deploy direto com um comando
-gcloud run deploy br3-tech-os \
+gcloud run deploy br3tech \
   --source . \
   --platform managed \
   --region us-central1 \
   --allow-unauthenticated \
-  --port 3000 \
-  --set-env-vars "NODE_ENV=production,VITE_SUPABASE_URL=...,VITE_SUPABASE_ANON_KEY=..."
+  --port 8080 \
+  --set-env-vars "NODE_ENV=production,HOST=0.0.0.0,NITRO_HOST=0.0.0.0,PORT=8080"
 ```
 
 ---

@@ -1,5 +1,5 @@
-# Imagem oficial Bun para build e execução rápida no Google Cloud Run
-FROM oven/bun:1.2-alpine AS builder
+# Imagem oficial Bun baseada em Debian (glibc) compativel com o Google Cloud Run e gVisor
+FROM oven/bun:1.2 AS builder
 
 WORKDIR /app
 
@@ -28,18 +28,19 @@ ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
 # Compila o projeto com preset de servidor universal
 RUN bun run build
 
-# Stage 2: Runtime enxuto e resiliente
-FROM oven/bun:1.2-alpine AS runner
+# Stage 2: Runtime estavel Debian para Google Cloud Run
+FROM oven/bun:1.2 AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
+    NITRO_HOST=0.0.0.0 \
     PORT=8080
 
 COPY --from=builder /app ./
 
 EXPOSE 8080
 
-# Inicia o servidor HTTP universal do Nitro que atende na porta $PORT do Cloud Run / Google Cloud
-CMD ["bun", ".output/server/index.mjs"]
+# Inicia o entrypoint resiliente do Cloud Run que escuta na porta $PORT
+CMD ["bun", "start-server.js"]
