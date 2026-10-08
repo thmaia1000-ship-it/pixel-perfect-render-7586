@@ -38,7 +38,8 @@ export function obterChaveGoogleAIStudio(): string {
     }
   }
 
-  const envKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || (import.meta as any).env?.GEMINI_API_KEY;
+  const envKey =
+    (import.meta as any).env?.VITE_GEMINI_API_KEY || (import.meta as any).env?.GEMINI_API_KEY;
   return (envKey || "").trim();
 }
 
@@ -58,12 +59,15 @@ export function salvarChaveGoogleAIStudio(chave: string): void {
 /**
  * Valida se uma chave do Google AI Studio é válida fazendo uma chamada leve de teste
  */
-export async function testarChaveGoogleAIStudio(apiKey?: string): Promise<{ valida: boolean; mensagem: string }> {
+export async function testarChaveGoogleAIStudio(
+  apiKey?: string,
+): Promise<{ valida: boolean; mensagem: string }> {
   const chave = apiKey || obterChaveGoogleAIStudio();
   if (!chave) {
     return {
       valida: false,
-      mensagem: "Nenhuma chave de API informada. Obtenha sua chave gratuitamente em aistudio.google.com.",
+      mensagem:
+        "Nenhuma chave de API informada. Obtenha sua chave gratuitamente em aistudio.google.com.",
     };
   }
 
@@ -122,7 +126,10 @@ RESULTADOS DA BATERIA DE TESTES DE HARDWARE (*#0*#):
 ${
   dados.testesHardware
     ? Object.entries(dados.testesHardware)
-        .map(([teste, res]) => `  • ${teste.toUpperCase()}: ${res.status.toUpperCase()} ${res.detalhes ? `(${res.detalhes})` : ""}`)
+        .map(
+          ([teste, res]) =>
+            `  • ${teste.toUpperCase()}: ${res.status.toUpperCase()} ${res.detalhes ? `(${res.detalhes})` : ""}`,
+        )
         .join("\n")
     : "Bateria de testes em andamento."
 }

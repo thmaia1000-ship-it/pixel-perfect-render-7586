@@ -1,6 +1,7 @@
 # 🚀 Guia de Publicação e Integração: Google AI Studio & Google Cloud
 
 Este projeto está 100% configurado para rodar e ser publicado nos serviços do Google:
+
 1. **Google AI Studio / Google Project IDX** (Ambiente de desenvolvimento e testes de prompts Gemini na nuvem)
 2. **Google Firebase App Hosting** (Deploy contínuo direto do GitHub)
 3. **Google Cloud Run** (Deploy de container Docker serverless)
@@ -12,6 +13,7 @@ Este projeto está 100% configurado para rodar e ser publicado nos serviços do 
 O sistema conta com um assistente pericial integrado com a API do **Google AI Studio** para analisar ordens de serviço e diagnósticos de hardware.
 
 ### Como obter sua chave gratuita:
+
 1. Acesse [Google AI Studio](https://aistudio.google.com/).
 2. Clique no botão **"Get API key"** (Obter chave de API).
 3. Crie uma chave de API vinculada a um projeto Google Cloud ou use a padrão.
@@ -52,6 +54,7 @@ O repositório possui o arquivo [`apphosting.yaml`](file:///Users/thiagomaia/.ge
 O projeto possui um [`Dockerfile`](file:///Users/thiagomaia/.gemini/antigravity/scratch/pixel-perfect-render-7586/Dockerfile) otimizado com Bun e suporte à variável `PORT` do Cloud Run.
 
 ### Deploy via Google Cloud CLI (`gcloud`):
+
 ```bash
 # 1. Definir o projeto
 gcloud config set project SEU_PROJETO_ID
@@ -69,6 +72,7 @@ gcloud run deploy br3tech \
 ---
 
 ## 📋 Checklist de Arquivos de Integração
+
 - [x] [`.idx/dev.nix`](file:///Users/thiagomaia/.gemini/antigravity/scratch/pixel-perfect-render-7586/.idx/dev.nix) — Configuração nativa para Google Project IDX.
 - [x] [`apphosting.yaml`](file:///Users/thiagomaia/.gemini/antigravity/scratch/pixel-perfect-render-7586/apphosting.yaml) — Configuração para Google Firebase App Hosting.
 - [x] [`Dockerfile`](file:///Users/thiagomaia/.gemini/antigravity/scratch/pixel-perfect-render-7586/Dockerfile) & [`.dockerignore`](file:///Users/thiagomaia/.gemini/antigravity/scratch/pixel-perfect-render-7586/.dockerignore) — Container para Google Cloud Run.

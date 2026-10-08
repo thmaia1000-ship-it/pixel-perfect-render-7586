@@ -29,7 +29,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
-  ssr: false,
   head: () => ({
     meta: [
       { title: "BR3 Tech — Laboratório de Tecnologia Especializado" },

@@ -841,7 +841,8 @@ function DetalheOS() {
                         className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
                         title="Gerar laudo pericial com Google Gemini"
                       >
-                        <Sparkles className="h-3 w-3 text-indigo-400 animate-pulse" /> Laudo IA (Gemini)
+                        <Sparkles className="h-3 w-3 text-indigo-400 animate-pulse" /> Laudo IA
+                        (Gemini)
                       </button>
                     </div>
                     <Textarea

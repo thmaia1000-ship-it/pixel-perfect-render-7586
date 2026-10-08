@@ -1,5 +1,14 @@
 import { useState, useEffect } from "react";
-import { Sparkles, Key, CheckCircle2, AlertCircle, ExternalLink, Bot, Loader2, Copy } from "lucide-react";
+import {
+  Sparkles,
+  Key,
+  CheckCircle2,
+  AlertCircle,
+  ExternalLink,
+  Bot,
+  Loader2,
+  Copy,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +36,9 @@ export function ModalGoogleAIStudio({
 }: ModalGoogleAIStudioProps) {
   const [chave, setChave] = useState("");
   const [testando, setTestando] = useState(false);
-  const [statusConexao, setStatusConexao] = useState<{ valida: boolean; mensagem: string } | null>(null);
+  const [statusConexao, setStatusConexao] = useState<{ valida: boolean; mensagem: string } | null>(
+    null,
+  );
   const [gerandoLaudo, setGerandoLaudo] = useState(false);
   const [laudoGerado, setLaudoGerado] = useState<string | null>(null);
 
@@ -236,7 +247,10 @@ export function ModalGoogleAIStudio({
         <div className="text-[11px] text-slate-400 bg-slate-950/60 p-3 rounded-xl border border-slate-800 space-y-1">
           <p className="font-semibold text-slate-300">💡 Sobre a Publicação no Google AI Studio</p>
           <p className="leading-relaxed">
-            Este projeto conta com arquivos nativos de ambiente e nuvem do Google (<code>.idx/dev.nix</code>, <code>apphosting.yaml</code> e <code>Dockerfile</code>), permitindo importação com 1 clique no Google Project IDX e publicação no Google Cloud Run.
+            Este projeto conta com arquivos nativos de ambiente e nuvem do Google (
+            <code>.idx/dev.nix</code>, <code>apphosting.yaml</code> e <code>Dockerfile</code>),
+            permitindo importação com 1 clique no Google Project IDX e publicação no Google Cloud
+            Run.
           </p>
         </div>
       </div>

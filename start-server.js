@@ -26,7 +26,9 @@ try {
       return;
     }
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-    res.end(`<!doctype html><html><head><meta charset="utf-8"><title>BR3 Tech</title></head><body><h2>Sistema BR3 Tech em inicializacao...</h2><p>Recarregue a pagina em alguns instantes.</p></body></html>`);
+    res.end(
+      `<!doctype html><html><head><meta charset="utf-8"><title>BR3 Tech</title></head><body><h2>Sistema BR3 Tech em inicializacao...</h2><p>Recarregue a pagina em alguns instantes.</p></body></html>`,
+    );
   });
 
   fallback.listen(port, host, () => {
