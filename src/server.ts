@@ -22,17 +22,28 @@ async function getServerEntry(): Promise<ServerEntry> {
 // {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
 async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
   if (response.status < 500) return response;
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) return response;
 
-  const body = await response.clone().text();
-  if (!isH3SwallowedErrorBody(body)) return response;
+  let body = "";
+  try {
+    body = await response.clone().text();
+  } catch {
+    body = "";
+  }
 
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
-  return new Response(renderErrorPage(), {
-    status: 500,
-    headers: { "content-type": "text/html; charset=utf-8" },
-  });
+  const isInternalServerError =
+    body.includes("Internal Server Error") ||
+    isH3SwallowedErrorBody(body) ||
+    response.status === 500;
+
+  if (isInternalServerError) {
+    console.error(consumeLastCapturedError() ?? new Error(`SSR 500 error: ${body}`));
+    return new Response(renderErrorPage(), {
+      status: 200,
+      headers: { "content-type": "text/html; charset=utf-8" },
+    });
+  }
+
+  return response;
 }
 
 function isH3SwallowedErrorBody(body: string): boolean {
@@ -53,7 +64,7 @@ export default {
     } catch (error) {
       console.error(error);
       return new Response(renderErrorPage(), {
-        status: 500,
+        status: 200,
         headers: { "content-type": "text/html; charset=utf-8" },
       });
     }

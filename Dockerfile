@@ -27,20 +27,18 @@ ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
 # Compila o projeto
 RUN bun run build
 
-# Stage 2: Runtime enxuto
+# Stage 2: Runtime enxuto e resiliente
 FROM oven/bun:1.2-alpine AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production \
+    HOST=0.0.0.0 \
     PORT=8080
 
-COPY package.json ./
-COPY --from=builder /app/.output ./.output
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/public ./public
+COPY --from=builder /app ./
 
 EXPOSE 8080
 
-# Inicia o servidor escutando na porta $PORT do Cloud Run
-CMD ["bun", "run", "preview", "--", "--host", "0.0.0.0", "--port", "8080"]
+# Inicia o servidor respeitando dinamicamente a porta $PORT do Cloud Run / App Hosting
+CMD ["sh", "-c", "PORT=${PORT:-8080} HOST=0.0.0.0 bun .output/server/index.mjs || bun run preview -- --host 0.0.0.0 --port ${PORT:-8080}"]
