@@ -55,8 +55,7 @@ export function InstallAppModal({ open, onClose }: { open: boolean; onClose: () 
       setDeferredPrompt(null);
     } else {
       // If prompt is not directly available, show instructions
-      const isAndroid =
-        typeof navigator !== "undefined" && /android/i.test(navigator.userAgent);
+      const isAndroid = typeof navigator !== "undefined" && /android/i.test(navigator.userAgent);
       if (isAndroid) {
         toast.info(
           "Para instalar no Android: Toque nos 3 pontinhos (⋮) do Chrome e selecione 'Instalar aplicativo' ou 'Adicionar à tela inicial'.",

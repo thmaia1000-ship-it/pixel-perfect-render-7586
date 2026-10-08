@@ -9,7 +9,6 @@
     "build:dev": "vite build --mode development",
     "preview": "node start-server.js",
     "start": "node start-server.js",
-    "start:bun": "bun start-server.js",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
