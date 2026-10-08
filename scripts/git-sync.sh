@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+# Garante que o repositorio local git esteja inicializado
+if [ ! -d ".git" ]; then
+  git init -b main
+  git config user.name "AI Studio"
+  git config user.email "bot@aistudio.google.com"
+  git remote add origin "https://github.com/thmaia1000-ship-it/pixel-perfect-render-7586.git" || true
+fi
+
 # Se uma URL remota for fornecida como segundo argumento ou variável de ambiente GITHUB_REPO
 REMOTE_URL=${2:-$GITHUB_REPO_URL}
 if [ -n "$REMOTE_URL" ]; then
@@ -26,11 +34,10 @@ CURRENT_BRANCH=$(git branch --show-current || echo "main")
 # Se houver remote origin configurado, faz o push para o GitHub
 if git remote get-url origin >/dev/null 2>&1; then
   echo "Enviando para o GitHub (origin $CURRENT_BRANCH)..."
-  git push -u origin "$CURRENT_BRANCH"
-  echo "✓ Upload para o GitHub concluído com sucesso!"
-else
-  echo "✓ Repositório git local sincronizado com sucesso na branch '$CURRENT_BRANCH'."
-  echo "Para enviar diretamente ao GitHub e sincronizar com o Lovable, use:"
-  echo "  bash scripts/git-sync.sh \"mensagem\" \"https://<SEU_TOKEN_OU_USUARIO>@github.com/<USUARIO>/<REPO>.git\""
+  git push -u origin "$CURRENT_BRANCH" || echo "✓ Commit local registrado. Para sincronizar com o GitHub remoto, forneça credenciais ou configure SSH/Token."
 fi
+
+echo "✓ Repositório git local sincronizado com sucesso na branch '$CURRENT_BRANCH'."
+echo "Para enviar diretamente ao GitHub e sincronizar com o Lovable, use:"
+echo "  bash scripts/git-sync.sh \"mensagem\" \"https://<SEU_TOKEN_OU_USUARIO>@github.com/<USUARIO>/<REPO>.git\""
 
