@@ -55,10 +55,12 @@ export function InstallAppModal({ open, onClose }: { open: boolean; onClose: () 
       setDeferredPrompt(null);
     } else {
       // If prompt is not directly available, show instructions
-      const isAndroid = /android/i.test(navigator.userAgent);
+      const isAndroid =
+        typeof navigator !== "undefined" && /android/i.test(navigator.userAgent);
       if (isAndroid) {
-        alert(
-          "Para instalar no Android:\n\n1. Toque nos 3 pontinhos (⋮) do navegador Chrome.\n2. Selecione 'Instalar aplicativo' ou 'Adicionar à tela inicial'.\n3. O app BR3 Tech será instalado como um aplicativo Android nativo!",
+        toast.info(
+          "Para instalar no Android: Toque nos 3 pontinhos (⋮) do Chrome e selecione 'Instalar aplicativo' ou 'Adicionar à tela inicial'.",
+          { duration: 6000 },
         );
       }
     }

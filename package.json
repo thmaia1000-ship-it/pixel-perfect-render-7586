@@ -7,7 +7,7 @@
     "dev": "vite dev --host 0.0.0.0 --port 3000",
     "build": "vite build",
     "build:dev": "vite build --mode development",
-    "preview": "vite preview --host 0.0.0.0 --port 3000",
+    "preview": "node start-server.js",
     "start": "node start-server.js",
     "start:bun": "bun start-server.js",
     "lint": "eslint .",

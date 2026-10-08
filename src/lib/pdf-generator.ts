@@ -117,6 +117,24 @@ export function baixarBlobComoArquivo(blob: Blob, nomeArquivo: string) {
   }, 4000);
 }
 
+function abrirLinkComSeguranca(url: string) {
+  try {
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      if (document.body.contains(a)) document.body.removeChild(a);
+    }, 100);
+  } catch {
+    if (typeof window !== "undefined") {
+      window.open(url, "_blank");
+    }
+  }
+}
+
 /**
  * Envia mensagem pelo WhatsApp sempre acompanhada da cópia em PDF:
  * 1) No celular/tablets compatíveis: anexa o arquivo PDF diretamente via Web Share API
@@ -179,9 +197,9 @@ export async function enviarWhatsAppComCopiaPdf({
       // Ignora se não permitido
     }
 
-    // Abre o WhatsApp Web / App diretamente com a mensagem
+    // Abre o WhatsApp Web / App diretamente com a mensagem de forma segura
     const link = linkWhatsApp(telefone, mensagem);
-    window.open(link, "_blank");
+    abrirLinkComSeguranca(link);
 
     toast.success(
       `📄 Cópia em PDF baixada (${nomeFinal})! O WhatsApp foi aberto para colar a mensagem e anexar o PDF.`,
@@ -192,6 +210,6 @@ export async function enviarWhatsAppComCopiaPdf({
     toast.dismiss(toastId);
     toast.error("Não foi possível gerar o PDF automaticamente. Abrindo WhatsApp...");
     const link = linkWhatsApp(telefone, mensagem);
-    window.open(link, "_blank");
+    abrirLinkComSeguranca(link);
   }
 }

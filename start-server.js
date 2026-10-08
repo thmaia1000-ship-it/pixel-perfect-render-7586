@@ -1,7 +1,7 @@
 // start-server.js - Entrypoint resiliente para Google Cloud Run & Google Cloud
 import http from "node:http";
 
-const port = Number.parseInt(process.env.PORT || "8080", 10);
+const port = Number.parseInt(process.env.PORT || "3000", 10);
 const host = "0.0.0.0";
 
 process.env.PORT = String(port);
