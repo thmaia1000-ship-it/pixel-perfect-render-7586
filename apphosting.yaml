@@ -18,7 +18,7 @@ env:
   - variable: NODE_ENV
     value: production
   - variable: NITRO_PRESET
-    value: node-server
+    value: bun
   - variable: HOST
     value: "0.0.0.0"
   - variable: NITRO_HOST
