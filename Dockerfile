@@ -22,9 +22,10 @@ ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
     VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY \
     VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY \
     VITE_SUPABASE_PROJECT_ID=$VITE_SUPABASE_PROJECT_ID \
+    NITRO_PRESET=node-server \
     NODE_ENV=production
 
-# Compila o projeto
+# Compila o projeto com preset de servidor universal
 RUN bun run build
 
 # Stage 2: Runtime enxuto e resiliente
@@ -40,5 +41,5 @@ COPY --from=builder /app ./
 
 EXPOSE 8080
 
-# Inicia o servidor respeitando dinamicamente a porta $PORT do Cloud Run / App Hosting
-CMD ["sh", "-c", "PORT=${PORT:-8080} HOST=0.0.0.0 bun .output/server/index.mjs || bun run preview -- --host 0.0.0.0 --port ${PORT:-8080}"]
+# Inicia o servidor HTTP universal do Nitro que atende na porta $PORT do Cloud Run / Google Cloud
+CMD ["bun", ".output/server/index.mjs"]

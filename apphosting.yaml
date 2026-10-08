@@ -17,6 +17,8 @@ runConfig:
 env:
   - variable: NODE_ENV
     value: production
+  - variable: NITRO_PRESET
+    value: node-server
   - variable: PORT
     value: "8080"
   - variable: VITE_SUPABASE_URL

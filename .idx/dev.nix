@@ -15,6 +15,7 @@
   env = {
     PORT = "3000";
     NODE_ENV = "development";
+    NITRO_PRESET = "node-server";
   };
 
   idx = {
