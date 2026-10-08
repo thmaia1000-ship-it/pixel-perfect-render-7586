@@ -33,6 +33,7 @@ import {
   deserializarEstadoEConferencia,
   serializarEstadoEConferencia,
   type EncerramentoOS,
+  type MidiaConferencia,
 } from "@/lib/conferencia-aparelho";
 import {
   PROXIMOS_STATUS,
@@ -201,6 +202,30 @@ function DetalheOS() {
 
     if (error) throw error;
     await queryClient.invalidateQueries();
+  }
+
+  async function salvarMidias(novasMidias: MidiaConferencia[]) {
+    if (!os) return;
+    try {
+      const novoEstadoFisico = serializarEstadoEConferencia(
+        conferencia,
+        observacoesFisicas,
+        novasMidias,
+        assinaturaAutorizacao,
+        encerramento,
+      );
+
+      const { error } = await supabase
+        .from("ordens_servico")
+        .update({ estado_fisico: novoEstadoFisico })
+        .eq("id", os.id);
+
+      if (error) throw error;
+      await queryClient.invalidateQueries();
+      toast.success("Evidências fotográficas salvas com sucesso!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar fotos da conferência.");
+    }
   }
 
   const linkAprovacao =
@@ -395,7 +420,11 @@ function DetalheOS() {
               </div>
             </div>
 
-            <UploadMidiaConferencia midias={midias} somenteLeitura />
+            <UploadMidiaConferencia
+              midias={midias}
+              onChange={salvarMidias}
+              somenteLeitura={status === "cancelada"}
+            />
           </section>
 
           {/* CHECKLIST DE SAÍDA E TESTES DE HARDWARE */}

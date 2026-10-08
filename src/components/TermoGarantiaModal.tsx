@@ -212,8 +212,34 @@ export function TermoGarantiaModal({
     toast.success(`Nº da OS (${os.numero}) copiado para a área de transferência!`);
   };
 
-  // Recupera dados de encerramento e autorização se existirem
-  const { encerramento, assinaturaAutorizacao } = deserializarEstadoEConferencia(os.estado_fisico);
+  // Recupera dados de encerramento, autorização, mídias e conferência se existirem no banco
+  const {
+    encerramento,
+    assinaturaAutorizacao,
+    midias: midiasSalvas,
+    conferencia: conferenciaSalva,
+    observacoes: observacoesSalvas,
+  } = deserializarEstadoEConferencia(os.estado_fisico);
+
+  // Unifica mídias passadas como prop com as salvas no estado_fisico da OS
+  const midiasEfetivas: MidiaConferencia[] =
+    midias && midias.length > 0 ? midias : midiasSalvas || [];
+
+  const fotosConferencia = midiasEfetivas.filter(
+    (m) =>
+      m.tipo === "imagem" ||
+      !m.tipo ||
+      m.url?.startsWith("data:image") ||
+      m.url?.startsWith("http"),
+  );
+  const videosConferencia = midiasEfetivas.filter(
+    (m) => m.tipo === "video" || m.url?.startsWith("data:video"),
+  );
+
+  const conferenciaEfetiva =
+    conferencia && Object.keys(conferencia).length > 0 ? conferencia : conferenciaSalva;
+
+  const observacoesEfetivas = observacoesFisicas || observacoesSalvas || "";
 
   // Obtém as assinaturas digitais cadastradas para impressos
   const assinaturaTecnico = obterAssinaturaTecnicoOuLoja(os.tecnico_id) || obterMinhaAssinatura();
@@ -221,7 +247,7 @@ export function TermoGarantiaModal({
 
   const checklistAtivo: ConferenciaChecklist = (() => {
     if (modo !== "finalizada") {
-      return conferencia;
+      return conferenciaEfetiva;
     }
     const res: ConferenciaChecklist = {};
     const checklistExistente = encerramento?.checklistSaida || {};
@@ -586,9 +612,9 @@ export function TermoGarantiaModal({
                     <p className="font-medium text-slate-900 bg-slate-50 p-1.5 rounded border border-slate-200 print:p-1 print:text-[8px]">
                       {os.defeito_relatado}
                     </p>
-                    {observacoesFisicas && (
+                    {observacoesEfetivas && (
                       <p className="mt-1 text-[9px] text-slate-600 print:mt-0.5 print:text-[8px]">
-                        <strong>Obs. Físicas:</strong> {observacoesFisicas}
+                        <strong>Obs. Físicas:</strong> {observacoesEfetivas}
                       </p>
                     )}
                     {os.acessorios && (
@@ -614,8 +640,30 @@ export function TermoGarantiaModal({
                       )}
                       <p className="text-[9px] text-slate-600 print:text-[7.5px]">
                         Itens OK: {itensOK.length} · Defeito: {itensComDefeito.length}
-                        {midias.length > 0 && ` · ${midias.length} foto(s)/vídeo(s) arquivados`}
+                        {midiasEfetivas.length > 0 &&
+                          ` · ${midiasEfetivas.length} foto(s)/vídeo(s)`}
                       </p>
+                      {fotosConferencia.length > 0 && (
+                        <div className="pt-0.5">
+                          <span className="block text-[7.5px] font-bold text-slate-700 print:text-[6.5px]">
+                            Evidências ({fotosConferencia.length} foto(s)):
+                          </span>
+                          <div className="grid grid-cols-4 gap-1 mt-0.5">
+                            {fotosConferencia.slice(0, 4).map((f, i) => (
+                              <div
+                                key={f.id || i}
+                                className="aspect-video rounded border border-slate-200 overflow-hidden bg-slate-100"
+                              >
+                                <img
+                                  src={f.url}
+                                  alt={`Foto ${i + 1}`}
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       <div className="flex justify-between items-center text-[10px] pt-1 border-t border-slate-200 font-bold print:pt-0.5 print:text-[8.5px]">
                         <span>Total Previsto / Orçamento:</span>
                         <span className="text-slate-950 font-black">{moeda(total)}</span>
@@ -721,6 +769,27 @@ export function TermoGarantiaModal({
                           ? ` · Defeitos anotados: ${itensComDefeito.join(", ")}`
                           : " · Sem defeitos aparentes"}
                       </p>
+                      {fotosConferencia.length > 0 && (
+                        <div className="pt-0.5">
+                          <span className="block text-[7.5px] font-bold text-slate-700 print:text-[6.5px]">
+                            Evidências de Entrada ({fotosConferencia.length} foto(s)):
+                          </span>
+                          <div className="grid grid-cols-4 gap-1 mt-0.5">
+                            {fotosConferencia.slice(0, 4).map((f, i) => (
+                              <div
+                                key={f.id || i}
+                                className="aspect-video rounded border border-slate-200 overflow-hidden bg-slate-100"
+                              >
+                                <img
+                                  src={f.url}
+                                  alt={`Foto ${i + 1}`}
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       <div className="flex justify-between items-center text-[10px] pt-1 border-t border-slate-200 font-bold print:pt-0.5 print:text-[8.5px]">
                         <span>Total Previsto / Orçamento:</span>
                         <span className="text-slate-950 font-black">{moeda(total)}</span>
@@ -827,10 +896,10 @@ export function TermoGarantiaModal({
                       <span>{os.acessorios}</span>
                     </div>
                   )}
-                  {observacoesFisicas && (
+                  {observacoesEfetivas && (
                     <div>
                       <span className="font-bold">OBS. FÍSICAS: </span>
-                      <span>{observacoesFisicas}</span>
+                      <span>{observacoesEfetivas}</span>
                     </div>
                   )}
                 </div>
@@ -854,7 +923,9 @@ export function TermoGarantiaModal({
                   ) : (
                     <div>✓ Sem avarias iniciais anotadas</div>
                   )}
-                  {midias.length > 0 && <div>📷 {midias.length} foto(s)/vídeo(s) arquivados</div>}
+                  {midiasEfetivas.length > 0 && (
+                    <div>📷 {fotosConferencia.length} foto(s) de evidência arquivada(s)</div>
+                  )}
                 </div>
 
                 {/* Valores & Prazos */}
@@ -1141,9 +1212,9 @@ export function TermoGarantiaModal({
                     <p className="font-medium text-slate-900 bg-white p-1 rounded border border-slate-200 text-[9.5px] print:text-[8px] print:p-0.5">
                       {os.defeito_relatado}
                     </p>
-                    {observacoesFisicas && (
+                    {observacoesEfetivas && (
                       <p className="mt-0.5 text-[8.5px] text-slate-600 print:text-[7.5px]">
-                        <strong>Obs. Físicas:</strong> {observacoesFisicas}
+                        <strong>Obs. Físicas:</strong> {observacoesEfetivas}
                       </p>
                     )}
                   </div>
@@ -1218,7 +1289,7 @@ export function TermoGarantiaModal({
                     ) : (
                       <span className="text-emerald-700 font-bold">✓ Sem defeitos aparentes</span>
                     )}
-                    {midias.length > 0 && ` · ${midias.length} foto(s)/vídeo(s)`}
+                    {midiasEfetivas.length > 0 && ` · ${midiasEfetivas.length} foto(s)/vídeo(s)`}
                   </span>
                 </div>
 
@@ -1306,11 +1377,21 @@ export function TermoGarantiaModal({
                   </table>
                 </div>
 
-                {midias.length > 0 && (
-                  <div className="mt-1 flex items-center gap-1.5 text-[8.5px] font-medium text-slate-600 print:mt-0.5 print:text-[7.5px]">
-                    <Camera className="h-3 w-3 text-primary" />
-                    Registro Fotográfico: {midias.length} arquivo(s) arquivado(s) no sistema
-                    digital.
+                {midiasEfetivas.length > 0 && (
+                  <div className="mt-1 flex items-center justify-between text-[8px] font-semibold text-slate-700 bg-white p-1 rounded border border-slate-200 print:mt-0.5 print:py-0.5 print:text-[7px]">
+                    <span className="flex items-center gap-1">
+                      <Camera className="h-3 w-3 text-primary" />
+                      <span>Registro Fotográfico da Conferência:</span>
+                      <strong className="text-primary font-bold">
+                        {fotosConferencia.length} foto(s) anexada(s)
+                      </strong>
+                      {videosConferencia.length > 0 && (
+                        <span> · {videosConferencia.length} vídeo(s)</span>
+                      )}
+                    </span>
+                    <span className="text-[7.5px] text-slate-500 uppercase font-mono print:text-[6.5px]">
+                      Ver Evidências no Item 5 abaixo ↓
+                    </span>
                   </div>
                 )}
 
@@ -1398,12 +1479,97 @@ export function TermoGarantiaModal({
                 )}
               </section>
 
-              {/* TERMOS E CONDIÇÕES */}
+              {/* 5. EVIDÊNCIAS FOTOGRÁFICAS */}
+              <section className="rounded border border-slate-200 bg-slate-50/70 p-2 print:p-1.5 print:border-slate-300 break-inside-avoid">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-0.5 mb-1.5 print:mb-1">
+                  <h2 className="text-[9.5px] font-black uppercase tracking-wider text-slate-800 print:text-[8.5px] flex items-center gap-1.5">
+                    <Camera className="h-3.5 w-3.5 text-primary print:h-2.5 print:w-2.5" />
+                    <span>
+                      5. EVIDÊNCIAS FOTOGRÁFICAS{" "}
+                      {modo === "finalizada"
+                        ? "E REGISTRO VISUAL DO EQUIPAMENTO"
+                        : "(CONFERÊNCIA DE ENTRADA DO EQUIPAMENTO)"}
+                    </span>
+                  </h2>
+                  <span className="text-[8.5px] font-bold text-slate-600 print:text-[7.5px]">
+                    {fotosConferencia.length > 0
+                      ? `${fotosConferencia.length} foto(s) anexada(s)`
+                      : "Sem fotos anexadas"}
+                    {videosConferencia.length > 0 && ` · ${videosConferencia.length} vídeo(s)`}
+                  </span>
+                </div>
+
+                {fotosConferencia.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {/* Grade de fotos com visualização nítida em tela e impressão */}
+                    <div
+                      className={`grid gap-2 print:gap-1.5 ${
+                        fotosConferencia.length === 1
+                          ? "grid-cols-1 sm:grid-cols-2 max-w-sm"
+                          : fotosConferencia.length === 2
+                            ? "grid-cols-2"
+                            : fotosConferencia.length === 3
+                              ? "grid-cols-3"
+                              : "grid-cols-2 sm:grid-cols-4"
+                      }`}
+                    >
+                      {fotosConferencia.map((foto, idx) => (
+                        <div
+                          key={foto.id || idx}
+                          className="group relative overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-2xs print:p-0.5 print:border-slate-300 break-inside-avoid"
+                        >
+                          <div className="relative aspect-video w-full overflow-hidden rounded bg-slate-900 print:max-h-28 print:bg-white flex items-center justify-center">
+                            <img
+                              src={foto.url}
+                              alt={foto.nome || `Evidência Fotográfica ${idx + 1}`}
+                              className="h-full w-full object-cover print:object-contain print:bg-white"
+                              loading="eager"
+                            />
+                            <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1.5 py-0.5 text-[8px] font-bold text-white print:text-[7px]">
+                              Foto {idx + 1}
+                            </span>
+                          </div>
+                          <div className="mt-1 flex items-center justify-between px-0.5 text-[8px] text-slate-600 print:mt-0.5 print:text-[7px]">
+                            <span
+                              className="truncate font-semibold text-slate-800 max-w-[130px]"
+                              title={foto.nome}
+                            >
+                              {foto.nome || `Registro ${idx + 1}`}
+                            </span>
+                            {foto.tamanhoFormatado && (
+                              <span className="font-mono text-slate-400 text-[7.5px] print:text-[6.5px]">
+                                {foto.tamanhoFormatado}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[7.5px] text-slate-500 italic print:text-[6.5px]">
+                      * Evidências fotográficas capturadas no momento do recebimento do aparelho,
+                      registrando o estado físico da tela, carcaça e eventuais avarias
+                      pré-existentes.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded border border-dashed border-slate-300 bg-white p-2 text-center text-[8.5px] text-slate-500 print:p-1 print:text-[7.5px]">
+                    <p className="font-semibold text-slate-700">
+                      Nenhuma foto arquivada para este equipamento.
+                    </p>
+                    <p className="text-[7.5px] text-slate-400 print:text-[7px]">
+                      As condições e avarias foram anotadas no Checklist (Item 4) e nas Observações
+                      de Entrada.
+                    </p>
+                  </div>
+                )}
+              </section>
+
+              {/* 6. TERMOS E CONDIÇÕES */}
               <section className="rounded border border-slate-200 bg-slate-50/70 p-2 text-[8px] leading-tight text-slate-700 print:p-1.5 print:text-[7.5px] print:border-slate-300">
                 <h3 className="font-bold text-slate-900 uppercase text-[8.5px] mb-0.5 print:text-[7.5px]">
                   {modo === "finalizada"
-                    ? "TERMOS DE GARANTIA E ENTREGA"
-                    : "CONDIÇÕES DA ORDEM DE SERVIÇO E GUARDA"}
+                    ? "6. TERMOS DE GARANTIA E ENTREGA"
+                    : "6. CONDIÇÕES DA ORDEM DE SERVIÇO E GUARDA"}
                 </h3>
                 <ul className="grid grid-cols-2 gap-x-3 gap-y-0.5 list-disc list-inside print:gap-x-2">
                   {modo === "finalizada" ? (
