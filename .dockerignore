@@ -1,0 +1,13 @@
+node_modules
+.output
+.git
+.idx
+.env
+.env.*
+!.env.example
+dist
+dist-ssr
+.tanstack
+.vinxi
+logs
+*.log

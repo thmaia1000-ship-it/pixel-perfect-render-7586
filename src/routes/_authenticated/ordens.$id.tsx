@@ -14,6 +14,7 @@ import {
   FileCheck,
   X,
   RotateCcw,
+  Sparkles,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -28,6 +29,7 @@ import { UploadMidiaConferencia } from "@/components/UploadMidiaConferencia";
 import { TermoGarantiaModal, type ModoDocumentoOS } from "@/components/TermoGarantiaModal";
 import { ModalEncerramentoOS } from "@/components/ModalEncerramentoOS";
 import { ModalReaberturaOS } from "@/components/ModalReaberturaOS";
+import { ModalGoogleAIStudio } from "@/components/ModalGoogleAIStudio";
 import { supabase } from "@/integrations/supabase/client";
 import {
   deserializarEstadoEConferencia,
@@ -83,6 +85,7 @@ function DetalheOS() {
   const [modalLinkAberto, setModalLinkAberto] = useState(false);
   const [modalEncerramentoAberto, setModalEncerramentoAberto] = useState(false);
   const [modalReaberturaAberto, setModalReaberturaAberto] = useState(false);
+  const [modalGoogleAIAberto, setModalGoogleAIAberto] = useState(false);
   const [modoDocumento, setModoDocumento] = useState<ModoDocumentoOS>("entrada");
 
   const { data, isLoading } = useQuery({
@@ -350,6 +353,15 @@ function DetalheOS() {
               </Button>
             </>
           )}
+          <Button
+            onClick={() => setModalGoogleAIAberto(true)}
+            variant="outline"
+            size="sm"
+            className="gap-1.5 font-semibold border-indigo-500/40 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20"
+            title="Gerar Laudo Técnico Pericial com Google AI Studio (Gemini)"
+          >
+            <Sparkles className="h-4 w-4 text-indigo-400 animate-pulse" /> Laudo IA
+          </Button>
           <span
             className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold ${STATUS_CLASS[status]}`}
           >
@@ -494,14 +506,26 @@ function DetalheOS() {
                 {/* Resumo do Laudo de Hardware */}
                 {encerramento.diagnosticoHardware && (
                   <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3.5 text-xs space-y-2">
-                    <div className="flex items-center justify-between font-bold text-emerald-600 dark:text-emerald-400">
+                    <div className="flex flex-wrap items-center justify-between gap-2 font-bold text-emerald-600 dark:text-emerald-400">
                       <span className="flex items-center gap-1.5">
                         <CheckCircle2 className="h-4 w-4" /> Laudo de Hardware via QR Code
                       </span>
-                      <span className="font-mono text-[11px]">
-                        {encerramento.diagnosticoHardware.totalAprovados} Aprovados ·{" "}
-                        {encerramento.diagnosticoHardware.totalReprovados} Falhas
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[11px]">
+                          {encerramento.diagnosticoHardware.totalAprovados} Aprovados ·{" "}
+                          {encerramento.diagnosticoHardware.totalReprovados} Falhas
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setModalGoogleAIAberto(true)}
+                          className="h-6 px-2 text-[10px] gap-1 font-semibold border-indigo-500/40 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20"
+                          title="Analisar falhas e testes de hardware com Google AI Studio (Gemini)"
+                        >
+                          <Sparkles className="h-3 w-3" /> Parecer IA
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1">
@@ -809,7 +833,17 @@ function DetalheOS() {
               ) : (
                 <div className="mt-4 grid gap-3">
                   <div className="grid gap-1.5">
-                    <Label htmlFor="obs">Observação (opcional)</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="obs">Observação (opcional)</Label>
+                      <button
+                        type="button"
+                        onClick={() => setModalGoogleAIAberto(true)}
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
+                        title="Gerar laudo pericial com Google Gemini"
+                      >
+                        <Sparkles className="h-3 w-3 text-indigo-400 animate-pulse" /> Laudo IA (Gemini)
+                      </button>
+                    </div>
                     <Textarea
                       id="obs"
                       rows={3}
@@ -1048,6 +1082,46 @@ function DetalheOS() {
           }}
         />
       )}
+
+      <ModalGoogleAIStudio
+        aberto={modalGoogleAIAberto}
+        onFechar={() => setModalGoogleAIAberto(false)}
+        dadosOS={{
+          numero: os.numero,
+          aparelho: os.aparelho,
+          marca: os.marca || undefined,
+          modelo: os.modelo || undefined,
+          defeitoRelatado: os.defeito_relatado,
+          diagnostico: os.diagnostico || undefined,
+          valorPecas: Number(os.valor_pecas) || 0,
+          valorMaoObra: Number(os.valor_mao_obra) || 0,
+          testesHardware: encerramento?.diagnosticoHardware?.testes,
+          conferenciaEntrada: conferencia,
+        }}
+        onAplicarLaudo={async (textoLaudo) => {
+          setObservacao((prev) => (prev ? `${prev}\n\n${textoLaudo}` : textoLaudo));
+          try {
+            const { data: user } = await supabase.auth.getUser();
+            const { data: perfil } = await supabase
+              .from("profiles")
+              .select("nome")
+              .eq("id", user.user?.id ?? "")
+              .maybeSingle();
+
+            await supabase.from("os_historico").insert({
+              os_id: os.id,
+              status: status,
+              observacao: `[Laudo Pericial Google AI Studio]\n${textoLaudo}`.slice(0, 500),
+              usuario_id: user.user?.id ?? null,
+              usuario_nome: perfil?.nome ?? "Google AI Studio",
+            });
+            await queryClient.invalidateQueries();
+            toast.success("Laudo do Gemini salvo no histórico da OS!");
+          } catch {
+            // Em caso de falha de gravação de histórico, a observação já foi inserida no textarea
+          }
+        }}
+      />
     </AppShell>
   );
 }
